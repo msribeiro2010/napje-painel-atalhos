@@ -136,8 +136,12 @@ const ShortcutButton = ({
     <Button
       variant="outline"
       className="w-full h-28 p-5 flex flex-col items-center justify-center gap-3 
-                 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 hover:from-blue-100 hover:to-purple-100
-                 border-2 border-blue-200/60 hover:border-blue-300/80
+                 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 
+                 dark:from-[#23201a] dark:via-[#2d2717] dark:to-[#181511]
+                 hover:from-blue-100 hover:to-purple-100
+                 dark:hover:from-[#2d2717] dark:hover:to-[#28231a]
+                 border-2 border-blue-200/60 dark:border-[#3a3320] hover:border-blue-300/80
+                 dark:hover:border-[#bfae7c]/30
                  shadow-lg hover:shadow-2xl
                  transition-all duration-300 ease-out
                  hover:scale-105 hover:-translate-y-1
@@ -146,11 +150,13 @@ const ShortcutButton = ({
     >
       <div className="flex flex-col items-center justify-center gap-2 h-full w-full">
         <div className="p-3 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 
+                        dark:from-[#bfae7c] dark:to-[#7c6a3c]
                         group-hover:from-indigo-500 group-hover:to-purple-500
+                        dark:group-hover:from-[#f8f5e4] dark:group-hover:to-[#bfae7c]
                         shadow-lg transition-all duration-300 flex-shrink-0">
-          <Icon className="h-6 w-6 text-white group-hover:text-yellow-200" />
+          <Icon className="h-6 w-6 text-white dark:text-[#23201a] group-hover:text-yellow-200 dark:group-hover:text-[#23201a]" />
         </div>
-        <span className="text-sm text-center leading-tight font-medium text-gray-800 dark:text-gray-100 group-hover:text-blue-900 dark:group-hover:text-blue-100 transition-colors line-clamp-2 flex-1 flex items-center justify-center w-full">
+        <span className="text-sm text-center leading-tight font-medium text-gray-800 dark:text-[#f8f5e4] group-hover:text-blue-900 dark:group-hover:text-[#bfae7c] transition-colors line-clamp-2 flex-1 flex items-center justify-center w-full">
           {title}
         </span>
       </div>
@@ -160,8 +166,8 @@ const ShortcutButton = ({
       variant="ghost"
       size="sm"
       className="absolute -top-2 -right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 
-                 transition-all duration-300 bg-white/95 backdrop-blur-sm shadow-xl 
-                 border border-pink-200 hover:border-pink-400 rounded-full
+                 transition-all duration-300 bg-white/95 dark:bg-[#23201a]/95 backdrop-blur-sm shadow-xl 
+                 border border-pink-200 dark:border-[#bfae7c]/30 hover:border-pink-400 dark:hover:border-[#bfae7c]/50 rounded-full
                  hover:scale-110"
       onClick={(e) => {
         e.stopPropagation();
@@ -171,8 +177,8 @@ const ShortcutButton = ({
       <Heart 
         className={`h-5 w-5 transition-all duration-200 ${
           favorites.includes(id) 
-            ? 'fill-pink-400 text-pink-400 scale-110' 
-            : 'text-gray-300 hover:text-pink-400'
+            ? 'fill-pink-400 dark:fill-[#bfae7c] text-pink-400 dark:text-[#bfae7c] scale-110' 
+            : 'text-gray-300 dark:text-[#bfae7c]/60 hover:text-pink-400 dark:hover:text-[#bfae7c]'
         }`}
       />
     </Button>
@@ -224,8 +230,8 @@ const SortableGroup = ({
       ref={setNodeRef} 
       style={style} 
       className={`overflow-hidden transition-all duration-300 animate-fade-in
-                  bg-[#f8f5e4] dark:bg-[#23201a] border border-[#e2d8b8] dark:border-[#3a3320] shadow-sm
-                  rounded-xl min-h-[80px] flex flex-col justify-between px-3 py-2 my-2`}
+                  bg-[#f8f5e4] dark:bg-[#23201a] border border-[#e2d8b8] dark:border-[#3a3320] shadow-md
+                  rounded-xl min-h-[80px] flex flex-col justify-between px-3 py-2 my-2 dark:text-[#f8f5e4]`}
     >
       <Collapsible
         open={openGroups[group.id] || false}
@@ -253,7 +259,7 @@ const SortableGroup = ({
                 <Button 
                   size="icon" 
                   variant="outline" 
-                  className="ml-1 rounded-full w-7 h-7 flex items-center justify-center text-[#bfae7c] dark:text-[#bfae7c] border-[#e2d8b8] dark:border-[#3a3320] hover:bg-[#f8f5e4] dark:hover:bg-[#2d2717]" 
+                  className="ml-1 rounded-full w-7 h-7 flex items-center justify-center text-[#bfae7c] dark:text-[#f8f5e4] border-[#e2d8b8] dark:border-[#3a3320] hover:bg-[#f8f5e4] dark:bg-[#2d2717] dark:hover:bg-[#28231a]" 
                   title="Adicionar atalho" 
                   type="button" 
                   tabIndex={-1} 
@@ -324,14 +330,18 @@ const SortableItem = ({
     transition,
     zIndex: isDragging ? 99 : undefined,
   };
+
   return (
     <div ref={setNodeRef} style={mergedStyle} className={(className || '') + ' group relative'} {...attributes} {...listeners}>
       <Button
         variant="outline"
-        className="w-full h-28 p-5 flex flex-col items-center justify-center gap-3 
-                   bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 
+        className="w-full h-28 p-5 flex flex-col items-center justify-center gap-3
+                   bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50
+                   dark:from-[#23201a] dark:via-[#2d2717] dark:to-[#181511]
                    hover:from-yellow-100 hover:to-orange-100
-                   border-2 border-yellow-300/40 hover:border-yellow-400/60
+                   dark:hover:from-[#2d2717] dark:hover:to-[#28231a]
+                   border-2 border-yellow-300/40 dark:border-[#3a3320] hover:border-yellow-400/60
+                   dark:hover:border-[#bfae7c]/30
                    shadow-lg hover:shadow-2xl
                    transition-all duration-500 ease-out
                    hover:scale-[1.03] hover:-translate-y-1
@@ -343,22 +353,24 @@ const SortableItem = ({
         }}
       >
         <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 
+                        dark:from-[#bfae7c] dark:via-[#7c6a3c] dark:to-[#5a4a2a]
                         group-hover:from-yellow-500 group-hover:to-orange-600
-                        shadow-lg group-hover:shadow-xl transition-all duration-300 ">
-          <button.icon className="h-6 w-6 text-white group-hover:text-yellow-200" />
+                        dark:group-hover:from-[#f8f5e4] dark:group-hover:to-[#bfae7c]
+                        shadow-lg group-hover:shadow-xl transition-all duration-300">
+          <button.icon className="h-6 w-6 text-white dark:text-[#23201a] group-hover:text-yellow-200 dark:group-hover:text-[#23201a]" />
         </div>
-        <span className="text-sm font-medium text-gray-800 dark:text-gray-100 
-                       group-hover:text-amber-900 dark:group-hover:text-amber-100 
+        <span className="text-sm font-medium text-gray-800 dark:text-[#f8f5e4] 
+                       group-hover:text-amber-900 dark:group-hover:text-[#bfae7c] 
                        transition-colors duration-300 line-clamp-2 leading-tight w-full">
           {button.title}
         </span>
       </Button>
-      {/* Botão de ação: só aparece no hover do card e nunca durante o drag */}
+      {/* Action button: only appears on card hover and never during drag */}
       {!isDragging && (
         <Button
           variant="ghost"
           size="sm"
-          className="absolute -top-3 -right-3 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 
+          className="absolute -top-3 -right-3 h-8 w-8 p-0 opacity-0 group-hover:opacity-100
                      transition-all duration-300 bg-gradient-to-br from-red-500 to-pink-600 
                      hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl 
                      border-2 border-white rounded-full z-10
@@ -378,7 +390,7 @@ const SortableItem = ({
 
 // Adicionar área de drop para favoritos
 const FavoriteDropZone = ({ children, isOver }: { children: React.ReactNode, isOver: boolean }) => (
-  <div className={`transition-all duration-300 rounded-2xl ${isOver ? 'ring-4 ring-pink-300 bg-pink-50/60' : ''}`}>
+  <div className={`transition-all duration-300 rounded-2xl ${isOver ? 'ring-4 ring-pink-300 dark:ring-[#bfae7c] bg-pink-50/60 dark:bg-[#bfae7c]/10' : ''}`}>
     {children}
   </div>
 );
@@ -697,12 +709,12 @@ const Atalhos = () => {
         
         {/* Controles de Accordion */}
         <div className="mb-6 flex flex-wrap items-center justify-center gap-4">
-          <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-xl p-2 shadow-lg border border-blue-100">
+          <div className="flex items-center gap-2 bg-white/80 dark:bg-[#23201a]/80 backdrop-blur-sm rounded-xl p-2 shadow-lg border border-blue-100 dark:border-[#3a3320]">
             <Button
               onClick={expandAllGroups}
               variant="outline"
               size="sm"
-              className="h-8 px-3 text-xs bg-success/10 border-success/20 text-success hover:bg-success/20 hover:border-success/40"
+              className="h-8 px-3 text-xs bg-success/10 dark:bg-[#2d2717] border-success/20 dark:border-[#bfae7c]/30 text-success dark:text-[#bfae7c] hover:bg-success/20 dark:hover:bg-[#28231a] hover:border-success/40 dark:hover:border-[#bfae7c]/50"
             >
               <ChevronDown className="h-4 w-4 mr-1" />
               Expandir Todos
@@ -711,7 +723,7 @@ const Atalhos = () => {
               onClick={collapseAllGroups}
               variant="outline"
               size="sm"
-              className="h-8 px-3 text-xs bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20 hover:border-destructive/40"
+              className="h-8 px-3 text-xs bg-destructive/10 dark:bg-[#2d2717] border-destructive/20 dark:border-[#bfae7c]/30 text-destructive dark:text-[#bfae7c] hover:bg-destructive/20 dark:hover:bg-[#28231a] hover:border-destructive/40 dark:hover:border-[#bfae7c]/50"
             >
               <ChevronUp className="h-4 w-4 mr-1" />
               Colapsar Todos
@@ -722,11 +734,11 @@ const Atalhos = () => {
               size="sm"
               className={`h-8 px-3 text-xs ${
                 showOnlyFavorites 
-                  ? 'bg-warning text-warning-foreground border-warning' 
-                  : 'bg-muted text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground'
+                  ? 'bg-warning dark:bg-[#bfae7c]/20 text-warning-foreground dark:text-[#f8f5e4] border-warning dark:border-[#bfae7c]/40' 
+                  : 'bg-muted dark:bg-[#2d2717] text-muted-foreground dark:text-[#bfae7c] border-border dark:border-[#3a3320] hover:bg-accent dark:hover:bg-[#28231a] hover:text-accent-foreground dark:hover:text-[#f8f5e4]'
               }`}
             >
-              <Star className={`h-4 w-4 mr-1 ${showOnlyFavorites ? 'fill-warning-foreground text-warning-foreground' : ''}`} />
+              <Star className={`h-4 w-4 mr-1 ${showOnlyFavorites ? 'fill-warning-foreground dark:fill-[#f8f5e4] text-warning-foreground dark:text-[#f8f5e4]' : ''}`} />
               {showOnlyFavorites ? 'Mostrar Todos' : 'Só Favoritos'}
             </Button>
           </div>
@@ -734,12 +746,12 @@ const Atalhos = () => {
         
         <div className="mb-8">
           <div className="relative max-w-md mx-auto">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground dark:text-[#bfae7c] h-5 w-5" />
             <Input
               placeholder="Buscar atalhos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 h-12 text-lg border-2 border-primary/20 focus:border-primary/40 bg-white/80 backdrop-blur-sm shadow-lg rounded-xl"
+              className="pl-12 h-12 text-lg border-2 border-primary/20 dark:border-[#bfae7c]/30 focus:border-primary/40 dark:focus:border-[#bfae7c]/50 bg-white/80 dark:bg-[#23201a]/80 backdrop-blur-sm shadow-lg rounded-xl dark:text-[#f8f5e4] dark:placeholder-[#bfae7c]"
             />
           </div>
         </div>
@@ -747,15 +759,15 @@ const Atalhos = () => {
         <div className="max-w-6xl mx-auto">
           {/* Seção de Resultados de Busca - mostra quando há termo de busca */}
           {searchTerm && searchResults.length > 0 && (
-            <Card className="mb-8 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 border-2 border-green-200 shadow-xl animate-fade-in">
-              <CardHeader className="pb-4 bg-gradient-to-r from-green-100 to-emerald-100">
-                <CardTitle className="flex items-center gap-3 text-green-900">
-                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg shadow-lg">
-                    <Search className="h-6 w-6 text-white" />
+            <Card className="mb-8 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 dark:from-[#23201a] dark:via-[#2d2717] dark:to-[#181511] border-2 border-green-200 dark:border-[#3a3320] shadow-xl animate-fade-in">
+              <CardHeader className="pb-4 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-[#2d2717] dark:to-[#28231a]">
+                <CardTitle className="flex items-center gap-3 text-green-900 dark:text-[#f8f5e4]">
+                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 dark:from-[#bfae7c] dark:to-[#7c6a3c] rounded-lg shadow-lg">
+                    <Search className="h-6 w-6 text-white dark:text-[#23201a]" />
                   </div>
                   <div>
                     <span className="text-xl font-bold">Resultados da Busca</span>
-                    <p className="text-sm text-green-700 font-normal">
+                    <p className="text-sm text-green-700 dark:text-[#bfae7c] font-normal">
                       {searchResults.length} atalho{searchResults.length > 1 ? 's' : ''} encontrado{searchResults.length > 1 ? 's' : ''} para "{searchTerm}"
                     </p>
                   </div>
@@ -796,20 +808,20 @@ const Atalhos = () => {
             {(favoriteButtons.length > 0 || showOnlyFavorites) && (
               <div ref={setFavoritesDropRef}>
                 <FavoriteDropZone isOver={isOverFavorites}>
-                  <Card className="mb-8 bg-gradient-card border-2 border-border shadow-xl animate-fade-in">
-                    <CardHeader className="pb-4 bg-gradient-accent">
-                      <CardTitle className="flex items-center gap-3 text-foreground">
-                        <div className="p-2 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-lg shadow-lg">
-                          <Star className="h-6 w-6 fill-white text-white" />
-                        </div>
-                        <div>
-                          <span className="text-xl font-bold">Favoritos</span>
-                          <p className="text-sm text-muted-foreground font-normal">
-                            {favoriteButtons.length > 0 ? 'Seus atalhos preferidos' : 'Nenhum favorito selecionado'}
-                          </p>
-                        </div>
-                      </CardTitle>
-                    </CardHeader>
+                                  <Card className="mb-8 bg-gradient-card dark:bg-[#23201a] border-2 border-border dark:border-[#3a3320] shadow-xl animate-fade-in">
+                  <CardHeader className="pb-4 bg-gradient-accent dark:bg-[#2d2717]">
+                    <CardTitle className="flex items-center gap-3 text-foreground dark:text-[#f8f5e4]">
+                      <div className="p-2 bg-gradient-to-br from-yellow-400 to-amber-500 dark:from-[#bfae7c] dark:to-[#7c6a3c] rounded-lg shadow-lg">
+                        <Star className="h-6 w-6 fill-white dark:fill-[#23201a] text-white dark:text-[#23201a]" />
+                      </div>
+                      <div>
+                        <span className="text-xl font-bold">Favoritos</span>
+                        <p className="text-sm text-muted-foreground dark:text-[#bfae7c] font-normal">
+                          {favoriteButtons.length > 0 ? 'Seus atalhos preferidos' : 'Nenhum favorito selecionado'}
+                        </p>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
                     {favoriteButtons.length > 0 && (
                       <CardContent className="pt-6">
                         <SortableContext 
@@ -840,13 +852,13 @@ const Atalhos = () => {
             {!showOnlyFavorites && (
               <>
                 {filteredGroups.length === 0 ? (
-                  <Card>
-                    <CardContent className="p-12 text-center">
-                      <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-muted-foreground mb-2">
+                  <Card className="dark:bg-[#23201a] dark:border-[#3a3320]">
+                    <CardContent className="p-12 text-center dark:bg-[#23201a]">
+                      <Search className="h-16 w-16 text-muted-foreground dark:text-[#bfae7c] mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-muted-foreground dark:text-[#f8f5e4] mb-2">
                         Nenhum resultado encontrado
                       </h3>
-                      <p className="text-muted-foreground">
+                      <p className="text-muted-foreground dark:text-[#bfae7c]">
                         Tente ajustar os termos da sua busca
                       </p>
                     </CardContent>
@@ -893,26 +905,22 @@ const Atalhos = () => {
         />
 
         {/* Footer */}
-        <div className="mt-16 text-center">
-          <Card className="bg-white/60 backdrop-blur-sm shadow-lg border-0">
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground mb-2">
-                © 2025 TRT15 - Núcleo de Apoio ao PJe | Central de Atalhos
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Desenvolvido por{' '}
-                <a 
-                  href="https://msribeiro2010.github.io/marcelo-s-ribeiro-stellar-ai/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline font-medium"
-                >
-                  msribeiro
-                </a>
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <footer className="mt-8 text-center text-sm bg-[#f8f5e4] dark:bg-[#181511] border-t border-[#e2d8b8] dark:border-t-[#3a3320] py-4 dark:text-[#bfae7c]">
+          <p className="text-sm text-muted-foreground dark:text-[#bfae7c] mb-2">
+            © 2025 TRT15 - Núcleo de Apoio ao PJe | Central de Atalhos
+          </p>
+          <p className="text-sm text-muted-foreground dark:text-[#bfae7c]">
+            Desenvolvido por{' '}
+            <a 
+              href="https://msribeiro2010.github.io/marcelo-s-ribeiro-stellar-ai/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary dark:text-[#f8f5e4] hover:underline font-medium"
+            >
+              msribeiro
+            </a>
+          </p>
+        </footer>
       </div>
     </div>
   );

@@ -111,7 +111,7 @@ async function extractKnowledgeItems(text: string) {
   console.log(`Processando texto de ${text.length} caracteres`)
 
   // Se o texto for muito grande, processamos em chunks
-  const maxChunkSize = 15000 // Aumentado para processar mais texto
+  const maxChunkSize = 30000 // Aumentado para processar mais texto (até 30 mil caracteres por chunk)
   const chunks = []
   
   if (text.length > maxChunkSize) {
@@ -139,6 +139,7 @@ IMPORTANTE:
 - Crie títulos descritivos e concisos
 - Categorize adequadamente cada item
 - NÃO pule nenhum problema encontrado no texto
+- Retorne até 50 itens por chunk, se possível
 
 Cada item deve ter:
 - titulo: Um título descritivo e conciso (máximo 100 caracteres)
@@ -213,7 +214,7 @@ async function processChunkWithAI(prompt: string, openaiApiKey: string) {
           }
         ],
         temperature: 0.2, // Reduzido para mais consistência
-        max_tokens: 6000 // Aumentado para permitir mais itens
+        max_tokens: 12000 // Aumentado para permitir mais itens por chunk
       })
     })
 
@@ -287,5 +288,5 @@ function extractBasicProblems(text: string) {
     }
   }
   
-  return items.slice(0, 10) // Limitar a 10 itens no fallback
+  return items.slice(0, 50) // Limitar a 50 itens no fallback
 }
