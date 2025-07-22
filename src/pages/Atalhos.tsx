@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { useShortcutsPreferences } from '@/hooks/useShortcutsPreferences';
+import { AddShortcutDialog } from '@/components/atalhos/AddShortcutDialog';
 
 import {
   DndContext,
@@ -184,20 +185,24 @@ interface SortableGroupProps {
   isFavorite: boolean;
   openGroups: Record<string, boolean>;
   favorites: string[];
+  isAdmin: boolean;
   onToggleGroup: (groupId: string) => void;
   onToggleFavoriteGroup: (groupId: string) => void;
   onToggleFavoriteButton: (buttonId: string) => void;
   onOpenUrl: (url: string) => void;
+  onAddShortcut: (groupId: string, groupTitle: string) => void;
 }
 
 // Refatoração visual dos grupos de atalhos
 const SortableGroup = ({ 
   group, 
   openGroups, 
-  favorites, 
+  favorites,
+  isAdmin,
   onToggleGroup, 
   onToggleFavoriteButton, 
-  onOpenUrl 
+  onOpenUrl,
+  onAddShortcut
 }: Omit<SortableGroupProps, 'isFavorite' | 'onToggleFavoriteGroup'>) => {
   const {
     attributes,
@@ -244,9 +249,22 @@ const SortableGroup = ({
             </div>
             <div className="flex items-center gap-1">
               <span className="bg-[#f3ecd2] dark:bg-[#2d2717] text-[#bfae7c] dark:text-[#bfae7c] rounded-full px-2 py-0.5 text-xs font-medium">{group.buttons.length} atalhos</span>
-              <Button size="icon" variant="outline" className="ml-1 rounded-full w-7 h-7 flex items-center justify-center text-[#bfae7c] dark:text-[#bfae7c] border-[#e2d8b8] dark:border-[#3a3320] hover:bg-[#f8f5e4] dark:hover:bg-[#2d2717]" title="Adicionar atalho" type="button" tabIndex={-1} onClick={e => e.stopPropagation()}>
-                +
-              </Button>
+              {isAdmin && (
+                <Button 
+                  size="icon" 
+                  variant="outline" 
+                  className="ml-1 rounded-full w-7 h-7 flex items-center justify-center text-[#bfae7c] dark:text-[#bfae7c] border-[#e2d8b8] dark:border-[#3a3320] hover:bg-[#f8f5e4] dark:hover:bg-[#2d2717]" 
+                  title="Adicionar atalho" 
+                  type="button" 
+                  tabIndex={-1} 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddShortcut(group.id, group.title);
+                  }}
+                >
+                  +
+                </Button>
+              )}
               <div className="p-1 bg-[#f8f5e4] dark:bg-[#23201a] rounded-lg">
                 {openGroups[group.id] ? (
                   <ChevronUp className="h-4 w-4 text-[#bfae7c] dark:text-[#bfae7c]" />
@@ -370,8 +388,37 @@ const Atalhos = () => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [addShortcutDialog, setAddShortcutDialog] = useState<{ open: boolean; groupId: string; groupTitle: string }>({
+    open: false,
+    groupId: '',
+    groupTitle: ''
+  });
   const { preferences, loading: preferencesLoading, updateGroupOrder, toggleFavoriteGroup, toggleFavoriteButton, updateFavoriteButtonsOrder } = useShortcutsPreferences();
   const queryClient = useQueryClient();
+
+  // Buscar profile do usuário para verificar se é admin
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_admin, status')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Erro ao buscar profile:', error);
+        return null;
+      }
+      
+      return data;
+    }
+  });
+
+  const isAdmin = profile?.is_admin && profile?.status === 'aprovado';
 
   // Buscar grupos do banco de dados
   const { data: dbGroups, isLoading: groupsLoading } = useQuery({
@@ -454,6 +501,22 @@ const Atalhos = () => {
 
   const openUrl = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const openAddShortcutDialog = (groupId: string, groupTitle: string) => {
+    setAddShortcutDialog({
+      open: true,
+      groupId,
+      groupTitle
+    });
+  };
+
+  const closeAddShortcutDialog = () => {
+    setAddShortcutDialog({
+      open: false,
+      groupId: '',
+      groupTitle: ''
+    });
   };
 
   // Aplicar a ordem personalizada dos grupos
@@ -801,10 +864,12 @@ const Atalhos = () => {
                           isFavorite={preferences.favoriteGroups?.includes(group.id) || false}
                           openGroups={openGroups}
                           favorites={favorites}
+                          isAdmin={isAdmin || false}
                           onToggleGroup={toggleGroup}
                           onToggleFavoriteGroup={toggleFavoriteGroup}
                           onToggleFavoriteButton={toggleFavoriteButton}
                           onOpenUrl={openUrl}
+                          onAddShortcut={openAddShortcutDialog}
                         />
                       ))}
                     </div>
@@ -814,6 +879,18 @@ const Atalhos = () => {
             )}
           </DndContext>
         </div>
+
+        {/* Dialog para adicionar atalho */}
+        <AddShortcutDialog
+          isOpen={addShortcutDialog.open}
+          onOpenChange={(open) => {
+            if (!open) {
+              closeAddShortcutDialog();
+            }
+          }}
+          groupId={addShortcutDialog.groupId}
+          groupTitle={addShortcutDialog.groupTitle}
+        />
 
         {/* Footer */}
         <div className="mt-16 text-center">
