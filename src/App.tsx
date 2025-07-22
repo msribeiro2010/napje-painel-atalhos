@@ -8,6 +8,7 @@ import { ThemeProvider } from "./components/theme-provider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
+import Calendario from "./pages/Calendario";
 import CriarChamado from "./pages/CriarChamado";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import ChamadosRecentes from "./pages/ChamadosRecentes";
@@ -33,12 +34,12 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={
               <ProtectedRoute>
-                <Index />
+                <Dashboard />
               </ProtectedRoute>
             } />
-            <Route path="/dashboard" element={
+            <Route path="/calendario" element={
               <ProtectedRoute>
-                <Dashboard />
+                <Calendario />
               </ProtectedRoute>
             } />
             <Route path="/criar-chamado" element={

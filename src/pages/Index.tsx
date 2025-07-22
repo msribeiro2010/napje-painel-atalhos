@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, BookOpen, User, Shield, ExternalLink, Calendar as CalendarIcon, Home, Umbrella, Laptop } from 'lucide-react';
+import { FileText, BookOpen, User, Shield, ExternalLink } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,104 +16,8 @@ import { generateDescription, formatDescriptionSections } from '@/utils/descript
 import { useUsuarios } from '@/hooks/useUsuarios';
 import { useChamados } from '@/hooks/useChamados';
 import UserMenu from '@/components/UserMenu';
-import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday } from 'date-fns';
 
-const calendarLabels = {
-  presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-4 w-4 text-[#bfae7c]" /> },
-  ferias: { label: 'Férias', color: '#ffe6e6', icon: <Umbrella className="h-4 w-4 text-[#e6a1a1]" /> },
-  remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Laptop className="h-4 w-4 text-[#7cc3e6]" /> },
-  none: { label: '', color: '#fff', icon: null },
-};
 
-function MinimalCalendar() {
-  const today = new Date();
-  const [month, setMonth] = useState(today);
-  
-  // Carregar marcações do localStorage na inicialização
-  const [marks, setMarks] = useState<{ [date: string]: 'presencial' | 'ferias' | 'remoto' | 'none' }>(() => {
-    try {
-      const saved = localStorage.getItem('calendar-marks');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
-
-  const handleDayClick = (date: Date) => {
-    const key = format(date, 'yyyy-MM-dd');
-    const current = marks[key] || 'none';
-    const next = current === 'none' ? 'presencial' : current === 'presencial' ? 'ferias' : current === 'ferias' ? 'remoto' : 'none';
-    const newMarks = { ...marks, [key]: next };
-    setMarks(newMarks);
-    
-    // Salvar no localStorage
-    try {
-      localStorage.setItem('calendar-marks', JSON.stringify(newMarks));
-    } catch (error) {
-      console.warn('Não foi possível salvar as marcações do calendário:', error);
-    }
-  };
-
-  const clearAllMarks = () => {
-    setMarks({});
-    try {
-      localStorage.removeItem('calendar-marks');
-    } catch (error) {
-      console.warn('Não foi possível limpar as marcações do calendário:', error);
-    }
-  };
-
-  return (
-    <div className="bg-[#f8f5e4] border border-[#e2d8b8] rounded-xl shadow-sm p-4 mb-6 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex flex-col">
-          <span className="font-semibold text-[#7c6a3c] text-base flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5 text-[#bfae7c]" />
-            Meu Calendário de Trabalho
-          </span>
-          <span className="text-[#bfae7c] text-sm">{format(month, 'MMMM yyyy')}</span>
-        </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="px-2 py-1 text-xs" onClick={() => setMonth(addDays(month, -30))}>Anterior</Button>
-          <Button size="sm" variant="outline" className="px-2 py-1 text-xs" onClick={() => setMonth(addDays(month, 30))}>Próximo</Button>
-          <Button size="sm" variant="destructive" className="px-2 py-1 text-xs" onClick={clearAllMarks} title="Limpar todas as marcações">Limpar</Button>
-        </div>
-      </div>
-      <div className="grid grid-cols-7 gap-1 text-xs">
-        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d) => (
-          <div key={d} className="text-[#bfae7c] font-medium text-center py-1">{d}</div>
-        ))}
-        {Array(days[0].getDay()).fill(null).map((_, i) => (
-          <div key={'empty-' + i}></div>
-        ))}
-        {days.map((date) => {
-          const key = format(date, 'yyyy-MM-dd');
-          const mark = marks[key] || 'none';
-          const isCurrent = isToday(date);
-          return (
-            <button
-              key={key}
-              onClick={() => handleDayClick(date)}
-              className={`rounded-lg border border-[#e2d8b8] flex flex-col items-center justify-center h-12 w-full transition-all duration-150 focus:outline-none ${isCurrent ? 'ring-2 ring-[#bfae7c]' : ''}`}
-              style={{ background: calendarLabels[mark].color }}
-              title={calendarLabels[mark].label}
-            >
-              <span className="font-semibold text-[#7c6a3c] text-sm">{date.getDate()}</span>
-              {calendarLabels[mark].icon}
-            </button>
-          );
-        })}
-      </div>
-      <div className="flex gap-4 mt-3 justify-center text-xs">
-        <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-[#f5e7c4] border border-[#e2d8b8]"></span>Presencial</span>
-        <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-[#ffe6e6] border border-[#e2d8b8]"></span>Férias</span>
-        <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-[#e6f7ff] border border-[#e2d8b8]"></span>Remoto</span>
-      </div>
-    </div>
-  );
-}
 
 const Index = () => {
   const navigate = useNavigate();
@@ -253,8 +157,7 @@ const Index = () => {
           <UserMenu />
         </div>
 
-        {/* Painel de Calendário */}
-        <MinimalCalendar />
+
 
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">

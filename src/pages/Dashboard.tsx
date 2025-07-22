@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, BookOpen, Shield, Plus, ExternalLink, StickyNote, Scale } from 'lucide-react';
+import { FileText, BookOpen, Shield, Plus, ExternalLink, StickyNote, Scale, Calendar } from 'lucide-react';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import PostitNotes from '@/components/PostitNotes';
@@ -97,6 +97,13 @@ const Dashboard = () => {
       description: 'Consultar soluções documentadas',
       icon: BookOpen,
       onClick: () => navigate('/base-conhecimento'),
+      variant: 'outline' as const
+    },
+    {
+      title: 'Calendário de Trabalho',
+      description: 'Organize férias, folgas, presencial e remoto',
+      icon: Calendar,
+      onClick: () => navigate('/calendario'),
       variant: 'outline' as const
     },
     {
