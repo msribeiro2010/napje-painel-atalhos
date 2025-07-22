@@ -174,7 +174,7 @@ const UserMenu = () => {
             <span>Gerenciar Atalhos</span>
           </DropdownMenuItem>
         )}
-        {profile.is_admin && (
+        {/* {profile.is_admin && (
           <DropdownMenuItem 
             onClick={() => navigate('/admin/feriados')}
             className="cursor-pointer hover:bg-gradient-accent"
@@ -182,7 +182,7 @@ const UserMenu = () => {
             <Calendar className="mr-2 h-4 w-4" />
             <span>Gerenciar Feriados</span>
           </DropdownMenuItem>
-        )}
+        )} */}
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           onClick={handleSignOut}
