@@ -243,64 +243,64 @@
   }
 
   .dark {
-    /* Modo escuro sofisticado com tons azulados */
-    --background: 20 25% 8%; /* Preto azulado elegante */
-    --foreground: 46 15% 95%; /* Texto claro com leve tom cálido */
+    /* Modo escuro sofisticado com tons slate/azulados melhorados */
+    --background: 222 84% 5%; /* Mais escuro e com melhor contraste */
+    --foreground: 210 40% 98%; /* Texto mais claro e legível */
 
-    --card: 20 20% 10%; /* Cartões escuros sofisticados */
-    --card-foreground: 46 15% 95%;
+    --card: 222 84% 8%; /* Cartões escuros com melhor contraste */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 20 20% 10%;
-    --popover-foreground: 46 15% 95%;
+    --popover: 222 84% 8%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 210 100% 65%; /* Azul vibrante para contraste */
-    --primary-foreground: 20 25% 8%;
+    --primary: 210 100% 65%; /* Azul vibrante mantido */
+    --primary-foreground: 222 84% 5%;
     --primary-glow: 210 100% 75%;
 
-    --secondary: 25 20% 15%; /* Tom quente escuro */
-    --secondary-foreground: 46 15% 95%;
+    --secondary: 217 32% 17%; /* Tom slate escuro mais neutro */
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 25 15% 12%; /* Neutro escuro com calor */
-    --muted-foreground: 46 10% 65%;
+    --muted: 215 28% 17%; /* Neutro escuro slate */
+    --muted-foreground: 217 10% 65%;
 
-    --accent: 210 80% 25%; /* Azul escuro elegante */
-    --accent-foreground: 46 15% 95%;
+    --accent: 216 34% 17%; /* Accent slate escuro */
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 46 15% 95%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 25 15% 18%; /* Bordas escuras com tom quente */
-    --input: 25 15% 15%;
+    --border: 217 32% 22%; /* Bordas slate mais visíveis */
+    --input: 217 32% 17%;
     --ring: 210 100% 65%;
     
-    /* Gradientes para modo escuro */
-    --gradient-primary: linear-gradient(135deg, hsl(210 100% 65%), hsl(25 85% 45%));
-    --gradient-secondary: linear-gradient(135deg, hsl(25 20% 15%), hsl(210 25% 20%));
+    /* Gradientes para modo escuro melhorados */
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 65%), hsl(217 91% 60%));
+    --gradient-secondary: linear-gradient(135deg, hsl(217 32% 17%), hsl(216 34% 20%));
     --gradient-bg: linear-gradient(135deg, 
-      hsl(20 25% 8%) 0%, 
-      hsl(25 20% 10%) 25%, 
-      hsl(210 20% 12%) 50%, 
-      hsl(25 20% 10%) 75%, 
-      hsl(20 25% 8%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(20 20% 12%), hsl(25 15% 8%));
-    --gradient-accent: linear-gradient(135deg, hsl(210 80% 25% / 0.4), hsl(25 40% 20% / 0.3));
+      hsl(222 84% 4%) 0%, 
+      hsl(220 78% 6%) 25%, 
+      hsl(218 76% 8%) 50%, 
+      hsl(220 78% 6%) 75%, 
+      hsl(222 84% 4%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(222 84% 8%), hsl(220 84% 6%));
+    --gradient-accent: linear-gradient(135deg, hsl(216 34% 17% / 0.6), hsl(217 32% 22% / 0.4));
     
-    /* Gradientes pastel para modo escuro */
-    --gradient-pastel-blue: linear-gradient(135deg, hsl(210 40% 25%), hsl(220 35% 30%));
-    --gradient-pastel-purple: linear-gradient(135deg, hsl(270 35% 25%), hsl(280 30% 30%));
-    --gradient-pastel-green: linear-gradient(135deg, hsl(140 25% 25%), hsl(120 20% 30%));
-    --gradient-pastel-pink: linear-gradient(135deg, hsl(340 35% 25%), hsl(320 30% 30%));
-    --gradient-pastel-yellow: linear-gradient(135deg, hsl(50 40% 25%), hsl(40 35% 30%));
-    --gradient-pastel-orange: linear-gradient(135deg, hsl(25 35% 25%), hsl(35 30% 30%));
+    /* Gradientes pastel para modo escuro mais sutis */
+    --gradient-pastel-blue: linear-gradient(135deg, hsl(210 30% 20%), hsl(220 25% 25%));
+    --gradient-pastel-purple: linear-gradient(135deg, hsl(270 25% 20%), hsl(280 20% 25%));
+    --gradient-pastel-green: linear-gradient(135deg, hsl(140 20% 20%), hsl(120 15% 25%));
+    --gradient-pastel-pink: linear-gradient(135deg, hsl(340 25% 20%), hsl(320 20% 25%));
+    --gradient-pastel-yellow: linear-gradient(135deg, hsl(50 30% 20%), hsl(40 25% 25%));
+    --gradient-pastel-orange: linear-gradient(135deg, hsl(25 25% 20%), hsl(35 20% 25%));
     
     /* Variáveis do sidebar para modo escuro */
-    --sidebar-background: 20 20% 10%;
-    --sidebar-foreground: 46 15% 95%;
+    --sidebar-background: 222 84% 8%;
+    --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 210 100% 65%;
-    --sidebar-primary-foreground: 20 25% 8%;
-    --sidebar-accent: 25 15% 15%;
-    --sidebar-accent-foreground: 46 15% 95%;
-    --sidebar-border: 25 15% 18%;
+    --sidebar-primary-foreground: 222 84% 5%;
+    --sidebar-accent: 217 32% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 32% 22%;
     --sidebar-ring: 210 100% 65%;
   }
 }
@@ -329,14 +329,14 @@
   
   .dark body {
     background-image: 
-      radial-gradient(circle at 25% 25%, hsl(25 25% 12%) 0%, transparent 60%),
-      radial-gradient(circle at 75% 75%, hsl(210 30% 15%) 0%, transparent 60%),
+      radial-gradient(circle at 25% 25%, hsl(217 28% 10%) 0%, transparent 60%),
+      radial-gradient(circle at 75% 75%, hsl(220 30% 12%) 0%, transparent 60%),
       linear-gradient(135deg, 
-        hsl(20 25% 8%) 0%, 
-        hsl(25 20% 10%) 25%, 
-        hsl(210 20% 12%) 50%, 
-        hsl(25 20% 10%) 75%, 
-        hsl(20 25% 8%) 100%);
+        hsl(222 84% 4%) 0%, 
+        hsl(220 78% 6%) 25%, 
+        hsl(218 76% 8%) 50%, 
+        hsl(220 78% 6%) 75%, 
+        hsl(222 84% 4%) 100%);
   }
 }
 

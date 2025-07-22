@@ -137,8 +137,12 @@ const ShortcutButton = ({
       variant="outline"
       className="w-full h-28 p-5 flex flex-col items-center justify-center gap-3 
                  bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 hover:from-blue-100 hover:to-purple-100
+                 dark:bg-gradient-to-br dark:from-slate-800 dark:via-slate-700 dark:to-slate-600 
+                 dark:hover:from-slate-700 dark:hover:to-slate-500
                  border-2 border-blue-200/60 hover:border-blue-300/80
+                 dark:border-slate-600/60 dark:hover:border-slate-400/80
                  shadow-lg hover:shadow-2xl
+                 dark:shadow-slate-900/50 dark:hover:shadow-slate-900/70
                  transition-all duration-300 ease-out
                  hover:scale-105 hover:-translate-y-1
                  rounded-2xl group"
@@ -147,10 +151,13 @@ const ShortcutButton = ({
       <div className="flex flex-col items-center justify-center gap-2 h-full w-full">
         <div className="p-3 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 
                         group-hover:from-indigo-500 group-hover:to-purple-500
+                        dark:bg-gradient-to-br dark:from-blue-500 dark:to-indigo-600
+                        dark:group-hover:from-indigo-600 dark:group-hover:to-purple-600
                         shadow-lg transition-all duration-300 flex-shrink-0">
-          <Icon className="h-6 w-6 text-white group-hover:text-yellow-200" />
+          <Icon className="h-6 w-6 text-white group-hover:text-yellow-200 dark:text-slate-100 dark:group-hover:text-yellow-300" />
         </div>
-        <span className="text-sm text-center leading-tight font-medium text-gray-800 dark:text-gray-100 group-hover:text-blue-900 dark:group-hover:text-blue-100 transition-colors line-clamp-2 flex-1 flex items-center justify-center w-full">
+        <span className="text-sm text-center leading-tight font-medium text-gray-800 dark:text-slate-200 
+                       group-hover:text-blue-900 dark:group-hover:text-blue-200 transition-colors line-clamp-2 flex-1 flex items-center justify-center w-full">
           {title}
         </span>
       </div>
@@ -161,7 +168,9 @@ const ShortcutButton = ({
       size="sm"
       className="absolute -top-2 -right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 
                  transition-all duration-300 bg-white/95 backdrop-blur-sm shadow-xl 
-                 border border-pink-200 hover:border-pink-400 rounded-full
+                 dark:bg-slate-800/95 dark:backdrop-blur-sm dark:shadow-slate-900/70
+                 border border-pink-200 hover:border-pink-400 
+                 dark:border-pink-400/50 dark:hover:border-pink-300 rounded-full
                  hover:scale-110"
       onClick={(e) => {
         e.stopPropagation();
@@ -171,8 +180,8 @@ const ShortcutButton = ({
       <Heart 
         className={`h-5 w-5 transition-all duration-200 ${
           favorites.includes(id) 
-            ? 'fill-pink-400 text-pink-400 scale-110' 
-            : 'text-gray-300 hover:text-pink-400'
+            ? 'fill-pink-400 text-pink-400 scale-110 dark:fill-pink-300 dark:text-pink-300' 
+            : 'text-gray-300 hover:text-pink-400 dark:text-slate-400 dark:hover:text-pink-300'
         }`}
       />
     </Button>
@@ -224,36 +233,39 @@ const SortableGroup = ({
       ref={setNodeRef} 
       style={style} 
       className={`overflow-hidden transition-all duration-300 animate-fade-in
-                  bg-[#f8f5e4] dark:bg-[#23201a] border border-[#e2d8b8] dark:border-[#3a3320] shadow-sm
-                  rounded-xl min-h-[80px] flex flex-col justify-between px-3 py-2 my-2`}
+                  bg-[#f8f5e4] dark:bg-slate-800/80 border border-[#e2d8b8] dark:border-slate-600/50 
+                  shadow-sm dark:shadow-slate-900/30
+                  rounded-xl min-h-[80px] flex flex-col justify-between px-3 py-2 my-2
+                  hover:shadow-md dark:hover:shadow-slate-900/50`}
     >
       <Collapsible
         open={openGroups[group.id] || false}
         onOpenChange={() => onToggleGroup(group.id)}
       >
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-[#f3ecd2] dark:hover:bg-[#2d2717] transition-all duration-300 group p-2 flex flex-row items-center justify-between">
+          <CardHeader className="cursor-pointer hover:bg-[#f3ecd2] dark:hover:bg-slate-700/50 transition-all duration-300 group p-2 flex flex-row items-center justify-between">
             <div className="flex items-center gap-2">
               <div 
                 {...attributes} 
                 {...listeners}
-                className="cursor-grab active:cursor-grabbing p-1 hover:bg-[#f3ecd2] dark:hover:bg-[#2d2717] rounded-lg transition-all duration-200 hover:scale-105"
+                className="cursor-grab active:cursor-grabbing p-1 hover:bg-[#f3ecd2] dark:hover:bg-slate-600/50 rounded-lg transition-all duration-200 hover:scale-105"
                 onClick={(e) => e.stopPropagation()}
               >
-                <GripVertical className="h-3 w-3 text-[#bfae7c] dark:text-[#bfae7c]" />
+                <GripVertical className="h-3 w-3 text-[#bfae7c] dark:text-slate-400" />
               </div>
-              <div className="p-2 bg-[#f3ecd2] dark:bg-[#2d2717] rounded-lg shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-105">
-                <group.icon className="h-5 w-5 text-[#bfae7c] dark:text-[#bfae7c]" />
+              <div className="p-2 bg-[#f3ecd2] dark:bg-slate-700/70 rounded-lg shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-105">
+                <group.icon className="h-5 w-5 text-[#bfae7c] dark:text-slate-300" />
               </div>
-              <span className="font-semibold text-[#7c6a3c] dark:text-[#bfae7c] text-base truncate max-w-[120px]">{group.title}</span>
+              <span className="font-semibold text-[#7c6a3c] dark:text-slate-200 text-base truncate max-w-[120px]">{group.title}</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="bg-[#f3ecd2] dark:bg-[#2d2717] text-[#bfae7c] dark:text-[#bfae7c] rounded-full px-2 py-0.5 text-xs font-medium">{group.buttons.length} atalhos</span>
+              <span className="bg-[#f3ecd2] dark:bg-slate-700/70 text-[#bfae7c] dark:text-slate-300 rounded-full px-2 py-0.5 text-xs font-medium">{group.buttons.length} atalhos</span>
               {isAdmin && (
                 <Button 
                   size="icon" 
                   variant="outline" 
-                  className="ml-1 rounded-full w-7 h-7 flex items-center justify-center text-[#bfae7c] dark:text-[#bfae7c] border-[#e2d8b8] dark:border-[#3a3320] hover:bg-[#f8f5e4] dark:hover:bg-[#2d2717]" 
+                  className="ml-1 rounded-full w-7 h-7 flex items-center justify-center text-[#bfae7c] dark:text-slate-300 
+                           border-[#e2d8b8] dark:border-slate-600/50 hover:bg-[#f8f5e4] dark:hover:bg-slate-600/50" 
                   title="Adicionar atalho" 
                   type="button" 
                   tabIndex={-1} 
@@ -265,18 +277,18 @@ const SortableGroup = ({
                   +
                 </Button>
               )}
-              <div className="p-1 bg-[#f8f5e4] dark:bg-[#23201a] rounded-lg">
+              <div className="p-1 bg-[#f8f5e4] dark:bg-slate-800/50 rounded-lg">
                 {openGroups[group.id] ? (
-                  <ChevronUp className="h-4 w-4 text-[#bfae7c] dark:text-[#bfae7c]" />
+                  <ChevronUp className="h-4 w-4 text-[#bfae7c] dark:text-slate-400" />
                 ) : (
-                  <ChevronDown className="h-4 w-4 text-[#bfae7c] dark:text-[#bfae7c]" />
+                  <ChevronDown className="h-4 w-4 text-[#bfae7c] dark:text-slate-400" />
                 )}
               </div>
             </div>
           </CardHeader>
         </CollapsibleTrigger>
         <CollapsibleContent className="animate-accordion-down">
-          <CardContent className="pt-0 pb-3 dark:bg-[#23201a]">
+          <CardContent className="pt-0 pb-3 bg-transparent dark:bg-transparent">
             <div className="grid grid-cols-1 gap-2">
               {group.buttons.map((button, index) => (
                 <div 
@@ -331,8 +343,12 @@ const SortableItem = ({
         className="w-full h-28 p-5 flex flex-col items-center justify-center gap-3 
                    bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 
                    hover:from-yellow-100 hover:to-orange-100
+                   dark:bg-gradient-to-br dark:from-amber-900/30 dark:via-yellow-800/40 dark:to-orange-800/30
+                   dark:hover:from-amber-800/40 dark:hover:to-orange-700/40
                    border-2 border-yellow-300/40 hover:border-yellow-400/60
+                   dark:border-amber-500/30 dark:hover:border-amber-400/50
                    shadow-lg hover:shadow-2xl
+                   dark:shadow-slate-900/50 dark:hover:shadow-slate-900/70
                    transition-all duration-500 ease-out
                    hover:scale-[1.03] hover:-translate-y-1
                    rounded-2xl relative overflow-hidden
@@ -344,10 +360,12 @@ const SortableItem = ({
       >
         <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 
                         group-hover:from-yellow-500 group-hover:to-orange-600
+                        dark:bg-gradient-to-br dark:from-amber-500 dark:via-yellow-600 dark:to-orange-600
+                        dark:group-hover:from-amber-600 dark:group-hover:to-orange-700
                         shadow-lg group-hover:shadow-xl transition-all duration-300 ">
-          <button.icon className="h-6 w-6 text-white group-hover:text-yellow-200" />
+          <button.icon className="h-6 w-6 text-white group-hover:text-yellow-200 dark:text-slate-100 dark:group-hover:text-yellow-100" />
         </div>
-        <span className="text-sm font-medium text-gray-800 dark:text-gray-100 
+        <span className="text-sm font-medium text-gray-800 dark:text-slate-200 
                        group-hover:text-amber-900 dark:group-hover:text-amber-100 
                        transition-colors duration-300 line-clamp-2 leading-tight w-full">
           {button.title}
@@ -360,8 +378,12 @@ const SortableItem = ({
           size="sm"
           className="absolute -top-3 -right-3 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 
                      transition-all duration-300 bg-gradient-to-br from-red-500 to-pink-600 
-                     hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl 
-                     border-2 border-white rounded-full z-10
+                     hover:from-red-600 hover:to-pink-700 
+                     dark:bg-gradient-to-br dark:from-red-600 dark:to-pink-700
+                     dark:hover:from-red-700 dark:hover:to-pink-800
+                     shadow-lg hover:shadow-xl 
+                     dark:shadow-slate-900/50 dark:hover:shadow-slate-900/70
+                     border-2 border-white dark:border-slate-200 rounded-full z-10
                      hover:scale-110 transform-gpu cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
@@ -369,7 +391,7 @@ const SortableItem = ({
           }}
           title="Remover dos Favoritos"
         >
-          <Heart className="h-5 w-5 fill-white text-white transition-all duration-200" />
+          <Heart className="h-5 w-5 fill-white text-white dark:fill-slate-100 dark:text-slate-100 transition-all duration-200" />
         </Button>
       )}
     </div>
@@ -378,7 +400,11 @@ const SortableItem = ({
 
 // Adicionar área de drop para favoritos
 const FavoriteDropZone = ({ children, isOver }: { children: React.ReactNode, isOver: boolean }) => (
-  <div className={`transition-all duration-300 rounded-2xl ${isOver ? 'ring-4 ring-pink-300 bg-pink-50/60' : ''}`}>
+  <div className={`transition-all duration-300 rounded-2xl ${
+    isOver 
+      ? 'ring-4 ring-pink-300 bg-pink-50/60 dark:ring-pink-400/70 dark:bg-pink-900/20' 
+      : ''
+  }`}>
     {children}
   </div>
 );
@@ -682,27 +708,29 @@ const Atalhos = () => {
     .filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-[#f8f5e4] dark:bg-[#23201a] p-2 dark:text-[#bfae7c]">
-      {/* Background decorative elements with pastel tones */}
+    <div className="min-h-screen bg-[#f8f5e4] dark:bg-slate-900 p-2 text-gray-900 dark:text-slate-100 transition-colors duration-300">
+      {/* Background decorative elements with enhanced dark mode */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-pastel-purple rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-pastel-pink rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-pastel-blue rounded-full blur-3xl opacity-20"></div>
-        <div className="absolute top-20 left-20 w-60 h-60 bg-gradient-pastel-green rounded-full blur-3xl opacity-20"></div>
-        <div className="absolute bottom-20 right-20 w-60 h-60 bg-gradient-pastel-orange rounded-full blur-3xl opacity-20"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-pastel-purple dark:bg-slate-800/30 rounded-full blur-3xl opacity-30 dark:opacity-20"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-pastel-pink dark:bg-slate-700/30 rounded-full blur-3xl opacity-30 dark:opacity-20"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-pastel-blue dark:bg-slate-600/20 rounded-full blur-3xl opacity-20 dark:opacity-15"></div>
+        <div className="absolute top-20 left-20 w-60 h-60 bg-gradient-pastel-green dark:bg-slate-700/25 rounded-full blur-3xl opacity-20 dark:opacity-15"></div>
+        <div className="absolute bottom-20 right-20 w-60 h-60 bg-gradient-pastel-orange dark:bg-slate-800/25 rounded-full blur-3xl opacity-20 dark:opacity-15"></div>
       </div>
       
       <div className="container mx-auto px-4 py-8 relative z-10">
         <PageHeader title="Atalhos NAPJe" />
         
-        {/* Controles de Accordion */}
+        {/* Controles de Accordion com melhor dark mode */}
         <div className="mb-6 flex flex-wrap items-center justify-center gap-4">
-          <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-xl p-2 shadow-lg border border-blue-100">
+          <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 
+                         shadow-lg border border-blue-100 dark:border-slate-600/50 dark:shadow-slate-900/30">
             <Button
               onClick={expandAllGroups}
               variant="outline"
               size="sm"
-              className="h-8 px-3 text-xs bg-success/10 border-success/20 text-success hover:bg-success/20 hover:border-success/40"
+              className="h-8 px-3 text-xs bg-success/10 border-success/20 text-success hover:bg-success/20 hover:border-success/40
+                        dark:bg-green-900/20 dark:border-green-600/30 dark:text-green-400 dark:hover:bg-green-800/30 dark:hover:border-green-500/50"
             >
               <ChevronDown className="h-4 w-4 mr-1" />
               Expandir Todos
@@ -711,7 +739,8 @@ const Atalhos = () => {
               onClick={collapseAllGroups}
               variant="outline"
               size="sm"
-              className="h-8 px-3 text-xs bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20 hover:border-destructive/40"
+              className="h-8 px-3 text-xs bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20 hover:border-destructive/40
+                        dark:bg-red-900/20 dark:border-red-600/30 dark:text-red-400 dark:hover:bg-red-800/30 dark:hover:border-red-500/50"
             >
               <ChevronUp className="h-4 w-4 mr-1" />
               Colapsar Todos
@@ -722,11 +751,11 @@ const Atalhos = () => {
               size="sm"
               className={`h-8 px-3 text-xs ${
                 showOnlyFavorites 
-                  ? 'bg-warning text-warning-foreground border-warning' 
-                  : 'bg-muted text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground'
+                  ? 'bg-warning text-warning-foreground border-warning dark:bg-amber-600 dark:text-amber-100 dark:border-amber-500' 
+                  : 'bg-muted text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-600'
               }`}
             >
-              <Star className={`h-4 w-4 mr-1 ${showOnlyFavorites ? 'fill-warning-foreground text-warning-foreground' : ''}`} />
+              <Star className={`h-4 w-4 mr-1 ${showOnlyFavorites ? 'fill-warning-foreground text-warning-foreground dark:fill-amber-100 dark:text-amber-100' : ''}`} />
               {showOnlyFavorites ? 'Mostrar Todos' : 'Só Favoritos'}
             </Button>
           </div>
@@ -734,28 +763,37 @@ const Atalhos = () => {
         
         <div className="mb-8">
           <div className="relative max-w-md mx-auto">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground dark:text-slate-400 h-5 w-5" />
             <Input
               placeholder="Buscar atalhos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 h-12 text-lg border-2 border-primary/20 focus:border-primary/40 bg-white/80 backdrop-blur-sm shadow-lg rounded-xl"
+              className="pl-12 h-12 text-lg border-2 border-primary/20 focus:border-primary/40 
+                        bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-lg rounded-xl
+                        dark:border-slate-600/50 dark:focus:border-slate-400/70 dark:text-slate-100
+                        dark:placeholder:text-slate-400 transition-colors duration-300"
             />
           </div>
         </div>
 
         <div className="max-w-6xl mx-auto">
-          {/* Seção de Resultados de Busca - mostra quando há termo de busca */}
+          {/* Seção de Resultados de Busca - com melhor dark mode */}
           {searchTerm && searchResults.length > 0 && (
-            <Card className="mb-8 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 border-2 border-green-200 shadow-xl animate-fade-in">
-              <CardHeader className="pb-4 bg-gradient-to-r from-green-100 to-emerald-100">
-                <CardTitle className="flex items-center gap-3 text-green-900">
-                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg shadow-lg">
-                    <Search className="h-6 w-6 text-white" />
+            <Card className="mb-8 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 
+                           dark:bg-gradient-to-r dark:from-emerald-900/20 dark:via-green-800/30 dark:to-teal-800/20
+                           border-2 border-green-200 dark:border-emerald-600/30 
+                           shadow-xl dark:shadow-slate-900/50 animate-fade-in">
+              <CardHeader className="pb-4 bg-gradient-to-r from-green-100 to-emerald-100 
+                                   dark:bg-gradient-to-r dark:from-emerald-900/30 dark:to-green-800/40">
+                <CardTitle className="flex items-center gap-3 text-green-900 dark:text-emerald-200">
+                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 
+                                 dark:bg-gradient-to-br dark:from-emerald-600 dark:to-green-700
+                                 rounded-lg shadow-lg">
+                    <Search className="h-6 w-6 text-white dark:text-emerald-100" />
                   </div>
                   <div>
                     <span className="text-xl font-bold">Resultados da Busca</span>
-                    <p className="text-sm text-green-700 font-normal">
+                    <p className="text-sm text-green-700 dark:text-emerald-300 font-normal">
                       {searchResults.length} atalho{searchResults.length > 1 ? 's' : ''} encontrado{searchResults.length > 1 ? 's' : ''} para "{searchTerm}"
                     </p>
                   </div>
@@ -792,19 +830,22 @@ const Atalhos = () => {
             onDragEnd={handleDragEnd}
             onDragOver={handleDragOver}
           >
-            {/* Seção de Favoritos - só mostra se tiver favoritos OU se estiver no modo "só favoritos" */}
+            {/* Seção de Favoritos - com melhor dark mode */}
             {(favoriteButtons.length > 0 || showOnlyFavorites) && (
               <div ref={setFavoritesDropRef}>
                 <FavoriteDropZone isOver={isOverFavorites}>
-                  <Card className="mb-8 bg-gradient-card border-2 border-border shadow-xl animate-fade-in">
-                    <CardHeader className="pb-4 bg-gradient-accent">
-                      <CardTitle className="flex items-center gap-3 text-foreground">
-                        <div className="p-2 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-lg shadow-lg">
-                          <Star className="h-6 w-6 fill-white text-white" />
+                  <Card className="mb-8 bg-gradient-card dark:bg-slate-800/60 border-2 border-border dark:border-slate-600/50 
+                                 shadow-xl dark:shadow-slate-900/50 animate-fade-in backdrop-blur-sm">
+                    <CardHeader className="pb-4 bg-gradient-accent dark:bg-slate-700/30">
+                      <CardTitle className="flex items-center gap-3 text-foreground dark:text-slate-100">
+                        <div className="p-2 bg-gradient-to-br from-yellow-400 to-amber-500 
+                                       dark:bg-gradient-to-br dark:from-amber-500 dark:to-yellow-600
+                                       rounded-lg shadow-lg">
+                          <Star className="h-6 w-6 fill-white text-white dark:fill-slate-100 dark:text-slate-100" />
                         </div>
                         <div>
                           <span className="text-xl font-bold">Favoritos</span>
-                          <p className="text-sm text-muted-foreground font-normal">
+                          <p className="text-sm text-muted-foreground dark:text-slate-300 font-normal">
                             {favoriteButtons.length > 0 ? 'Seus atalhos preferidos' : 'Nenhum favorito selecionado'}
                           </p>
                         </div>
@@ -840,13 +881,13 @@ const Atalhos = () => {
             {!showOnlyFavorites && (
               <>
                 {filteredGroups.length === 0 ? (
-                  <Card>
+                  <Card className="dark:bg-slate-800/60 dark:border-slate-600/50">
                     <CardContent className="p-12 text-center">
-                      <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-muted-foreground mb-2">
+                      <Search className="h-16 w-16 text-muted-foreground dark:text-slate-400 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-muted-foreground dark:text-slate-300 mb-2">
                         Nenhum resultado encontrado
                       </h3>
-                      <p className="text-muted-foreground">
+                      <p className="text-muted-foreground dark:text-slate-400">
                         Tente ajustar os termos da sua busca
                       </p>
                     </CardContent>
@@ -892,20 +933,20 @@ const Atalhos = () => {
           groupTitle={addShortcutDialog.groupTitle}
         />
 
-        {/* Footer */}
+        {/* Footer com melhor dark mode */}
         <div className="mt-16 text-center">
-          <Card className="bg-white/60 backdrop-blur-sm shadow-lg border-0">
+          <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-lg border-0 dark:border-slate-600/30">
             <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-sm text-muted-foreground dark:text-slate-300 mb-2">
                 © 2025 TRT15 - Núcleo de Apoio ao PJe | Central de Atalhos
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground dark:text-slate-400">
                 Desenvolvido por{' '}
                 <a 
                   href="https://msribeiro2010.github.io/marcelo-s-ribeiro-stellar-ai/" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline font-medium"
+                  className="text-primary hover:underline font-medium dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                 >
                   msribeiro
                 </a>
