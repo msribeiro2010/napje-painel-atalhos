@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -51,6 +53,65 @@ interface Group {
   icon: any;
   buttons: GroupButton[];
 }
+
+// Interface para dados do banco
+interface ShortcutGroup {
+  id: string;
+  title: string;
+  icon: string;
+  order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Shortcut {
+  id: string;
+  title: string;
+  url: string;
+  icon: string;
+  group_id: string;
+  order: number;
+  created_at: string;
+  updated_at: string;
+  group_title?: string;
+}
+
+// Mapeamento de ícones - converte string de emoji para componente React
+const getIconComponent = (iconString: string) => {
+  const iconMap: Record<string, any> = {
+    '📅': Calendar,
+    '✅': CalendarCheck,
+    '🔍': Search,
+    '🏢': Building,
+    '🎧': Headset,
+    '🚶': PersonStanding,
+    '💰': Cash,
+    '📄': FileText,
+    '👥': Users,
+    '🌐': Globe,
+    '💯': CheckCircle,
+    '🐛': Bug,
+    '🌍': Globe2,
+    '🔒': Shield,
+    '📞': Phone,
+    '📧': Mail,
+    '🤖': Bot,
+    '📁': Database,
+    '💼': Briefcase,
+    '❓': QuestionCircle,
+    '💬': ChatBubbleIcon,
+    '⚠️': ExclamationTriangle,
+    '🏛️': Bank,
+    '👤': User,
+    '👤👤': UserPlus, // Usando ícone diferente para evitar conflito
+    '📊': FileEarmarkText,
+    '💳': Bank2,
+    '🔗': Diagram3,
+    '⚖️': Building2,
+  };
+  
+  return iconMap[iconString] || Globe; // Default para Globe se ícone não encontrado
+};
 
 // Componente ShortcutButton reutilizável
 const ShortcutButton = ({ 
@@ -329,14 +390,68 @@ const Atalhos = () => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
-  const { preferences, loading, updateGroupOrder, toggleFavoriteGroup, toggleFavoriteButton, updateFavoriteButtonsOrder } = useShortcutsPreferences();
+  const { preferences, loading: preferencesLoading, updateGroupOrder, toggleFavoriteGroup, toggleFavoriteButton, updateFavoriteButtonsOrder } = useShortcutsPreferences();
+  const queryClient = useQueryClient();
+
+  // Buscar grupos do banco de dados
+  const { data: dbGroups, isLoading: groupsLoading } = useQuery({
+    queryKey: ['shortcut-groups'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('shortcut_groups')
+        .select('*')
+        .order('order', { ascending: true });
+
+      if (error) throw error;
+      return data as ShortcutGroup[];
+    }
+  });
+
+  // Buscar atalhos do banco de dados
+  const { data: dbShortcuts, isLoading: shortcutsLoading } = useQuery({
+    queryKey: ['shortcuts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('shortcuts')
+        .select(`
+          *,
+          shortcut_groups!inner(title)
+        `)
+        .order('order', { ascending: true });
+
+      if (error) throw error;
+      return data.map(item => ({
+        ...item,
+        group_title: item.shortcut_groups?.title
+      })) as Shortcut[];
+    }
+  });
 
   // Carregar favoritos salvos das preferências
   useEffect(() => {
-    if (!loading && preferences.favoriteButtons) {
+    if (!preferencesLoading && preferences.favoriteButtons) {
       setFavorites(preferences.favoriteButtons);
     }
-  }, [preferences.favoriteButtons, loading]);
+  }, [preferences.favoriteButtons, preferencesLoading]);
+
+  // Transformar dados do banco em formato esperado pelos componentes
+  const groups: Group[] = useMemo(() => {
+    if (!dbGroups || !dbShortcuts) return [];
+    
+    return dbGroups.map(group => ({
+      id: group.id,
+      title: group.title,
+      icon: getIconComponent(group.icon),
+      buttons: dbShortcuts
+        .filter(shortcut => shortcut.group_id === group.id)
+        .map(shortcut => ({
+          id: shortcut.id,
+          title: shortcut.title,
+          url: shortcut.url,
+          icon: getIconComponent(shortcut.icon)
+        }))
+    }));
+  }, [dbGroups, dbShortcuts]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -360,402 +475,6 @@ const Atalhos = () => {
   const openUrl = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
-
-  const groups: Group[] = [
-    {
-      id: 'planilha-presencial',
-      title: 'Presencial/Plantão/Férias',
-      icon: CalendarCheck,
-      buttons: [
-        {
-          id: 'painel-controle',
-          title: 'Painel/Controle NAPJe',
-          url: 'https://script.google.com/a/macros/trt15.jus.br/s/AKfycbzucXdGYLOxqBol7ri-eyT3fzXuWMdqvgnVkRuVVlV7/dev',
-          icon: Calendar
-        },
-        {
-          id: 'gerenciador-ferias',
-          title: 'GERENCIADOR DE FÉRIAS',
-          url: 'https://msribeiro2010.github.io/controle-ferias/',
-          icon: CalendarCheck
-        }
-      ]
-    },
-    {
-      id: 'consulta-documentos',
-      title: 'Consulta CPF/OAB/CNPJ',
-      icon: Search,
-      buttons: [
-        {
-          id: 'cnpj',
-          title: 'CNPJ',
-          url: 'https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp',
-          icon: Building
-        },
-        {
-          id: 'cpf',
-          title: 'CPF',
-          url: 'https://servicos.receita.fazenda.gov.br/servicos/cpf/consultasituacao/consultapublica.asp',
-          icon: User
-        },
-        {
-          id: 'oab',
-          title: 'OAB',
-          url: 'https://www2.oabsp.org.br/asp/consultaInscritos/consulta01.asp',
-          icon: Bank
-        }
-      ]
-    },
-    {
-      id: 'google-apps',
-      title: 'Google Apps',
-      icon: Globe,
-      buttons: [
-        {
-          id: 'gmail',
-          title: 'Gmail',
-          url: 'https://auth.trt15.jus.br/auth/realms/principal/protocol/saml?SAMLRequest=fVJdT8IwFH038T80fd/GZoimYSMIIZKgLjJ88K3r7qDQtbO3A/33joEBH%2BT19NzzcXsHw69KkR1YlEbHNPR7lIAWppB6FdNlNvUe6DC5vRkgr1TNRo1b6zf4bAAdaSc1su4hpo3VzHCUyDSvAJkTbDF6nrPI77HaGmeEUZTMJjEVRta5lFtQ2zzfClAKVJ1vN2UhirKQXFd1AXUlKXn/jRUdYs0QG5hpdFy7FupFfa9370VRFvZZdM%2Biuw9K0pPTo9THBtdi5UcSsqcsS730dZF1AjtZgH1p2TFdGbNS4AtTHexTjih3LVxyhUDJCBGsawOOjcamArsAu5MClm/zmK6dq5EFwX6/988yAQ%2BcdWHf3zTo5zbgAmnS7ZZ19ezFUq%2BH57/mNDnLD4ILqeT0Z4cqs0lqlBTfZKSU2Y8tcNf2cLZpa0yNrbj73y30ww6RhVd2VNZorEHIUkJBSZAcXf8eR3syPw%3D%3D&RelayState=https://accounts.google.com/CheckCookie?continue%3Dhttps://mail.google.com/mail/%2526ogbl/%26service%3Dmail%26ss%3D1%26scc%3D1%26rm%3Dfalse%26osid%3D1%26flowName%3DGlifWebSignIn%26ltmpl%3Ddefault%26ifkv%3DAdBytiMNWrwYEFQf_Fi5aYbktLQzVC0tesNaOqoOgDHzv4HNZuqWJZuNdC5vingIDoinwh-jBDsQSw',
-          icon: Mail
-        },
-        {
-          id: 'drive',
-          title: 'Drive',
-          url: 'https://drive.google.com/drive/my-drive?hl=pt-br',
-          icon: Database
-        },
-        {
-          id: 'sheets',
-          title: 'Sheets',
-          url: 'https://docs.google.com/spreadsheets/u/0/?tgif=d',
-          icon: FileText
-        },
-        {
-          id: 'docs',
-          title: 'Docs',
-          url: 'https://docs.google.com/document/u/0/?tgif=d',
-          icon: FileText
-        }
-      ]
-    },
-    {
-      id: 'assyst-pje',
-      title: 'Assyst-PJe',
-      icon: Headset,
-      buttons: [
-        {
-          id: 'assystweb',
-          title: 'AssystWeb',
-          url: 'https://centraldetic.trt15.jus.br/assystweb/application.do',
-          icon: Headset
-        },
-        {
-          id: 'assyst-atribuidos',
-          title: 'Assyst-Atribuidos p/mim',
-          url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=423&queryProfileForm.columnProfileId=67',
-          icon: Users
-        },
-        {
-          id: 'assyst-abertos',
-          title: 'Assyst-Abertos',
-          url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=996&queryProfileForm.columnProfileId=67',
-          icon: FileText
-        },
-        {
-          id: 'assyst-consulta',
-          title: 'Assyst-Consulta',
-          url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch',
-          icon: Search
-        },
-        {
-          id: 'assystnet',
-          title: 'AssystNet',
-          url: 'https://chatbot.trt15.jus.br/lhc/home.php',
-          icon: Bot
-        },
-        {
-          id: 'banco-conhecimento',
-          title: 'Banco de Conhecimento',
-          url: 'https://drive.google.com/file/d/1-6R-ZzSC3dSTGXh9NZLWeP25CY8MZ9DG/view?ths=true',
-          icon: FileText
-        }
-      ]
-    },
-    {
-      id: 'atendimento-externo',
-      title: '(0800) e Tawk.to',
-      icon: Phone,
-      buttons: [
-        {
-          id: 'registros-atend',
-          title: '(0800)Registros/Atend.',
-          url: 'https://script.google.com/a/macros/trt15.jus.br/s/AKfycbyZc3lywRgqNftHWdbBkCTYWEChxDk5OI6ijUD3XlsUBWgGulwzJIJpfdim-XRJ_NQ8/exec',
-          icon: FileText
-        },
-        {
-          id: 'planilha-atend',
-          title: 'Planilha/Atend.Telefônicos',
-          url: 'https://docs.google.com/spreadsheets/d/10_eaPcU5vmbOZBjvCKajOhvwssh_GkvaVjoKSeeSgcA/edit?gid=1098454302#gid=1098454302',
-          icon: FileText
-        },
-        {
-          id: 'pje-suporte',
-          title: 'PJe-Suporte',
-          url: 'https://trt15.jus.br/pje/suporte-ao-pje',
-          icon: Headset
-        },
-        {
-          id: 'tawk-to',
-          title: 'Tawk.to',
-          url: 'https://dashboard.tawk.to/login',
-          icon: Bot
-        },
-        {
-          id: 'emails-diarios',
-          title: 'E-mails Diários',
-          url: 'https://docs.google.com/spreadsheets/d/1g7pme1VNFhffy2zdbCyRfvdpNFqLjRku8hObrOwqXNY/edit?pli=1&gid=1693944372#gid=1693944372',
-          icon: Mail
-        },
-        {
-          id: 'emails-dinamicos',
-          title: 'Emails Dinâmicos',
-          url: 'https://docs.google.com/spreadsheets/d/1NXxxSjHc04X919BT741lZ1H0Bqs0kHrFVc8nuWFjqNY/edit?gid=1824743735',
-          icon: Mail
-        }
-      ]
-    },
-    {
-      id: 'info-funcionais',
-      title: 'Relatórios de Distribuição',
-      icon: FileText,
-      buttons: [
-        {
-          id: 'relatorios-distribuicao',
-          title: 'Relatórios de Distribuição',
-          url: 'https://trt15.jus.br/intranet/sec-geral-judiciaria/relatorio-distribuicao',
-          icon: FileText
-        }
-      ]
-    },
-    {
-      id: 'info-holerite',
-      title: 'Contra-Cheque/SISAD...',
-      icon: Cash,
-      buttons: [
-        {
-          id: 'contracheque',
-          title: 'Contracheque',
-          url: 'https://autoatendimento.trt15.jus.br/consultainformacoesfuncionais/contracheque',
-          icon: Cash
-        },
-        {
-          id: 'requerimentos',
-          title: 'Requerimentos',
-          url: 'https://autoatendimento.trt15.jus.br/autoatendimentoexterno/f/t/selecaorequerimentosel?fwPlc=fazerrequerimentoman',
-          icon: FileText
-        },
-        {
-          id: 'sisad',
-          title: 'SISAD',
-          url: 'https://sisad.jt.jus.br/portal-nacional',
-          icon: User
-        },
-        {
-          id: 'sigep',
-          title: 'SIGEP/ARTEMIS/SIGS',
-          url: 'https://sisad.jt.jus.br/portal-programa/1',
-          icon: Users
-        },
-        {
-          id: 'sigeo',
-          title: 'SIGEO/DIÁRIAS',
-          url: 'https://portal.sigeo.jt.jus.br/portal/0',
-          icon: Cash
-        }
-      ]
-    },
-    {
-      id: 'trabalho-plantao',
-      title: 'Requerimentos NAPJe',
-      icon: CalendarCheck,
-      buttons: [
-        {
-          id: 'averbacao-plantao',
-          title: 'Averbação Trabalho no Plantão',
-          url: 'https://autoatendimento.trt15.jus.br/autoatendimentoexterno/f/t/fazerrequerimentoman?chPlc=89',
-          icon: CalendarCheck
-        },
-        {
-          id: 'solicitar-folga',
-          title: 'Solicitar Folga',
-          url: 'https://autoatendimento.trt15.jus.br/autoatendimentoexterno/f/t/fazerrequerimentoman?chPlc=30411',
-          icon: Calendar
-        },
-        {
-          id: 'requerimento-ferias',
-          title: 'Requerimento de Férias',
-          url: 'https://autoatendimento.trt15.jus.br/autoatendimentoexterno/f/t/feriasperiodoman?chPlc=157',
-          icon: CalendarCheck
-        }
-      ]
-    },
-    {
-      id: 'pje-producao',
-      title: 'PJe-Produção',
-      icon: Building2,
-      buttons: [
-        {
-          id: 'pje-1-grau-prod',
-          title: 'PJe 1º Grau - Produção',
-          url: 'https://pje.trt15.jus.br/primeirograu/login.seam',
-          icon: Building2
-        },
-        {
-          id: 'pje-2-grau-prod',
-          title: 'PJe 2º Grau - Produção',
-          url: 'https://pje.trt15.jus.br/segundograu/login.seam',
-          icon: Building2
-        }
-      ]
-    },
-    {
-      id: 'pje-incidentes',
-      title: 'PJe-Incidentes',
-      icon: Bug,
-      buttons: [
-        {
-          id: 'pje-1-grau-inc',
-          title: 'PJe 1º Grau - Incidentes',
-          url: 'https://pje-incidentes.trt15.jus.br/primeirograu/login.seam',
-          icon: Bug
-        },
-        {
-          id: 'pje-2-grau-inc',
-          title: 'PJe 2º Grau - Incidentes',
-          url: 'https://pje-incidentes.trt15.jus.br/segundograu/login.seam',
-          icon: Bug
-        }
-      ]
-    },
-    {
-      id: 'pje-homologacao',
-      title: 'PJe-Homologação',
-      icon: CheckCircle,
-      buttons: [
-        {
-          id: 'pje-1-grau-hom',
-          title: 'PJe 1º Grau - Homolog.',
-          url: 'https://pje-homologacao.trt15.jus.br/primeirograu/login.seam',
-          icon: CheckCircle
-        },
-        {
-          id: 'pje-2-grau-hom',
-          title: 'PJe 2º Grau - Homolog.',
-          url: 'https://pje-homologacao.trt15.jus.br/segundograu/login.seam',
-          icon: CheckCircle
-        }
-      ]
-    },
-    {
-      id: 'pje-treino',
-      title: 'PJe-Treino',
-      icon: PersonStanding,
-      buttons: [
-        {
-          id: 'pje-1-grau-treino',
-          title: 'PJe 1º Grau - Treino',
-          url: 'https://pje-treino.trt15.jus.br/primeirograu/login.seam',
-          icon: PersonStanding
-        },
-        {
-          id: 'pje-2-grau-treino',
-          title: 'PJe 2º Grau - Treino',
-          url: 'https://pje-treino.trt15.jus.br/segundograu/login.seam',
-          icon: PersonStanding
-        }
-      ]
-    },
-    {
-      id: 'sistemas-administrativos',
-      title: 'Sistemas Administrativos',
-      icon: Diagram3,
-      buttons: [
-        {
-          id: 'sei',
-          title: 'SEI',
-          url: 'https://sei.trt15.jus.br/sei/',
-          icon: FileText
-        },
-        {
-          id: 'compras',
-          title: 'Compras',
-          url: 'https://compras.trt15.jus.br/',
-          icon: Bank2
-        },
-        {
-          id: 'portal-corporativo',
-          title: 'Portal Corporativo',
-          url: 'https://corporativo.trt15.jus.br/',
-          icon: Globe2
-        },
-        {
-          id: 'intranet',
-          title: 'Intranet',
-          url: 'https://intranet.trt15.jus.br/',
-          icon: Globe
-        }
-      ]
-    },
-    {
-      id: 'acesso-outros',
-      title: 'Acesso a Outros Sistemas',
-      icon: Shield,
-      buttons: [
-        {
-          id: 'citrix',
-          title: 'Citrix',
-          url: 'https://ctxvirtualdesktop.trt15.jus.br/',
-          icon: Shield
-        },
-        {
-          id: 'terminal-server',
-          title: 'Terminal Server',
-          url: 'https://ts.trt15.jus.br/ts',
-          icon: Shield
-        }
-      ]
-    },
-    {
-      id: 'utilitarios',
-      title: 'Utilitários',
-      icon: QuestionCircle,
-      buttons: [
-        {
-          id: 'calculadora-trabalhista',
-          title: 'Calculadora Trabalhista',
-          url: 'https://www3.tst.jus.br/Ssind/Calculo',
-          icon: Cash
-        },
-        {
-          id: 'caged',
-          title: 'CAGED',
-          url: 'https://caged.mte.gov.br/portalcaged/paginas/home/home.xhtml',
-          icon: FileEarmarkText
-        },
-        {
-          id: 'rais',
-          title: 'RAIS',
-          url: 'https://www.rais.gov.br/sitio/index.jsf',
-          icon: FileEarmarkText
-        },
-        {
-          id: 'cnis',
-          title: 'CNIS',
-          url: 'https://www3.dataprev.gov.br/CNIS/',
-          icon: FileEarmarkText
-        }
-      ]
-    }
-  ];
 
   // Aplicar a ordem personalizada dos grupos
   const orderedGroups = useMemo(() => {
@@ -899,7 +618,9 @@ const Atalhos = () => {
     setOpenGroups(allOpen);
   };
 
-  if (loading) {
+  const isLoading = preferencesLoading || groupsLoading || shortcutsLoading;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <Card className="bg-white/80 backdrop-blur-sm shadow-xl border-0">

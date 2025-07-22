@@ -111,6 +111,7 @@ const AdminShortcuts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-groups'] });
+      queryClient.invalidateQueries({ queryKey: ['shortcut-groups'] });
       toast.success('Grupo criado com sucesso!');
       setIsGroupDialogOpen(false);
       setGroupForm({ title: '', icon: '' });
@@ -136,6 +137,7 @@ const AdminShortcuts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-groups'] });
+      queryClient.invalidateQueries({ queryKey: ['shortcut-groups'] });
       toast.success('Grupo atualizado com sucesso!');
       setIsGroupDialogOpen(false);
       setEditingGroup(null);
@@ -166,6 +168,8 @@ const AdminShortcuts = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-groups'] });
       queryClient.invalidateQueries({ queryKey: ['admin-shortcuts'] });
+      queryClient.invalidateQueries({ queryKey: ['shortcut-groups'] });
+      queryClient.invalidateQueries({ queryKey: ['shortcuts'] });
       toast.success('Grupo excluído com sucesso!');
     },
     onError: (error) => {
@@ -189,6 +193,7 @@ const AdminShortcuts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-shortcuts'] });
+      queryClient.invalidateQueries({ queryKey: ['shortcuts'] });
       toast.success('Atalho criado com sucesso!');
       setIsShortcutDialogOpen(false);
       setShortcutForm({ title: '', url: '', icon: '', group_id: '' });
@@ -216,6 +221,7 @@ const AdminShortcuts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-shortcuts'] });
+      queryClient.invalidateQueries({ queryKey: ['shortcuts'] });
       toast.success('Atalho atualizado com sucesso!');
       setIsShortcutDialogOpen(false);
       setEditingShortcut(null);
@@ -238,6 +244,7 @@ const AdminShortcuts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-shortcuts'] });
+      queryClient.invalidateQueries({ queryKey: ['shortcuts'] });
       toast.success('Atalho excluído com sucesso!');
     },
     onError: (error) => {
