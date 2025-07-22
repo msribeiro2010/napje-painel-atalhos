@@ -10,7 +10,7 @@ import {
   Star, Clock, Gift, Phone, Mail, Bot, Kanban, Shield,
   Database, Briefcase, HelpCircle as QuestionCircle, MessageSquare as ChatBubbleIcon, AlertTriangle as ExclamationTriangle,
   Building2, CheckCircle, Bug, Network as Diagram3, ExternalLink as BoxArrowUpRight, Landmark as Bank,
-  User, UserPlus, FileBarChart as FileEarmarkText, Globe as Globe2, CreditCard as Bank2, GripVertical, Heart
+  User, UserPlus, FileBarChart as FileEarmarkText, Globe as Globe2, CreditCard as Bank2, GripVertical, Heart, Trash2
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { useShortcutsPreferences } from '@/hooks/useShortcutsPreferences';
@@ -247,8 +247,13 @@ const SortableItem = ({
     transition,
     zIndex: isDragging ? 99 : undefined,
   };
+  // Função para excluir o favorito
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleFavorite(button.id); // Remove dos favoritos
+  };
   return (
-    <div ref={setNodeRef} style={mergedStyle} className={className} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={mergedStyle} className={className + ' group'} {...attributes} {...listeners}>
       <Button
         variant="outline"
         className="w-full h-28 p-5 flex flex-col items-center justify-center gap-3 
@@ -289,8 +294,23 @@ const SortableItem = ({
           e.stopPropagation();
           onToggleFavorite(button.id);
         }}
+        title="Remover dos Favoritos"
       >
         <Heart className="h-5 w-5 fill-white text-white transition-all duration-200" />
+      </Button>
+      {/* Botão de excluir atalho dos favoritos */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="absolute -top-3 -left-3 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 
+                   transition-all duration-300 bg-gradient-to-br from-gray-400 to-gray-600 
+                   hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl 
+                   border-2 border-white rounded-full z-10
+                   hover:scale-110 transform-gpu"
+        onClick={handleDelete}
+        title="Excluir atalho dos Favoritos"
+      >
+        <Trash2 className="h-5 w-5 text-white transition-all duration-200" />
       </Button>
     </div>
   );
