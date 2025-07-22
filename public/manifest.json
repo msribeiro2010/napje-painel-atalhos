@@ -1,0 +1,21 @@
+{
+  "name": "NAPJe - Painel de Atalhos",
+  "short_name": "NAPJe",
+  "description": "Sistema de Atalhos do Núcleo de Apoio ao PJe - TRT15",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1F2937",
+  "theme_color": "#FFD700",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ]
+}
