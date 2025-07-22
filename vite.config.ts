@@ -5,7 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? '/napje-painel-atalhos/' : '/',
+  base: mode === 'production' && process.env.GITHUB_ACTIONS ? '/napje-painel-atalhos/' : '/',
   server: {
     host: "::",
     port: 8080,
@@ -20,4 +20,20 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+          query: ['@tanstack/react-query'],
+          supabase: ['@supabase/supabase-js'],
+          dnd: ['@dnd-kit/core', '@dnd-kit/sortable'],
+        }
+      }
+    }
+  }
 }));
