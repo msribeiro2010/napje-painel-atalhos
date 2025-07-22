@@ -56,10 +56,10 @@ const getEventEmoji = (type: 'feriado' | 'aniversario', daysUntil: number): stri
   return daysUntil === 0 ? '🏖️' : daysUntil === 1 ? '📅' : '⭐';
 };
 
-const getMotivationalMessage = (events: any): string => {
-  const urgentEvents = [...events.feriados, ...events.aniversariantes].filter((e: any) => e.daysUntil <= 1);
-  const hasToday = urgentEvents.some((e: any) => e.daysUntil === 0);
-  const hasTomorrow = urgentEvents.some((e: any) => e.daysUntil === 1);
+const getMotivationalMessage = (events: { feriados: Array<{ daysUntil: number }>, aniversariantes: Array<{ daysUntil: number }> }): string => {
+  const urgentEvents = [...events.feriados, ...events.aniversariantes].filter((e) => e.daysUntil <= 1);
+  const hasToday = urgentEvents.some((e) => e.daysUntil === 0);
+  const hasTomorrow = urgentEvents.some((e) => e.daysUntil === 1);
   
   if (hasToday) {
     return "🎊 Dia especial! Aproveite e celebre os momentos importantes!";
@@ -89,13 +89,13 @@ export const SmartEventNotifications = ({ compact = false }: SmartEventNotificat
         if (todayEvents.length > 0) {
           toast({
             title: "🎉 Eventos Acontecendo HOJE!",
-            description: `${todayEvents.map((e: any) => e.title || e.descricao).join(', ')}`,
+            description: `${todayEvents.map((e) => e.title || e.descricao).join(', ')}`,
             duration: 8000,
           });
         } else if (tomorrowEvents.length > 0) {
           toast({
             title: "⏰ Eventos Amanhã!",
-            description: `Lembre-se: ${tomorrowEvents.map((e: any) => e.title || e.descricao).join(', ')}`,
+            description: `Lembre-se: ${tomorrowEvents.map((e) => e.title || e.descricao).join(', ')}`,
             duration: 6000,
           });
         }
