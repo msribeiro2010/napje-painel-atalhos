@@ -152,24 +152,24 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
   }
 
   return (
-    <Card className="fixed bottom-6 right-6 w-[420px] h-[600px] max-h-[85vh] shadow-xl z-50 flex flex-col max-w-[calc(100vw-3rem)] bg-gradient-card backdrop-blur-sm border-2 border-blue-200/40 animate-fade-in">
+    <Card className="fixed bottom-6 right-6 w-[520px] h-[700px] max-h-[90vh] shadow-xl z-50 flex flex-col max-w-[calc(100vw-3rem)] bg-gradient-card backdrop-blur-sm border-2 border-blue-200/40 animate-fade-in font-roboto">
       {/* Header Moderno */}
       <CardHeader className="bg-gradient-pastel-blue/40 backdrop-blur-sm border-b border-blue-200/30 flex flex-row items-center justify-between space-y-0 pb-3 pt-3">
-        <CardTitle className="flex items-center gap-3 text-lg">
+        <CardTitle className="flex items-center gap-3 text-xl font-roboto">
           <div className="relative">
-            <div className="w-10 h-10 bg-gradient-pastel-blue rounded-full flex items-center justify-center shadow-soft">
-              <Bot className="h-6 w-6 text-blue-700" />
+            <div className="w-12 h-12 bg-gradient-pastel-blue rounded-full flex items-center justify-center shadow-soft">
+              <Bot className="h-7 w-7 text-blue-700" />
             </div>
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-pastel-green rounded-full border-2 border-white flex items-center justify-center">
               <Sparkles className="h-2 w-2 text-green-700" />
             </div>
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-blue-800">Assistente TRT15</span>
-            <span className="text-xs text-blue-600 font-normal">Powered by IA</span>
+            <span className="font-bold text-blue-800 text-lg">Assistente TRT15</span>
+            <span className="text-sm text-blue-600 font-normal">Powered by IA</span>
           </div>
-          <Badge className="bg-gradient-pastel-green/60 text-green-700 border-green-200/60 text-xs">
-            <Zap className="h-3 w-3 mr-1" />
+          <Badge className="bg-gradient-pastel-green/60 text-green-700 border-green-200/60 text-sm font-medium font-roboto">
+            <Zap className="h-4 w-4 mr-1" />
             Online
           </Badge>
         </CardTitle>
@@ -214,14 +214,14 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
                 )}
                 
                 <div
-                  className={`max-w-[280px] rounded-2xl px-4 py-3 text-sm shadow-soft transition-all duration-200 hover:shadow-medium ${
+                  className={`max-w-[380px] rounded-2xl px-5 py-4 text-base shadow-soft transition-all duration-200 hover:shadow-medium ${
                     message.role === 'user'
                       ? 'bg-gradient-pastel-purple/70 text-purple-800 ml-auto border border-purple-200/40'
                       : 'bg-gradient-card border border-blue-200/30 text-gray-700'
                   }`}
                 >
-                  <div className="whitespace-pre-wrap leading-relaxed break-words max-h-[300px] overflow-y-auto custom-scrollbar">{message.content}</div>
-                  <div className={`text-xs mt-2 opacity-60 ${
+                  <div className="whitespace-pre-wrap leading-relaxed break-words max-h-[400px] overflow-y-auto custom-scrollbar font-medium">{message.content}</div>
+                  <div className={`text-sm mt-3 opacity-70 font-medium ${
                     message.role === 'user' ? 'text-right text-purple-700' : 'text-left text-gray-500'
                   }`}>
                     {formatTime(message.timestamp)}
@@ -242,14 +242,14 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
                 <div className="w-8 h-8 bg-gradient-pastel-blue rounded-full flex items-center justify-center flex-shrink-0 mt-1 shadow-soft border border-blue-200/40">
                   <Bot className="h-4 w-4 text-blue-700" />
                 </div>
-                <div className="bg-gradient-card rounded-2xl px-4 py-3 text-sm shadow-soft border border-blue-200/30">
+                <div className="bg-gradient-card rounded-2xl px-5 py-4 text-base shadow-soft border border-blue-200/30">
                   <div className="flex items-center gap-3">
                     <div className="flex gap-1">
                       <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                       <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
-                    <span className="text-blue-600 text-xs">Assistente está digitando...</span>
+                    <span className="text-blue-600 text-sm font-medium">Assistente está digitando...</span>
                   </div>
                 </div>
               </div>
@@ -269,7 +269,7 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
                 onKeyPress={handleKeyPress}
                 placeholder="Digite sua mensagem..."
                 disabled={isLoading}
-                className="pr-12 py-3 rounded-2xl bg-white/80 border-2 border-blue-200/40 focus:border-blue-300/60 shadow-soft transition-all duration-200 text-sm"
+                className="pr-12 py-4 rounded-2xl bg-white/90 border-2 border-blue-200/40 focus:border-blue-300/60 shadow-soft transition-all duration-200 text-base font-medium placeholder:text-gray-500 font-roboto"
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">
                 {inputValue.length > 0 && (
@@ -280,7 +280,7 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
             <Button
               onClick={sendMessage}
               disabled={!inputValue.trim() || isLoading}
-              className="h-11 w-11 rounded-full bg-gradient-pastel-blue hover:bg-gradient-pastel-purple shadow-soft hover:shadow-medium transition-all duration-200 border-2 border-blue-200/40 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+              className="h-12 w-12 rounded-full bg-gradient-pastel-blue hover:bg-gradient-pastel-purple shadow-soft hover:shadow-medium transition-all duration-200 border-2 border-blue-200/40 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
               size="icon"
             >
               {isLoading ? (
@@ -298,7 +298,7 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
                 <button
                   key={suggestion}
                   onClick={() => setInputValue(suggestion)}
-                  className="text-xs px-3 py-1 bg-gradient-pastel-green/40 text-green-700 rounded-full border border-green-200/40 hover:bg-gradient-pastel-green/60 transition-all duration-200 hover:scale-105"
+                  className="text-sm px-4 py-2 bg-gradient-pastel-green/40 text-green-700 rounded-full border border-green-200/40 hover:bg-gradient-pastel-green/60 transition-all duration-200 hover:scale-105 font-medium font-roboto"
                 >
                   {suggestion}
                 </button>

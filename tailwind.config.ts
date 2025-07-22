@@ -148,6 +148,10 @@ export default {
 				'accordion-up': 'accordion-up 0.3s ease-out',
 				'fade-in': 'fade-in 0.5s ease-out',
 				'scale-in': 'scale-in 0.3s ease-out'
+			},
+			fontFamily: {
+				'roboto': ['Roboto', 'sans-serif'],
+				'sans': ['Roboto', 'ui-sans-serif', 'system-ui', 'sans-serif']
 			}
 		}
 	},
