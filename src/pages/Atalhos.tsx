@@ -158,7 +158,7 @@ const SortableGroup = ({
       ref={setNodeRef} 
       style={style} 
       className={`overflow-hidden transition-all duration-300 animate-fade-in
-                  bg-[#f8f5e4] border border-[#e2d8b8] shadow-sm
+                  bg-[#f8f5e4] dark:bg-[#23201a] border border-[#e2d8b8] dark:border-[#3a3320] shadow-sm
                   rounded-xl min-h-[80px] flex flex-col justify-between px-3 py-2 my-2`}
     >
       <Collapsible
@@ -166,38 +166,38 @@ const SortableGroup = ({
         onOpenChange={() => onToggleGroup(group.id)}
       >
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-[#f3ecd2] transition-all duration-300 group p-2 flex flex-row items-center justify-between">
+          <CardHeader className="cursor-pointer hover:bg-[#f3ecd2] dark:hover:bg-[#2d2717] transition-all duration-300 group p-2 flex flex-row items-center justify-between">
             <div className="flex items-center gap-2">
               <div 
                 {...attributes} 
                 {...listeners}
-                className="cursor-grab active:cursor-grabbing p-1 hover:bg-[#f3ecd2] rounded-lg transition-all duration-200 hover:scale-105"
+                className="cursor-grab active:cursor-grabbing p-1 hover:bg-[#f3ecd2] dark:hover:bg-[#2d2717] rounded-lg transition-all duration-200 hover:scale-105"
                 onClick={(e) => e.stopPropagation()}
               >
-                <GripVertical className="h-3 w-3 text-[#bfae7c]" />
+                <GripVertical className="h-3 w-3 text-[#bfae7c] dark:text-[#bfae7c]" />
               </div>
-              <div className="p-2 bg-[#f3ecd2] rounded-lg shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-105">
-                <group.icon className="h-5 w-5 text-[#bfae7c]" />
+              <div className="p-2 bg-[#f3ecd2] dark:bg-[#2d2717] rounded-lg shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-105">
+                <group.icon className="h-5 w-5 text-[#bfae7c] dark:text-[#bfae7c]" />
               </div>
-              <span className="font-semibold text-[#7c6a3c] text-base truncate max-w-[120px]">{group.title}</span>
+              <span className="font-semibold text-[#7c6a3c] dark:text-[#bfae7c] text-base truncate max-w-[120px]">{group.title}</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="bg-[#f3ecd2] text-[#bfae7c] rounded-full px-2 py-0.5 text-xs font-medium">{group.buttons.length} atalhos</span>
-              <Button size="icon" variant="outline" className="ml-1 rounded-full w-7 h-7 flex items-center justify-center text-[#bfae7c] border-[#e2d8b8] hover:bg-[#f8f5e4]" title="Adicionar atalho" type="button" tabIndex={-1} onClick={e => e.stopPropagation()}>
+              <span className="bg-[#f3ecd2] dark:bg-[#2d2717] text-[#bfae7c] dark:text-[#bfae7c] rounded-full px-2 py-0.5 text-xs font-medium">{group.buttons.length} atalhos</span>
+              <Button size="icon" variant="outline" className="ml-1 rounded-full w-7 h-7 flex items-center justify-center text-[#bfae7c] dark:text-[#bfae7c] border-[#e2d8b8] dark:border-[#3a3320] hover:bg-[#f8f5e4] dark:hover:bg-[#2d2717]" title="Adicionar atalho" type="button" tabIndex={-1} onClick={e => e.stopPropagation()}>
                 +
               </Button>
-              <div className="p-1 bg-[#f8f5e4] rounded-lg">
+              <div className="p-1 bg-[#f8f5e4] dark:bg-[#23201a] rounded-lg">
                 {openGroups[group.id] ? (
-                  <ChevronUp className="h-4 w-4 text-[#bfae7c]" />
+                  <ChevronUp className="h-4 w-4 text-[#bfae7c] dark:text-[#bfae7c]" />
                 ) : (
-                  <ChevronDown className="h-4 w-4 text-[#bfae7c]" />
+                  <ChevronDown className="h-4 w-4 text-[#bfae7c] dark:text-[#bfae7c]" />
                 )}
               </div>
             </div>
           </CardHeader>
         </CollapsibleTrigger>
         <CollapsibleContent className="animate-accordion-down">
-          <CardContent className="pt-0 pb-3">
+          <CardContent className="pt-0 pb-3 dark:bg-[#23201a]">
             <div className="grid grid-cols-1 gap-2">
               {group.buttons.map((button, index) => (
                 <div 
