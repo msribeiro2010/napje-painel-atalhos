@@ -155,18 +155,21 @@ const ShortcutButton = ({
         </span>
       </div>
     </Button>
-    {/* Botão de favorito com ícone de coração, sem estrela */}
+    {/* Botão de favorito com ícone de coração */}
     <Button
       variant="ghost"
       size="sm"
-      className="absolute -top-2 -right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 
-                 transition-all duration-300 bg-white/95 backdrop-blur-sm shadow-xl 
-                 border border-pink-200 hover:border-pink-400 rounded-full
-                 hover:scale-110"
+      className={`absolute -top-2 -right-2 h-8 w-8 p-0 transition-all duration-300 
+                  bg-white/95 backdrop-blur-sm shadow-xl border rounded-full hover:scale-110 ${
+        favorites.includes(id) 
+          ? 'opacity-100 border-pink-400 bg-pink-50' 
+          : 'opacity-0 group-hover:opacity-100 border-pink-200 hover:border-pink-400'
+      }`}
       onClick={(e) => {
         e.stopPropagation();
         onToggleFavorite(id);
       }}
+      title={favorites.includes(id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
     >
       <Heart 
         className={`h-5 w-5 transition-all duration-200 ${
@@ -810,8 +813,8 @@ const Atalhos = () => {
                         </div>
                       </CardTitle>
                     </CardHeader>
-                    {favoriteButtons.length > 0 && (
-                      <CardContent className="pt-6">
+                    <CardContent className="pt-6">
+                      {favoriteButtons.length > 0 ? (
                         <SortableContext 
                           items={favorites}
                           strategy={rectSortingStrategy}
@@ -829,8 +832,20 @@ const Atalhos = () => {
                             ))}
                           </div>
                         </SortableContext>
-                      </CardContent>
-                    )}
+                      ) : (
+                        <div className="text-center py-8">
+                          <div className="mx-auto mb-4 p-4 bg-gradient-to-br from-yellow-100 to-amber-50 rounded-full w-20 h-20 flex items-center justify-center">
+                            <Heart className="h-8 w-8 text-yellow-600" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-muted-foreground mb-2">
+                            Nenhum favorito ainda
+                          </h3>
+                          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                            Passe o mouse sobre os atalhos nos grupos abaixo e clique no ícone de coração ❤️ para adicioná-los aos seus favoritos
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
                   </Card>
                 </FavoriteDropZone>
               </div>
