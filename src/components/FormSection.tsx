@@ -62,27 +62,27 @@ export const FormSection = ({ formData, onInputChange, onGenerateDescription, on
         </CardDescription>
        </CardHeader>
        <CardContent className="space-y-6 p-6">
-         <div>
-           <Label htmlFor="chamadoOrigem">Número do Chamado de Origem</Label>
-           <Input
-             id="chamadoOrigem"
-             value={formData.chamadoOrigem}
-             onChange={(e) => onInputChange('chamadoOrigem', e.target.value)}
-             placeholder="Ex: R303300 ou 11100"
-           />
-         </div>
-
-         <div>
-           <div className="mb-2">
-             <Label htmlFor="resumo">Resumo *</Label>
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div>
+             <Label htmlFor="chamadoOrigem">Número do Chamado de Origem</Label>
+             <Input
+               id="chamadoOrigem"
+               value={formData.chamadoOrigem}
+               onChange={(e) => onInputChange('chamadoOrigem', e.target.value)}
+               placeholder="Ex: R303300 ou 11100"
+             />
            </div>
-          <AssuntoSearchSelect
-            value={formData.resumo}
-            onValueChange={(value) => onInputChange('resumo', value)}
-            placeholder="Selecione um resumo padrão ou busque por assunto..."
-            resumosPadroes={resumosPadroes}
-          />
-        </div>
+
+           <div>
+             <Label htmlFor="resumo">Resumo *</Label>
+             <AssuntoSearchSelect
+               value={formData.resumo}
+               onValueChange={(value) => onInputChange('resumo', value)}
+               placeholder="Selecione um resumo padrão ou busque por assunto..."
+               resumosPadroes={resumosPadroes}
+             />
+           </div>
+         </div>
 
         {formData.resumo === 'Outro (personalizado)' && (
           <div>
@@ -96,28 +96,30 @@ export const FormSection = ({ formData, onInputChange, onGenerateDescription, on
           </div>
         )}
 
-        <div>
-          <Label htmlFor="grau">Grau *</Label>
-          <Select onValueChange={(value) => onInputChange('grau', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o grau" />
-            </SelectTrigger>
-            <SelectContent>
-              {graus.map((grau) => (
-                <SelectItem key={grau} value={grau}>{grau}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="grau">Grau *</Label>
+            <Select onValueChange={(value) => onInputChange('grau', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o grau" />
+              </SelectTrigger>
+              <SelectContent>
+                {graus.map((grau) => (
+                  <SelectItem key={grau} value={grau}>{grau}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div>
-          <Label htmlFor="processos">Número(s) do(s) Processo(s)</Label>
-          <Input
-            id="processos"
-            value={formData.processos}
-            onChange={(e) => handleProcessoChange(e.target.value)}
-            placeholder="Ex: 0000000-00.0000.0.00.0000"
-          />
+          <div>
+            <Label htmlFor="processos">Número(s) do(s) Processo(s)</Label>
+            <Input
+              id="processos"
+              value={formData.processos}
+              onChange={(e) => handleProcessoChange(e.target.value)}
+              placeholder="Ex: 0000000-00.0000.0.00.0000"
+            />
+          </div>
         </div>
 
         {formData.grau === '1º Grau' && (
