@@ -211,6 +211,31 @@ Responda de forma útil e contextualizada baseando-se OBRIGATORIAMENTE nas infor
     
     if (data.choices && data.choices.length > 0 && data.choices[0].message?.content) {
       assistantResponse = data.choices[0].message.content.trim();
+      
+      // Remove caracteres de formatação Markdown
+      assistantResponse = assistantResponse
+        // Remove títulos (###, ##, #)
+        .replace(/^#{1,6}\s+/gm, '')
+        // Remove negrito (**texto** ou __texto__)
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/__(.*?)__/g, '$1')
+        // Remove itálico (*texto* ou _texto_)
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/_(.*?)_/g, '$1')
+        // Remove links [texto](url)
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        // Remove código `código`
+        .replace(/`([^`]+)`/g, '$1')
+        // Remove listas (* item ou - item)
+        .replace(/^[\*\-\+]\s+/gm, '')
+        // Remove números de listas (1. item, 2. item)
+        .replace(/^\d+\.\s+/gm, '')
+        // Remove linhas horizontais (--- ou ***)
+        .replace(/^[\-\*]{3,}$/gm, '')
+        // Remove múltiplas quebras de linha
+        .replace(/\n{3,}/g, '\n\n')
+        // Remove espaços extras no início e fim
+        .trim();
     } else if (data.error) {
       console.error('OpenAI API returned error:', data.error);
       assistantResponse = 'Sou o assistente de TI do TRT15. Como posso ajudá-lo hoje?';

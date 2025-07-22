@@ -152,7 +152,7 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
   }
 
   return (
-    <Card className="fixed bottom-6 right-6 w-[520px] h-[700px] max-h-[90vh] shadow-xl z-50 flex flex-col max-w-[calc(100vw-3rem)] bg-gradient-card backdrop-blur-sm border-2 border-blue-200/40 animate-fade-in font-roboto">
+    <Card className="fixed bottom-6 right-6 w-[600px] h-[700px] max-h-[90vh] shadow-xl z-50 flex flex-col max-w-[calc(100vw-3rem)] bg-gradient-card backdrop-blur-sm border-2 border-blue-200/40 animate-fade-in font-roboto">
       {/* Header Moderno */}
       <CardHeader className="bg-gradient-pastel-blue/40 backdrop-blur-sm border-b border-blue-200/30 flex flex-row items-center justify-between space-y-0 pb-3 pt-3">
         <CardTitle className="flex items-center gap-3 text-xl font-roboto">
@@ -214,7 +214,7 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
                 )}
                 
                 <div
-                  className={`max-w-[380px] rounded-2xl px-5 py-4 text-base shadow-soft transition-all duration-200 hover:shadow-medium ${
+                  className={`max-w-[480px] rounded-2xl px-5 py-4 text-base shadow-soft transition-all duration-200 hover:shadow-medium ${
                     message.role === 'user'
                       ? 'bg-gradient-pastel-purple/70 text-purple-800 ml-auto border border-purple-200/40'
                       : 'bg-gradient-card border border-blue-200/30 text-gray-700'
