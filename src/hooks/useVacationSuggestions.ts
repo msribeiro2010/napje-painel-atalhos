@@ -19,45 +19,104 @@ export const useVacationSuggestions = (year: number = new Date().getFullYear()) 
   return useQuery({
     queryKey: ["vacation-suggestions", year],
     queryFn: async (): Promise<VacationSuggestion[]> => {
-      const yearStart = format(startOfYear(new Date(year, 0, 1)), 'yyyy-MM-dd');
-      const yearEnd = format(endOfYear(new Date(year, 11, 31)), 'yyyy-MM-dd');
+      try {
+        const yearStart = format(startOfYear(new Date(year, 0, 1)), 'yyyy-MM-dd');
+        const yearEnd = format(endOfYear(new Date(year, 11, 31)), 'yyyy-MM-dd');
 
-      const { data: feriados, error } = await supabase
-        .from("feriados")
-        .select("*")
-        .gte("data", yearStart)
-        .lte("data", yearEnd)
-        .order("data", { ascending: true });
+        const { data: feriados, error } = await supabase
+          .from("feriados")
+          .select("*")
+          .gte("data", yearStart)
+          .lte("data", yearEnd)
+          .order("data", { ascending: true });
 
-      if (error) {
-        console.error('Erro ao buscar feriados:', error);
+        if (error) {
+          console.error('Erro ao buscar feriados:', error);
+          return [];
+        }
+
+        return generateVacationSuggestions(feriados || [], year);
+      } catch (error) {
+        console.error('Erro no useVacationSuggestions:', error);
         return [];
       }
-
-      return generateVacationSuggestions(feriados || [], year);
     },
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutos
   });
 };
 
 function generateVacationSuggestions(holidays: any[], year: number): VacationSuggestion[] {
-  const suggestions: VacationSuggestion[] = [];
-  
-  const holidayGroups = identifyHolidayGroups(holidays);
-  
-  holidayGroups.forEach((group, index) => {
-    const groupSuggestions = createHolidayBasedSuggestions(group, year, index);
-    suggestions.push(...groupSuggestions);
-  });
+  try {
+    const suggestions: VacationSuggestion[] = [];
+    
+    // Criar algumas sugestões básicas sempre, mesmo sem feriados
+    if (!holidays || holidays.length === 0) {
+      return createBasicSuggestions(year);
+    }
 
-  const strategicSuggestions = createStrategicSuggestions(holidays, year);
-  suggestions.push(...strategicSuggestions);
+    const holidayGroups = identifyHolidayGroups(holidays);
+    
+    holidayGroups.forEach((group, index) => {
+      try {
+        const groupSuggestions = createHolidayBasedSuggestions(group, year, index);
+        suggestions.push(...groupSuggestions);
+      } catch (error) {
+        console.error(`Erro ao processar grupo ${index}:`, error);
+      }
+    });
 
-  const yearEndSuggestions = createYearEndSuggestions(holidays, year);
-  suggestions.push(...yearEndSuggestions);
+    try {
+      const strategicSuggestions = createStrategicSuggestions(holidays, year);
+      suggestions.push(...strategicSuggestions);
+    } catch (error) {
+      console.error('Erro ao criar sugestões estratégicas:', error);
+    }
 
-  return suggestions
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 6);
+    try {
+      const yearEndSuggestions = createYearEndSuggestions(holidays, year);
+      suggestions.push(...yearEndSuggestions);
+    } catch (error) {
+      console.error('Erro ao criar sugestões de fim de ano:', error);
+    }
+
+    return suggestions
+      .filter(s => s && s.id && s.startDate && s.endDate) // Validação básica
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6);
+  } catch (error) {
+    console.error('Erro em generateVacationSuggestions:', error);
+    return createBasicSuggestions(year);
+  }
+}
+
+function createBasicSuggestions(year: number): VacationSuggestion[] {
+  return [
+    {
+      id: 'basic-january',
+      startDate: `${year}-01-08`,
+      endDate: `${year}-01-17`,
+      totalDays: 10,
+      workDays: 8,
+      score: 60,
+      reason: 'Início de ano tranquilo',
+      holidays: [],
+      benefits: ['Preços baixos', 'Destinos menos movimentados'],
+      period: 'primeiro-semestre'
+    },
+    {
+      id: 'basic-may',
+      startDate: `${year}-05-06`,
+      endDate: `${year}-05-15`,
+      totalDays: 10,
+      workDays: 8,
+      score: 55,
+      reason: 'Outono agradável',
+      holidays: [],
+      benefits: ['Clima ameno', 'Baixa temporada'],
+      period: 'primeiro-semestre'
+    }
+  ];
 }
 
 function identifyHolidayGroups(holidays: any[]) {

@@ -5,8 +5,8 @@ import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday }
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
 import { useCalendarEvents } from '@/hooks/useCalendarEvents';
-// import { VacationSuggestionsPanel } from '@/components/VacationSuggestionsPanel';
-// import { VacationSuggestion } from '@/hooks/useVacationSuggestions';
+import { VacationSuggestionsPanel } from '@/components/VacationSuggestionsPanel';
+import { VacationSuggestion } from '@/hooks/useVacationSuggestions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -66,34 +66,38 @@ function CalendarComponent() {
     }
   };
 
-  // const handleSelectVacationSuggestion = (suggestion: VacationSuggestion) => {
-  //   const startDate = new Date(suggestion.startDate);
-  //   const endDate = new Date(suggestion.endDate);
-  //   const newMarks = { ...marks };
-    
-  //   // Marcar todos os dias da sugestão como férias
-  //   let currentDate = new Date(startDate);
-  //   while (currentDate <= endDate) {
-  //     const key = format(currentDate, 'yyyy-MM-dd');
-  //     newMarks[key] = 'ferias';
-  //     currentDate = addDays(currentDate, 1);
-  //   }
-    
-  //   setMarks(newMarks);
-    
-  //   try {
-  //     localStorage.setItem('calendar-marks', JSON.stringify(newMarks));
-  //   } catch (error) {
-  //     console.warn('Não foi possível salvar as marcações do calendário:', error);
-  //   }
-    
-  //   // Navegar para o mês da sugestão se necessário
-  //   if (startDate.getMonth() !== month.getMonth() || startDate.getFullYear() !== month.getFullYear()) {
-  //     setMonth(startDate);
-  //   }
-    
-  //   setShowAISuggestions(false);
-  // };
+  const handleSelectVacationSuggestion = (suggestion: VacationSuggestion) => {
+    try {
+      const startDate = new Date(suggestion.startDate);
+      const endDate = new Date(suggestion.endDate);
+      const newMarks = { ...marks };
+      
+      // Marcar todos os dias da sugestão como férias
+      let currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        const key = format(currentDate, 'yyyy-MM-dd');
+        newMarks[key] = 'ferias';
+        currentDate = addDays(currentDate, 1);
+      }
+      
+      setMarks(newMarks);
+      
+      try {
+        localStorage.setItem('calendar-marks', JSON.stringify(newMarks));
+      } catch (error) {
+        console.warn('Não foi possível salvar as marcações do calendário:', error);
+      }
+      
+      // Navegar para o mês da sugestão se necessário
+      if (startDate.getMonth() !== month.getMonth() || startDate.getFullYear() !== month.getFullYear()) {
+        setMonth(startDate);
+      }
+      
+      setShowAISuggestions(false);
+    } catch (error) {
+      console.error('Erro ao aplicar sugestão de férias:', error);
+    }
+  };
 
   return (
     <div className="relative">
@@ -109,7 +113,7 @@ function CalendarComponent() {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" className="px-3 py-2" onClick={() => setMonth(addDays(month, -30))}>Anterior</Button>
           <Button size="sm" variant="outline" className="px-3 py-2" onClick={() => setMonth(addDays(month, 30))}>Próximo</Button>
-          {/* <Button 
+          <Button 
             size="sm" 
             variant={showAISuggestions ? "default" : "outline"}
             className="px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700" 
@@ -118,7 +122,7 @@ function CalendarComponent() {
           >
             <Brain className="h-4 w-4 mr-1" />
             IA Férias
-          </Button> */}
+          </Button>
           <Button size="sm" variant="destructive" className="px-3 py-2" onClick={clearAllMarks} title="Limpar todas as marcações">Limpar</Button>
         </div>
       </div>
@@ -257,8 +261,8 @@ function CalendarComponent() {
       </div>
       </div>
 
-      {/* Painel de Sugestões de IA - Flutuante - TEMPORARIAMENTE DESABILITADO */}
-      {/* <div className={`fixed top-4 right-4 w-96 max-h-[90vh] overflow-hidden transition-all duration-500 ease-in-out z-50 ${
+      {/* Painel de Sugestões de IA - Flutuante */}
+      <div className={`fixed top-4 right-4 w-96 max-h-[90vh] overflow-hidden transition-all duration-500 ease-in-out z-50 ${
         showAISuggestions 
           ? 'transform translate-x-0 opacity-100' 
           : 'transform translate-x-full opacity-0 pointer-events-none'
@@ -291,7 +295,7 @@ function CalendarComponent() {
             />
           </div>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 }

@@ -17,8 +17,29 @@ export const VacationSuggestionsPanel = ({
   year = new Date().getFullYear(),
   onSelectSuggestion 
 }: VacationSuggestionsPanelProps) => {
-  const { data: suggestions = [], isLoading } = useVacationSuggestions(year);
+  const { data: suggestions = [], isLoading, error } = useVacationSuggestions(year);
   const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(null);
+
+  // Se houver erro, mostrar mensagem amigável
+  if (error) {
+    return (
+      <Card className="shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5" />
+            IA de Férias Inteligentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="text-center text-gray-500">
+            <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+            <p>Erro ao carregar sugestões de IA</p>
+            <p className="text-sm">Tente novamente mais tarde</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const getScoreColor = (score: number) => {
     if (score >= 85) return 'bg-emerald-100 text-emerald-800 border-emerald-200';
