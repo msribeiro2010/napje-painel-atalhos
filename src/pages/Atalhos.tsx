@@ -264,7 +264,7 @@ const SortableItem = ({
                    transition-all duration-500 ease-out
                    hover:scale-[1.03] hover:-translate-y-1
                    rounded-2xl relative overflow-hidden
-                   text-center cursor-grab active:cursor-grabbing"
+                   text-center cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
           onOpenUrl(button.url);
@@ -289,7 +289,7 @@ const SortableItem = ({
                    transition-all duration-300 bg-gradient-to-br from-red-500 to-pink-600 
                    hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl 
                    border-2 border-white rounded-full z-10
-                   hover:scale-110 transform-gpu"
+                   hover:scale-110 transform-gpu cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
           onToggleFavorite(button.id);
@@ -306,7 +306,7 @@ const SortableItem = ({
                    transition-all duration-300 bg-gradient-to-br from-gray-400 to-gray-600 
                    hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl 
                    border-2 border-white rounded-full z-10
-                   hover:scale-110 transform-gpu"
+                   hover:scale-110 transform-gpu cursor-pointer"
         onClick={handleDelete}
         title="Excluir atalho dos Favoritos"
       >
