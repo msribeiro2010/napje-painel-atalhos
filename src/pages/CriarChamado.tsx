@@ -166,7 +166,7 @@ const CriarChamado = () => {
                   variant="secondary"
                   className="px-6 py-2"
                 >
-                  Voltar ao Dashboard
+                  Voltar ao Início
                 </Button>
               </div>
             )}
