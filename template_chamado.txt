@@ -1,0 +1,9 @@
+Assunto: Resumo - Erro no Envio de Publicação DEJT
+
+Detalhes do Usuário/Processo: 
+- Número do Chamado de Origem: R303300
+- Pessoa Relacionada: Marcelo S Ribeiro/Servidor/53036140697/3ª Vara do Trabalho de Araraquara
+- Número do Processo: 0010948-54.2024.5.15.0151
+- Grau da Instância: 1º Grau
+
+Descrição: O servidor Marcelo S Ribeiro está enfrentando um erro ao assinar a ata do processo 0010948-54.2024.5.15.0151, o que impede a publicação da ata no Diário Eletrônico da Justiça do Trabalho (DEJT). Este problema impacta a comunicação oficial dos atos processuais, prejudicando os usuários envolvidos, como magistrados e advogados, uma vez que a falta de publicação pode atrasar a tramitação do processo no sistema.
