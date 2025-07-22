@@ -163,7 +163,7 @@ export const FormSection = ({ formData, onInputChange, onGenerateDescription, on
         <div className="flex gap-3">
           <Button onClick={onGenerateDescription} className="flex-1 bg-blue-600 hover:bg-blue-700">
             <FileText className="h-4 w-4 mr-2" />
-            Gerar Assyst com IA
+            Gerar Chamado com IA
           </Button>
           <Button onClick={onResetForm} variant="outline">
             Limpar

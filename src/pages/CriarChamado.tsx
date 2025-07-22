@@ -97,17 +97,13 @@ const CriarChamado = () => {
     setShowAIDialog(true);
   };
 
-  const handleProceedToGenerate = (enhancedDescription: string, suggestedSolution: string) => {
-    setAiEnhancedDescription(enhancedDescription);
+  const handleProceedToGenerate = (aiTemplate: string, suggestedSolution: string) => {
     setAiSuggestedSolution(suggestedSolution);
     
-    // Atualizar os dados do formulário com a descrição melhorada
-    const updatedFormData = { ...formData, notas: enhancedDescription };
-    
-    const description = generateDescription(updatedFormData);
-    setGeneratedDescription(description);
+    // O template da IA já vem formatado, usamos ele diretamente
+    setGeneratedDescription(aiTemplate);
     setIsGenerated(true);
-    toast.success('Descrição gerada com sucesso!');
+    toast.success('Chamado com IA gerado com sucesso!');
   };
 
   const resetForm = () => {

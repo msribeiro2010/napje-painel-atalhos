@@ -7,19 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, Copy, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useTextEnhancement } from '@/hooks/useTextEnhancement';
 import { FormData } from '@/types/form';
+import { generateAITemplate } from '@/utils/description-generator';
 import { toast } from 'sonner';
 
 interface AIAssystDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   formData: FormData;
-  onProceedToGenerate: (enhancedDescription: string, suggestedSolution: string) => void;
+  onProceedToGenerate: (aiTemplate: string, suggestedSolution: string) => void;
 }
 
 export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenerate }: AIAssystDialogProps) => {
   const { enhanceText, isEnhancing } = useTextEnhancement();
   const [enhancedDescription, setEnhancedDescription] = useState('');
   const [suggestedSolution, setSuggestedSolution] = useState('');
+  const [aiTemplate, setAiTemplate] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -58,6 +60,9 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
 
       if (enhanced) {
         setEnhancedDescription(enhanced);
+        // Gerar template automaticamente com a descrição melhorada
+        const template = generateAITemplate(formData, enhanced);
+        setAiTemplate(template);
       }
       
       if (solution) {
@@ -84,7 +89,7 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
   };
 
   const handleProceed = () => {
-    onProceedToGenerate(enhancedDescription, suggestedSolution);
+    onProceedToGenerate(aiTemplate, suggestedSolution);
     onOpenChange(false);
   };
 
@@ -94,7 +99,7 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
         <DialogHeader>
           <DialogTitle className="flex items-center text-xl">
             <Bot className="h-6 w-6 mr-2 text-blue-600" />
-            Assyst Melhorado com IA
+            Gerador de Chamado com IA
           </DialogTitle>
         </DialogHeader>
 
@@ -150,6 +155,43 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
                       rows={6}
                       className="font-medium"
                       placeholder="A IA irá melhorar a descrição do problema..."
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Template Final do Chamado */}
+              <Card>
+                <CardHeader className="bg-purple-50">
+                  <CardTitle className="text-lg flex items-center">
+                    <Bot className="h-5 w-5 mr-2 text-purple-600" />
+                    Template Final do Chamado
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Prévia do template que será gerado:</Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(aiTemplate, 'template')}
+                        className="flex items-center gap-2"
+                      >
+                        {copiedField === 'template' ? (
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                        Copiar
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={aiTemplate}
+                      onChange={(e) => setAiTemplate(e.target.value)}
+                      rows={8}
+                      className="font-medium bg-purple-50 font-mono text-sm"
+                      placeholder="O template será gerado automaticamente..."
                     />
                   </div>
                 </CardContent>
@@ -213,11 +255,23 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
                   </Button>
                   
                   <Button
-                    onClick={handleProceed}
+                    variant="outline"
+                    onClick={() => {
+                      const template = generateAITemplate(formData, enhancedDescription);
+                      setAiTemplate(template);
+                      toast.success('Template regenerado!');
+                    }}
                     disabled={!enhancedDescription}
+                  >
+                    Atualizar Template
+                  </Button>
+                  
+                  <Button
+                    onClick={handleProceed}
+                    disabled={!aiTemplate}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
-                    Prosseguir para Gerar Assyst
+                    Usar Template com IA
                   </Button>
                 </div>
               </div>

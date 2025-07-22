@@ -71,6 +71,50 @@ export const generateDescription = (formData: FormData): string => {
   return description;
 };
 
+export const generateAITemplate = (formData: FormData, enhancedDescription?: string): string => {
+  const resumoFinal = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
+  
+  let template = `Revise e Finalize\n`;
+  template += `Assunto: Tarefa – ${resumoFinal}\n\n`;
+  
+  template += `Detalhes do Usuário/Processo:\n`;
+  
+  // Número do Chamado de Origem
+  if (formData.chamadoOrigem) {
+    template += `- Número do Chamado de Origem: ${formData.chamadoOrigem}\n`;
+  }
+  
+  // Pessoa Relacionada (Nome/Perfil/CPF/Órgão)
+  if (formData.nomeUsuario || formData.perfilUsuario || formData.cpfUsuario || formData.orgaoJulgador) {
+    template += `- Pessoa Relacionada: `;
+    const dadosPessoa = [];
+    if (formData.nomeUsuario) dadosPessoa.push(formData.nomeUsuario);
+    if (formData.perfilUsuario) dadosPessoa.push(formData.perfilUsuario);
+    if (formData.cpfUsuario) dadosPessoa.push(formData.cpfUsuario);
+    if (formData.orgaoJulgador) dadosPessoa.push(limparCodigoOJ(formData.orgaoJulgador));
+    template += `${dadosPessoa.join('/')}\n`;
+  }
+  
+  // Número do Processo
+  if (formData.processos) {
+    template += `- Número do Processo: ${formData.processos}\n`;
+  }
+  
+  // Grau da Instância
+  if (formData.grau) {
+    template += `- Grau da Instância: ${formData.grau}\n`;
+  }
+  
+  template += `\n`;
+  
+  // Descrição
+  template += `Descrição: `;
+  const descricaoFinal = enhancedDescription || limparDescricaoProblema(formData.notas);
+  template += descricaoFinal;
+  
+  return template;
+};
+
 export const formatDescriptionSections = (formData: FormData): DescriptionSection[] => {
   const resumoFinal = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
 
