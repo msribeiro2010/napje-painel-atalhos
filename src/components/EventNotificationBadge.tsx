@@ -1,0 +1,151 @@
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { 
+  Bell, 
+  Calendar, 
+  Clock, 
+  Gift, 
+  Heart,
+  ExternalLink
+} from 'lucide-react';
+import { useUpcomingEvents } from '@/hooks/useUpcomingEvents';
+import { useNavigate } from 'react-router-dom';
+
+export const EventNotificationBadge = () => {
+  const { events, loading, hasUpcomingEvents } = useUpcomingEvents();
+  const navigate = useNavigate();
+
+  if (loading || !hasUpcomingEvents) {
+    return null;
+  }
+
+  // Combinar e ordenar todos os eventos por proximidade
+  const allEvents = [
+    ...events.feriados.map(f => ({
+      type: 'feriado' as const,
+      title: f.descricao,
+      subtitle: f.tipo,
+      daysUntil: f.daysUntil,
+      id: `feriado-${f.id}`
+    })),
+    ...events.aniversariantes.map(a => ({
+      type: 'aniversario' as const,
+      title: a.nome,
+      subtitle: `${a.idade} anos`,
+      daysUntil: a.daysUntil,
+      id: `aniversario-${a.id}`
+    }))
+  ].sort((a, b) => a.daysUntil - b.daysUntil);
+
+  const urgentCount = allEvents.filter(e => e.daysUntil <= 1).length;
+  const hasUrgent = urgentCount > 0;
+
+  const getBadgeColor = () => {
+    if (hasUrgent) return 'bg-gradient-to-r from-red-500 to-orange-500 text-white animate-pulse';
+    if (allEvents.some(e => e.daysUntil <= 3)) return 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white';
+    return 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white';
+  };
+
+  const getEventIcon = (type: 'feriado' | 'aniversario') => {
+    return type === 'aniversario' ? 
+      <Gift className="h-3 w-3" /> : 
+      <Calendar className="h-3 w-3" />;
+  };
+
+  const getDaysText = (days: number): string => {
+    if (days === 0) return 'hoje';
+    if (days === 1) return 'amanhã';
+    return `${days}d`;
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="relative h-8 px-2 hover:bg-transparent"
+        >
+          <Bell className={`h-4 w-4 ${hasUrgent ? 'text-red-600 animate-ring' : 'text-blue-600'}`} />
+          <Badge 
+            className={`ml-1 text-xs px-1.5 py-0.5 ${getBadgeColor()}`}
+          >
+            {allEvents.length}
+          </Badge>
+          {hasUrgent && (
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping" />
+          )}
+        </Button>
+      </PopoverTrigger>
+      
+      <PopoverContent className="w-80 p-0" align="end">
+        <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-sm">Eventos Próximos</h3>
+            <Badge variant="secondary" className="text-xs">
+              {allEvents.length} evento{allEvents.length !== 1 ? 's' : ''}
+            </Badge>
+          </div>
+          {hasUrgent && (
+            <p className="text-xs text-orange-700 mt-1">
+              🚨 {urgentCount} evento{urgentCount !== 1 ? 's' : ''} urgente{urgentCount !== 1 ? 's' : ''}!
+            </p>
+          )}
+        </div>
+        
+        <div className="max-h-64 overflow-y-auto">
+          {allEvents.slice(0, 5).map((event) => (
+            <div key={event.id} className="p-3 border-b last:border-b-0 hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-full ${
+                  event.type === 'aniversario' 
+                    ? 'bg-pink-100 text-pink-600' 
+                    : 'bg-blue-100 text-blue-600'
+                }`}>
+                  {getEventIcon(event.type)}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{event.title}</p>
+                  <p className="text-xs text-muted-foreground">{event.subtitle}</p>
+                </div>
+                
+                <Badge 
+                  variant={event.daysUntil <= 1 ? 'destructive' : 'secondary'}
+                  className="text-xs"
+                >
+                  <Clock className="h-3 w-3 mr-1" />
+                  {getDaysText(event.daysUntil)}
+                </Badge>
+              </div>
+            </div>
+          ))}
+          
+          {allEvents.length > 5 && (
+            <div className="p-3 text-center border-t bg-gray-50">
+              <p className="text-xs text-muted-foreground">
+                +{allEvents.length - 5} mais evento{allEvents.length - 5 !== 1 ? 's' : ''}
+              </p>
+            </div>
+          )}
+        </div>
+        
+        <div className="p-3 border-t bg-gray-50">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              navigate('/calendario');
+            }}
+            className="w-full text-xs"
+          >
+            <Calendar className="h-3 w-3 mr-2" />
+            Ver todos no calendário
+            <ExternalLink className="h-3 w-3 ml-2" />
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};

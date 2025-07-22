@@ -4,6 +4,7 @@ import UserMenu from '@/components/UserMenu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Clock } from '@/components/ui/clock';
 import { DateDisplay } from '@/components/ui/date-display';
+import { EventNotificationBadge } from '@/components/EventNotificationBadge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +41,7 @@ export const DashboardHeader = ({ isAdmin }: DashboardHeaderProps) => {
         </div>
       </div>
       <div className="flex items-center gap-3">
+        <EventNotificationBadge />
         <Clock />
         <DateDisplay />
         {isAdmin && (

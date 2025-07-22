@@ -13,7 +13,9 @@ import { RecentChamados } from '@/components/dashboard/RecentChamados';
 import { DashboardFooter } from '@/components/dashboard/DashboardFooter';
 import { EventsPanels } from '@/components/EventsPanels';
 import { ChatAssistant } from '@/components/ChatAssistant';
-import { UpcomingEventsAlert } from '@/components/UpcomingEventsAlert';
+import { SmartEventNotifications } from '@/components/SmartEventNotifications';
+import { EventNotificationModal } from '@/components/EventNotificationModal';
+import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
 
@@ -21,6 +23,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isOpen, toggleChat } = useChatAssistant();
+  const { modalOpen, setModalOpen } = useEventNotifications();
   const [postItOpen, setPostItOpen] = useState(false);
   const { 
     duplicarChamado, 
@@ -160,7 +163,7 @@ const Dashboard = () => {
       <div className="max-w-6xl mx-auto">
         <DashboardHeader isAdmin={isAdmin} />
         
-        <UpcomingEventsAlert />
+        <SmartEventNotifications />
         
         <EventsPanels />
         
@@ -177,6 +180,8 @@ const Dashboard = () => {
       </div>
       
       <ChatAssistant isOpen={isOpen} onToggle={toggleChat} />
+      
+      <EventNotificationModal isOpen={modalOpen} onOpenChange={setModalOpen} />
       
       <Dialog open={postItOpen} onOpenChange={setPostItOpen}>
         <DialogContent className="max-w-6xl h-[85vh] p-0 overflow-hidden">
