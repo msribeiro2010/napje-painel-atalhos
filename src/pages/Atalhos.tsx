@@ -158,49 +158,47 @@ const SortableGroup = ({
       ref={setNodeRef} 
       style={style} 
       className={`overflow-hidden transition-all duration-300 animate-fade-in
-                  bg-white/90 backdrop-blur-sm 
-                  hover:shadow-xl shadow-md 
-                  border border-gray-200
-                  rounded-2xl min-h-[160px] flex flex-col justify-between`}
+                  bg-[#f8f5e4] border border-[#e2d8b8] shadow-sm
+                  rounded-xl min-h-[80px] flex flex-col justify-between px-3 py-2 my-2`}
     >
       <Collapsible
         open={openGroups[group.id] || false}
         onOpenChange={() => onToggleGroup(group.id)}
       >
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-gray-50 transition-all duration-300 group p-4 flex flex-row items-center justify-between">
-            <div className="flex items-center gap-3">
+          <CardHeader className="cursor-pointer hover:bg-[#f3ecd2] transition-all duration-300 group p-2 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
               <div 
                 {...attributes} 
                 {...listeners}
-                className="cursor-grab active:cursor-grabbing p-2 hover:bg-blue-100 rounded-lg transition-all duration-200 hover:scale-110"
+                className="cursor-grab active:cursor-grabbing p-1 hover:bg-[#f3ecd2] rounded-lg transition-all duration-200 hover:scale-105"
                 onClick={(e) => e.stopPropagation()}
               >
-                <GripVertical className="h-4 w-4 text-blue-600" />
+                <GripVertical className="h-3 w-3 text-[#bfae7c]" />
               </div>
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                <group.icon className="h-6 w-6 text-white" />
+              <div className="p-2 bg-[#f3ecd2] rounded-lg shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-105">
+                <group.icon className="h-5 w-5 text-[#bfae7c]" />
               </div>
-              <span className="font-bold text-gray-800 dark:text-gray-100 text-lg">{group.title}</span>
+              <span className="font-semibold text-[#7c6a3c] text-base truncate max-w-[120px]">{group.title}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 text-xs font-semibold">{group.buttons.length} atalhos</span>
-              <Button size="icon" variant="outline" className="ml-2 rounded-full w-8 h-8 flex items-center justify-center text-blue-600 border-blue-200 hover:bg-blue-50" title="Adicionar atalho" type="button" tabIndex={-1} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-1">
+              <span className="bg-[#f3ecd2] text-[#bfae7c] rounded-full px-2 py-0.5 text-xs font-medium">{group.buttons.length} atalhos</span>
+              <Button size="icon" variant="outline" className="ml-1 rounded-full w-7 h-7 flex items-center justify-center text-[#bfae7c] border-[#e2d8b8] hover:bg-[#f8f5e4]" title="Adicionar atalho" type="button" tabIndex={-1} onClick={e => e.stopPropagation()}>
                 +
               </Button>
-              <div className="p-2 bg-gray-100 rounded-lg">
+              <div className="p-1 bg-[#f8f5e4] rounded-lg">
                 {openGroups[group.id] ? (
-                  <ChevronUp className="h-5 w-5 text-blue-600" />
+                  <ChevronUp className="h-4 w-4 text-[#bfae7c]" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-blue-600" />
+                  <ChevronDown className="h-4 w-4 text-[#bfae7c]" />
                 )}
               </div>
             </div>
           </CardHeader>
         </CollapsibleTrigger>
         <CollapsibleContent className="animate-accordion-down">
-          <CardContent className="pt-0 pb-6">
-            <div className="grid grid-cols-1 gap-4">
+          <CardContent className="pt-0 pb-3">
+            <div className="grid grid-cols-1 gap-2">
               {group.buttons.map((button, index) => (
                 <div 
                   key={button.id} 
@@ -253,7 +251,7 @@ const SortableItem = ({
     onToggleFavorite(button.id); // Remove dos favoritos
   };
   return (
-    <div ref={setNodeRef} style={mergedStyle} className={className + ' group'} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={mergedStyle} className={(className || '') + ' group relative'} {...attributes} {...listeners}>
       <Button
         variant="outline"
         className="w-full h-28 p-5 flex flex-col items-center justify-center gap-3 
@@ -281,37 +279,40 @@ const SortableItem = ({
           {button.title}
         </span>
       </Button>
-      {/* Botão de desfavoritar com coração */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="absolute -top-3 -right-3 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 
-                   transition-all duration-300 bg-gradient-to-br from-red-500 to-pink-600 
-                   hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl 
-                   border-2 border-white rounded-full z-10
-                   hover:scale-110 transform-gpu cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggleFavorite(button.id);
-        }}
-        title="Remover dos Favoritos"
-      >
-        <Heart className="h-5 w-5 fill-white text-white transition-all duration-200" />
-      </Button>
-      {/* Botão de excluir atalho dos favoritos */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="absolute -top-3 -left-3 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 
-                   transition-all duration-300 bg-gradient-to-br from-gray-400 to-gray-600 
-                   hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl 
-                   border-2 border-white rounded-full z-10
-                   hover:scale-110 transform-gpu cursor-pointer"
-        onClick={handleDelete}
-        title="Excluir atalho dos Favoritos"
-      >
-        <Trash2 className="h-5 w-5 text-white transition-all duration-200" />
-      </Button>
+      {/* Botões de ação: só aparecem no hover do card e nunca durante o drag */}
+      {!isDragging && (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute -top-3 -right-3 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 
+                       transition-all duration-300 bg-gradient-to-br from-red-500 to-pink-600 
+                       hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl 
+                       border-2 border-white rounded-full z-10
+                       hover:scale-110 transform-gpu cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(button.id);
+            }}
+            title="Remover dos Favoritos"
+          >
+            <Heart className="h-5 w-5 fill-white text-white transition-all duration-200" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute -top-3 -left-3 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 
+                       transition-all duration-300 bg-gradient-to-br from-gray-400 to-gray-600 
+                       hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl 
+                       border-2 border-white rounded-full z-10
+                       hover:scale-110 transform-gpu cursor-pointer"
+            onClick={handleDelete}
+            title="Excluir atalho dos Favoritos"
+          >
+            <Trash2 className="h-5 w-5 text-white transition-all duration-200" />
+          </Button>
+        </>
+      )}
     </div>
   );
 };
