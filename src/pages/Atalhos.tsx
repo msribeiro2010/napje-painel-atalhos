@@ -918,7 +918,7 @@ const Atalhos = () => {
     .filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-gradient-bg relative overflow-hidden">
+    <div className="min-h-screen bg-[#f8f5e4] dark:bg-[#23201a] p-2 dark:text-[#bfae7c]">
       {/* Background decorative elements with pastel tones */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-pastel-purple rounded-full blur-3xl opacity-30"></div>
