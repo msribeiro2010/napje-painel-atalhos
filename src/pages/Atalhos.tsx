@@ -129,16 +129,15 @@ interface SortableGroupProps {
   onOpenUrl: (url: string) => void;
 }
 
+// Refatoração visual dos grupos de atalhos
 const SortableGroup = ({ 
   group, 
-  isFavorite, 
   openGroups, 
   favorites, 
   onToggleGroup, 
-  onToggleFavoriteGroup, 
   onToggleFavoriteButton, 
   onOpenUrl 
-}: SortableGroupProps) => {
+}: Omit<SortableGroupProps, 'isFavorite' | 'onToggleFavoriteGroup'>) => {
   const {
     attributes,
     listeners,
@@ -159,58 +158,46 @@ const SortableGroup = ({
       ref={setNodeRef} 
       style={style} 
       className={`overflow-hidden transition-all duration-300 animate-fade-in
-                  bg-gradient-card backdrop-blur-sm 
-                  hover:shadow-large shadow-soft 
-                  border-2 border-blue-200/40 hover:border-blue-300/60
-                  ${isDragging ? 'shadow-large scale-105 rotate-2' : ''}
-                  ${isFavorite ? 'ring-2 ring-pink-200/60 border-pink-300/60 bg-gradient-pastel-pink/40' : ''}`}
+                  bg-white/90 backdrop-blur-sm 
+                  hover:shadow-xl shadow-md 
+                  border border-gray-200
+                  rounded-2xl min-h-[160px] flex flex-col justify-between`}
     >
       <Collapsible
         open={openGroups[group.id] || false}
-        onOpenChange={(isOpen) => onToggleGroup(group.id)}
+        onOpenChange={() => onToggleGroup(group.id)}
       >
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:via-indigo-50/50 hover:to-blue-50 transition-all duration-300 group">
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div 
-                  {...attributes} 
-                  {...listeners}
-                  className="cursor-grab active:cursor-grabbing p-2 hover:bg-blue-100 rounded-lg transition-all duration-200 hover:scale-110"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <GripVertical className="h-4 w-4 text-blue-600" />
-                </div>
-                <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                  <group.icon className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-gray-800 dark:text-gray-100 text-lg">{group.title}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{group.buttons.length} atalhos</span>
-                </div>
-                <Badge variant="secondary" className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-md">
-                  {group.buttons.length}
-                </Badge>
-                {isFavorite && (
-                  <div className="flex items-center gap-1 bg-gradient-to-r from-red-100 to-pink-100 px-2 py-1 rounded-full">
-                    <Heart className="h-4 w-4 fill-red-400 text-red-400" />
-                    <span className="text-xs text-red-600 font-medium">Favorito</span>
-                  </div>
+          <CardHeader className="cursor-pointer hover:bg-gray-50 transition-all duration-300 group p-4 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div 
+                {...attributes} 
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing p-2 hover:bg-blue-100 rounded-lg transition-all duration-200 hover:scale-110"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <GripVertical className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                <group.icon className="h-6 w-6 text-white" />
+              </div>
+              <span className="font-bold text-gray-800 dark:text-gray-100 text-lg">{group.title}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 text-xs font-semibold">{group.buttons.length} atalhos</span>
+              <Button size="icon" variant="outline" className="ml-2 rounded-full w-8 h-8 flex items-center justify-center text-blue-600 border-blue-200 hover:bg-blue-50" title="Adicionar atalho" type="button" tabIndex={-1} onClick={e => e.stopPropagation()}>
+                +
+              </Button>
+              <div className="p-2 bg-gray-100 rounded-lg">
+                {openGroups[group.id] ? (
+                  <ChevronUp className="h-5 w-5 text-blue-600" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-blue-600" />
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
-                  {openGroups[group.id] ? (
-                    <ChevronUp className="h-5 w-5 text-blue-600" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-blue-600" />
-                  )}
-                </div>
-              </div>
-            </CardTitle>
+            </div>
           </CardHeader>
         </CollapsibleTrigger>
-        
         <CollapsibleContent className="animate-accordion-down">
           <CardContent className="pt-0 pb-6">
             <div className="grid grid-cols-1 gap-4">
