@@ -15,6 +15,7 @@ import { OrgaoJulgadorSearchSelect2Grau } from './OrgaoJulgadorSearchSelect2Grau
 import { UsuarioAutoComplete } from './UsuarioAutoComplete';
 import { AIEnhanceButton } from '@/components/ui/ai-enhance-button';
 import { useTextEnhancement } from '@/hooks/useTextEnhancement';
+import { useState } from 'react';
 
 interface FormSectionProps {
   formData: FormData;
@@ -25,6 +26,8 @@ interface FormSectionProps {
 
 export const FormSection = ({ formData, onInputChange, onGenerateDescription, onResetForm }: FormSectionProps) => {
   const { enhanceText, isEnhancing } = useTextEnhancement();
+  const [solucao, setSolucao] = useState('');
+  const [isGeneratingSolucao, setIsGeneratingSolucao] = useState(false);
   
   const handleEnhanceResumo = async () => {
     const textToEnhance = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
@@ -87,6 +90,18 @@ export const FormSection = ({ formData, onInputChange, onGenerateDescription, on
     } else {
       console.log('Condições não atendidas - Grau:', formData.grau, 'Value:', value.trim());
     }
+  };
+
+  const handleGenerateSolucao = async () => {
+    if (!formData.notas) return;
+    setIsGeneratingSolucao(true);
+    const contextualText = formData.notas +
+      (formData.processos ? `\n\nNúmero do processo: ${formData.processos}` : '') +
+      (formData.orgaoJulgador ? `\nÓrgão julgador: ${formData.orgaoJulgador}` : '') +
+      (formData.grau ? `\nGrau: ${formData.grau}` : '');
+    const suggestion = await enhanceText(contextualText, 'sugestao_solucao');
+    if (suggestion) setSolucao(suggestion);
+    setIsGeneratingSolucao(false);
   };
   return (
     <Card className="shadow-lg">
@@ -196,6 +211,26 @@ export const FormSection = ({ formData, onInputChange, onGenerateDescription, on
             onChange={(e) => onInputChange('notas', e.target.value)}
             placeholder="Descreva detalhadamente o problema, ações já realizadas e informações relevantes..."
             rows={4}
+          />
+        </div>
+
+        {/* Campo de Sugestão de Solução */}
+        <div>
+          <div className="flex items-center justify-between mb-2 mt-4">
+            <Label htmlFor="sugestaoSolucao">Sugestão de Solução (IA)</Label>
+            <AIEnhanceButton
+              onClick={handleGenerateSolucao}
+              isLoading={isGeneratingSolucao}
+              disabled={!formData.notas}
+            />
+          </div>
+          <Textarea
+            id="sugestaoSolucao"
+            value={solucao}
+            readOnly
+            placeholder="Clique no botão de IA para gerar uma sugestão de solução para o servidor."
+            rows={3}
+            className="bg-gray-50 text-gray-700"
           />
         </div>
 

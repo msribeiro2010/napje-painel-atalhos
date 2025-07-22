@@ -40,8 +40,12 @@ serve(async (req) => {
         userPrompt = `Melhore este resumo para um chamado de suporte do NAPJe, mantendo-o claro, profissional e técnico. Retorne apenas o texto melhorado:\n\n"${text}"`;
         break;
       case 'descricao':
-        systemPrompt = 'Você é um assistente especializado em melhorar descrições de problemas técnicos para chamados de suporte do sistema NAPJe. Organize as informações de forma clara, adicione contexto relevante sobre funcionalidades do sistema judiciário e mantenha a linguagem técnica apropriada.';
-        userPrompt = `Melhore esta descrição de problema para um chamado de suporte técnico do NAPJe. Organize as informações de forma estruturada, adicione contexto técnico se necessário, identifique possíveis causas e mantenha a linguagem clara e profissional. Retorne apenas o texto melhorado:\n\n"${text}"`;
+        systemPrompt = 'Você é um assistente especializado em melhorar descrições de problemas técnicos para chamados de suporte do sistema NAPJe. Sua tarefa é apenas reescrever o texto do problema de forma mais clara, organizada e profissional, SEM sugerir soluções, diagnósticos ou causas. Se houver informações como número do processo, órgão julgador ou outros dados relevantes, mantenha e destaque essas informações na descrição. Nunca invente dados e nunca proponha solução.';
+        userPrompt = `Reescreva a descrição do problema abaixo, tornando-a mais clara, organizada e profissional, sem sugerir solução ou diagnóstico. Mantenha e destaque informações como número do processo, órgão julgador, etc, se existirem. Retorne apenas o texto melhorado:\n\n"${text}"`;
+        break;
+      case 'sugestao_solucao':
+        systemPrompt = 'Você é um assistente especializado em suporte técnico do sistema NAPJe. Com base na descrição do problema fornecida, sugira uma possível solução ou orientação inicial para o servidor responsável, de forma clara, objetiva e profissional. Se não for possível sugerir uma solução, oriente o servidor a buscar mais informações ou encaminhar para o suporte especializado. Sempre responda em português brasileiro.';
+        userPrompt = `Com base na descrição do problema abaixo, gere uma sugestão de solução ou orientação inicial para o servidor responsável. Seja claro, objetivo e profissional. Se não for possível sugerir uma solução, oriente a buscar mais informações ou encaminhar para o suporte especializado.\n\nDescrição do problema:\n"${text}"`;
         break;
       default:
         systemPrompt = 'Você é um assistente especializado em melhorar textos para comunicação profissional no contexto de suporte técnico. Mantenha a linguagem clara, objetiva e profissional.';
