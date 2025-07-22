@@ -145,6 +145,14 @@ const Dashboard = () => {
       onClick: () => navigate('/admin/atalhos'),
       variant: 'outline' as const
     });
+    
+    dashboardActions.push({
+      title: 'Gerenciar Feriados',
+      description: 'Administrar feriados e sugestões de férias',
+      icon: Calendar,
+      onClick: () => navigate('/admin/feriados'),
+      variant: 'outline' as const
+    });
   }
 
   return (

@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Home, Umbrella, Laptop, ArrowLeft, Gift, Star } from 'lucide-react';
+import { Calendar as CalendarIcon, Home, Umbrella, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles } from 'lucide-react';
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
 import { useCalendarEvents } from '@/hooks/useCalendarEvents';
+import { VacationSuggestionsPanel } from '@/components/VacationSuggestionsPanel';
+import { VacationSuggestion } from '@/hooks/useVacationSuggestions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const calendarLabels = {
   presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-4 w-4 text-[#bfae7c]" /> },
@@ -17,6 +20,7 @@ const calendarLabels = {
 function CalendarComponent() {
   const today = new Date();
   const [month, setMonth] = useState(today);
+  const [showAISuggestions, setShowAISuggestions] = useState(false);
   
   const [marks, setMarks] = useState<{ [date: string]: 'presencial' | 'ferias' | 'remoto' | 'none' }>(() => {
     try {
@@ -62,9 +66,39 @@ function CalendarComponent() {
     }
   };
 
+  const handleSelectVacationSuggestion = (suggestion: VacationSuggestion) => {
+    const startDate = new Date(suggestion.startDate);
+    const endDate = new Date(suggestion.endDate);
+    const newMarks = { ...marks };
+    
+    // Marcar todos os dias da sugestão como férias
+    let currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const key = format(currentDate, 'yyyy-MM-dd');
+      newMarks[key] = 'ferias';
+      currentDate = addDays(currentDate, 1);
+    }
+    
+    setMarks(newMarks);
+    
+    try {
+      localStorage.setItem('calendar-marks', JSON.stringify(newMarks));
+    } catch (error) {
+      console.warn('Não foi possível salvar as marcações do calendário:', error);
+    }
+    
+    // Navegar para o mês da sugestão se necessário
+    if (startDate.getMonth() !== month.getMonth() || startDate.getFullYear() !== month.getFullYear()) {
+      setMonth(startDate);
+    }
+    
+    setShowAISuggestions(false);
+  };
+
   return (
-    <div className="bg-[#f8f5e4] border border-[#e2d8b8] rounded-xl shadow-sm p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
+    <div className="relative">
+      <div className="bg-[#f8f5e4] border border-[#e2d8b8] rounded-xl shadow-sm p-6 max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
         <div className="flex flex-col">
           <span className="font-semibold text-[#7c6a3c] text-xl flex items-center gap-2">
             <CalendarIcon className="h-6 w-6 text-[#bfae7c]" />
@@ -75,6 +109,16 @@ function CalendarComponent() {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" className="px-3 py-2" onClick={() => setMonth(addDays(month, -30))}>Anterior</Button>
           <Button size="sm" variant="outline" className="px-3 py-2" onClick={() => setMonth(addDays(month, 30))}>Próximo</Button>
+          <Button 
+            size="sm" 
+            variant={showAISuggestions ? "default" : "outline"}
+            className="px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700" 
+            onClick={() => setShowAISuggestions(!showAISuggestions)}
+            title="Sugestões inteligentes de férias com IA"
+          >
+            <Brain className="h-4 w-4 mr-1" />
+            IA Férias
+          </Button>
           <Button size="sm" variant="destructive" className="px-3 py-2" onClick={clearAllMarks} title="Limpar todas as marcações">Limpar</Button>
         </div>
       </div>
@@ -210,6 +254,43 @@ function CalendarComponent() {
             <span>Carregando eventos...</span>
           </div>
         )}
+      </div>
+      </div>
+
+      {/* Painel de Sugestões de IA - Flutuante */}
+      <div className={`fixed top-4 right-4 w-96 max-h-[90vh] overflow-hidden transition-all duration-500 ease-in-out z-50 ${
+        showAISuggestions 
+          ? 'transform translate-x-0 opacity-100' 
+          : 'transform translate-x-full opacity-0 pointer-events-none'
+      }`}>
+        <div className="bg-white rounded-xl shadow-2xl border border-gray-200">
+          <div className="p-4 border-b bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                <span className="font-semibold">Assistente de Férias</span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowAISuggestions(false)}
+                className="text-white hover:bg-white/20"
+              >
+                ×
+              </Button>
+            </div>
+            <p className="text-sm text-purple-100 mt-1">
+              Sugestões inteligentes para {month.getFullYear()}
+            </p>
+          </div>
+          
+          <div className="max-h-[calc(90vh-8rem)] overflow-y-auto p-4">
+            <VacationSuggestionsPanel
+              year={month.getFullYear()}
+              onSelectSuggestion={handleSelectVacationSuggestion}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

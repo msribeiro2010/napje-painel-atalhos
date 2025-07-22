@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import AdminUsers from "./pages/AdminUsers";
 import AdminShortcuts from "./pages/AdminShortcuts";
+import AdminHolidays from "./pages/AdminHolidays";
 import OrgaosJulgadores from "./pages/OrgaosJulgadores";
 import NotFound from "./pages/NotFound";
 
@@ -72,11 +73,16 @@ const App = () => (
                  <AdminUsers />
                </ProtectedRoute>
              } />
-             <Route path="/admin/atalhos" element={
-               <ProtectedRoute requireAdmin={true}>
-                 <AdminShortcuts />
-               </ProtectedRoute>
-             } />
+                       <Route path="/admin/atalhos" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminShortcuts />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/feriados" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminHolidays />
+            </ProtectedRoute>
+          } />
              <Route path="/orgaos-julgadores" element={
                <ProtectedRoute>
                  <OrgaosJulgadores />
