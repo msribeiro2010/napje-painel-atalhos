@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
 
 interface Message {
   id: string;
@@ -21,11 +22,18 @@ interface ChatAssistantProps {
 }
 
 export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) => {
+  const { data: profile } = useProfile();
+  
+  const getWelcomeMessage = () => {
+    const nomeUsuario = profile?.nome_completo || profile?.email?.split('@')[0] || 'Usuário';
+    return `Como posso ajudar ${nomeUsuario}?`;
+  };
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      content: 'Olá! Sou seu assistente de TI do TRT15. Posso ajudá-lo com informações da base de conhecimento e chamados recentes. Como posso ajudar?',
+      content: getWelcomeMessage(),
       timestamp: new Date()
     }
   ]);
@@ -33,6 +41,17 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Update welcome message when profile loads
+  useEffect(() => {
+    if (profile) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === 'welcome' 
+          ? { ...msg, content: getWelcomeMessage() }
+          : msg
+      ));
+    }
+  }, [profile]);
 
   // Auto scroll to bottom when new messages arrive
   useEffect(() => {
@@ -131,7 +150,7 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
     setMessages([{
       id: 'welcome',
       role: 'assistant',
-      content: 'Olá! Sou seu assistente de TI do TRT15. Posso ajudá-lo com informações da base de conhecimento e chamados recentes. Como posso ajudar?',
+      content: getWelcomeMessage(),
       timestamp: new Date()
     }]);
   };
