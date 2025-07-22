@@ -82,7 +82,7 @@ function CalendarComponent() {
             <button
               key={key}
               onClick={() => handleDayClick(date)}
-              className={\`rounded-lg border border-[#e2d8b8] flex flex-col items-center justify-center h-16 w-full transition-all duration-150 focus:outline-none hover:shadow-md \${isCurrent ? 'ring-2 ring-[#bfae7c]' : ''}\`}
+              className={`rounded-lg border border-[#e2d8b8] flex flex-col items-center justify-center h-16 w-full transition-all duration-150 focus:outline-none hover:shadow-md ${isCurrent ? 'ring-2 ring-[#bfae7c]' : ''}`}
               style={{ background: calendarLabels[mark].color }}
               title={calendarLabels[mark].label}
             >
