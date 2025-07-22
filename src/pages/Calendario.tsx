@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Home, Umbrella, Laptop, ArrowLeft } from 'lucide-react';
+import { Calendar as CalendarIcon, Home, Umbrella, Laptop, ArrowLeft, Gift, Star } from 'lucide-react';
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
+import { useCalendarEvents } from '@/hooks/useCalendarEvents';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const calendarLabels = {
   presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-4 w-4 text-[#bfae7c]" /> },
@@ -25,7 +27,17 @@ function CalendarComponent() {
     }
   });
 
+  const { data: events = [], isLoading: eventsLoading } = useCalendarEvents(month);
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
+
+  // Organizar eventos por data
+  const eventsByDate = events.reduce((acc, event) => {
+    if (!acc[event.date]) {
+      acc[event.date] = [];
+    }
+    acc[event.date].push(event);
+    return acc;
+  }, {} as { [date: string]: typeof events });
 
   const handleDayClick = (date: Date) => {
     const key = format(date, 'yyyy-MM-dd');
@@ -78,41 +90,126 @@ function CalendarComponent() {
           const key = format(date, 'yyyy-MM-dd');
           const mark = marks[key] || 'none';
           const isCurrent = isToday(date);
+          const dayEvents = eventsByDate[key] || [];
+          const hasFeriado = dayEvents.some(e => e.type === 'feriado');
+          const hasAniversario = dayEvents.some(e => e.type === 'aniversario');
+          
+          // Determinar cor de fundo - priorizar feriados
+          let backgroundColor = calendarLabels[mark].color;
+          if (hasFeriado && hasAniversario) {
+            backgroundColor = 'linear-gradient(45deg, #ffeb3b 50%, #ff9800 50%)'; // Gradiente para ambos
+          } else if (hasFeriado) {
+            backgroundColor = '#ffeb3b'; // Amarelo para feriados
+          } else if (hasAniversario) {
+            backgroundColor = '#ff9800'; // Laranja para aniversários
+          }
+          
+          const eventTitles = dayEvents.map(e => e.title).join('\n');
+          const fullTitle = [calendarLabels[mark].label, eventTitles].filter(Boolean).join('\n');
+          
           return (
-            <button
-              key={key}
-              onClick={() => handleDayClick(date)}
-              className={`rounded-lg border border-[#e2d8b8] flex flex-col items-center justify-center h-16 w-full transition-all duration-150 focus:outline-none hover:shadow-md ${isCurrent ? 'ring-2 ring-[#bfae7c]' : ''}`}
-              style={{ background: calendarLabels[mark].color }}
-              title={calendarLabels[mark].label}
-            >
-              <span className="font-semibold text-[#7c6a3c] text-base">{date.getDate()}</span>
-              {calendarLabels[mark].icon}
-            </button>
+            <TooltipProvider key={key}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => handleDayClick(date)}
+                    className={`rounded-lg border border-[#e2d8b8] flex flex-col items-center justify-center h-16 w-full transition-all duration-150 focus:outline-none hover:shadow-md relative ${isCurrent ? 'ring-2 ring-[#bfae7c]' : ''}`}
+                    style={{ background: backgroundColor }}
+                    title={fullTitle}
+                  >
+                    <span className="font-semibold text-[#7c6a3c] text-base">{date.getDate()}</span>
+                    
+                    {/* Ícones de eventos */}
+                    <div className="flex gap-1 absolute bottom-1 left-1">
+                      {hasFeriado && <Star className="h-3 w-3 text-amber-700" />}
+                      {hasAniversario && <Gift className="h-3 w-3 text-orange-700" />}
+                    </div>
+                    
+                    {/* Ícone do tipo de trabalho */}
+                    <div className="absolute bottom-1 right-1">
+                      {calendarLabels[mark].icon}
+                    </div>
+                  </button>
+                </TooltipTrigger>
+                {dayEvents.length > 0 && (
+                  <TooltipContent>
+                    <div className="space-y-1">
+                      {dayEvents.map((event, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          {event.type === 'feriado' ? (
+                            <Star className="h-3 w-3 text-amber-500" />
+                          ) : (
+                            <Gift className="h-3 w-3 text-orange-500" />
+                          )}
+                          <span className="text-sm">{event.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           );
         })}
       </div>
       
-      <div className="flex gap-6 justify-center text-sm bg-white/50 p-3 rounded-lg">
-        <span className="flex items-center gap-2">
-          <span className="inline-block w-4 h-4 rounded bg-[#f5e7c4] border border-[#e2d8b8]"></span>
-          <Home className="h-4 w-4 text-[#bfae7c]" />
-          Presencial
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="inline-block w-4 h-4 rounded bg-[#ffe6e6] border border-[#e2d8b8]"></span>
-          <Umbrella className="h-4 w-4 text-[#e6a1a1]" />
-          Férias
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="inline-block w-4 h-4 rounded bg-[#e6f7ff] border border-[#e2d8b8]"></span>
-          <Laptop className="h-4 w-4 text-[#7cc3e6]" />
-          Remoto
-        </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-white/50 p-4 rounded-lg">
+        <div className="space-y-2">
+          <h4 className="font-semibold text-[#7c6a3c] text-sm">Modalidade de Trabalho</h4>
+          <div className="flex flex-wrap gap-4">
+            <span className="flex items-center gap-2">
+              <span className="inline-block w-4 h-4 rounded bg-[#f5e7c4] border border-[#e2d8b8]"></span>
+              <Home className="h-4 w-4 text-[#bfae7c]" />
+              Presencial
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="inline-block w-4 h-4 rounded bg-[#ffe6e6] border border-[#e2d8b8]"></span>
+              <Umbrella className="h-4 w-4 text-[#e6a1a1]" />
+              Férias
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="inline-block w-4 h-4 rounded bg-[#e6f7ff] border border-[#e2d8b8]"></span>
+              <Laptop className="h-4 w-4 text-[#7cc3e6]" />
+              Remoto
+            </span>
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <h4 className="font-semibold text-[#7c6a3c] text-sm">Eventos</h4>
+          <div className="flex flex-wrap gap-4">
+            <span className="flex items-center gap-2">
+              <span className="inline-block w-4 h-4 rounded bg-[#ffeb3b] border border-[#e2d8b8]"></span>
+              <Star className="h-4 w-4 text-amber-700" />
+              Feriados
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="inline-block w-4 h-4 rounded bg-[#ff9800] border border-[#e2d8b8]"></span>
+              <Gift className="h-4 w-4 text-orange-700" />
+              Aniversários
+            </span>
+          </div>
+        </div>
       </div>
       
-      <div className="mt-4 text-center text-sm text-[#bfae7c]">
-        <p>Clique nos dias para marcar seu tipo de trabalho</p>
+      <div className="mt-4 space-y-2">
+        <div className="text-center text-sm text-[#bfae7c]">
+          <p>Clique nos dias para marcar seu tipo de trabalho</p>
+        </div>
+        
+        {events.length > 0 && (
+          <div className="text-center text-xs text-[#bfae7c] bg-white/30 p-2 rounded">
+            <span className="font-medium">
+              {events.filter(e => e.type === 'feriado').length} feriado(s) e {events.filter(e => e.type === 'aniversario').length} aniversário(s) este mês
+            </span>
+          </div>
+        )}
+        
+        {eventsLoading && (
+          <div className="text-center text-xs text-[#bfae7c]">
+            <span>Carregando eventos...</span>
+          </div>
+        )}
       </div>
     </div>
   );
