@@ -150,7 +150,7 @@ const ShortcutButton = ({
                         shadow-lg transition-all duration-300 flex-shrink-0">
           <Icon className="h-6 w-6 text-white group-hover:text-yellow-200" />
         </div>
-        <span className="text-base text-center leading-tight font-semibold text-gray-800 dark:text-gray-100 group-hover:text-blue-900 dark:group-hover:text-blue-100 transition-colors line-clamp-2 flex-1 flex items-center justify-center w-full">
+        <span className="text-sm text-center leading-tight font-medium text-gray-800 dark:text-gray-100 group-hover:text-blue-900 dark:group-hover:text-blue-100 transition-colors line-clamp-2 flex-1 flex items-center justify-center w-full">
           {title}
         </span>
       </div>
@@ -347,7 +347,7 @@ const SortableItem = ({
                         shadow-lg group-hover:shadow-xl transition-all duration-300 ">
           <button.icon className="h-6 w-6 text-white group-hover:text-yellow-200" />
         </div>
-        <span className="text-base font-semibold text-gray-800 dark:text-gray-100 
+        <span className="text-sm font-medium text-gray-800 dark:text-gray-100 
                        group-hover:text-amber-900 dark:group-hover:text-amber-100 
                        transition-colors duration-300 line-clamp-2 leading-tight w-full">
           {button.title}
