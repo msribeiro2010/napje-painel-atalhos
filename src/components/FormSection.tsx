@@ -62,29 +62,30 @@ export const FormSection = ({ formData, onInputChange, onGenerateDescription, on
         </CardDescription>
        </CardHeader>
        <CardContent className="space-y-6 p-6">
+         {/* Resumo first - most important field */}
          <div>
-           <Label htmlFor="chamadoOrigem">Chamado Origem</Label>
-           <Input
-             id="chamadoOrigem"
-             value={formData.chamadoOrigem}
-             onChange={(e) => onInputChange('chamadoOrigem', e.target.value)}
-             placeholder="Ex: R303300 ou 11100"
-           />
-         </div>
+           <div className="mb-2">
+             <Label htmlFor="resumo">Resumo *</Label>
+           </div>
+          <AssuntoSearchSelect
+            value={formData.resumo}
+            onValueChange={(value) => onInputChange('resumo', value)}
+            placeholder="Selecione um resumo padrão ou busque por assunto..."
+            resumosPadroes={resumosPadroes}
+          />
+        </div>
 
          {/* Grid layout for better screen utilization */}
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
            <div>
-             <div className="mb-2">
-               <Label htmlFor="resumo">Resumo *</Label>
-             </div>
-            <AssuntoSearchSelect
-              value={formData.resumo}
-              onValueChange={(value) => onInputChange('resumo', value)}
-              placeholder="Selecione um resumo padrão ou busque por assunto..."
-              resumosPadroes={resumosPadroes}
-            />
-          </div>
+             <Label htmlFor="chamadoOrigem">Chamado Origem</Label>
+             <Input
+               id="chamadoOrigem"
+               value={formData.chamadoOrigem}
+               onChange={(e) => onInputChange('chamadoOrigem', e.target.value)}
+               placeholder="Ex: R303300 ou 11100"
+             />
+           </div>
 
           <div>
             <Label htmlFor="grau">Grau *</Label>
