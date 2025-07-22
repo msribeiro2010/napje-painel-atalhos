@@ -13,9 +13,7 @@ import { AssuntoSearchSelect } from './AssuntoSearchSelect';
 import { OrgaoJulgadorSearchSelect } from './OrgaoJulgadorSearchSelect';
 import { OrgaoJulgadorSearchSelect2Grau } from './OrgaoJulgadorSearchSelect2Grau';
 import { UsuarioAutoComplete } from './UsuarioAutoComplete';
-import { AIEnhanceButton } from '@/components/ui/ai-enhance-button';
-import { useTextEnhancement } from '@/hooks/useTextEnhancement';
-import { useState } from 'react';
+
 
 interface FormSectionProps {
   formData: FormData;
@@ -25,49 +23,8 @@ interface FormSectionProps {
 }
 
 export const FormSection = ({ formData, onInputChange, onGenerateDescription, onResetForm }: FormSectionProps) => {
-  const { enhanceText, isEnhancing } = useTextEnhancement();
-  const [solucao, setSolucao] = useState('');
-  const [isGeneratingSolucao, setIsGeneratingSolucao] = useState(false);
   
-  const handleEnhanceResumo = async () => {
-    const textToEnhance = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
-    if (!textToEnhance) return;
-    
-    const enhanced = await enhanceText(textToEnhance, 'resumo');
-    if (enhanced) {
-      if (formData.resumo === 'Outro (personalizado)') {
-        onInputChange('resumoCustom', enhanced);
-      } else {
-        onInputChange('resumo', 'Outro (personalizado)');
-        onInputChange('resumoCustom', enhanced);
-      }
-    }
-  };
 
-  const handleEnhanceDescricao = async () => {
-    if (!formData.notas) return;
-    
-    // Criar contexto adicional para a IA
-    let contextualText = formData.notas;
-    
-    // Adicionar informações do processo se disponíveis
-    if (formData.processos) {
-      contextualText += `\n\nNúmero do processo: ${formData.processos}`;
-    }
-    
-    if (formData.orgaoJulgador) {
-      contextualText += `\nÓrgão julgador: ${formData.orgaoJulgador}`;
-    }
-    
-    if (formData.grau) {
-      contextualText += `\nGrau: ${formData.grau}`;
-    }
-    
-    const enhanced = await enhanceText(contextualText, 'descricao');
-    if (enhanced) {
-      onInputChange('notas', enhanced);
-    }
-  };
   
   const handleProcessoChange = (value: string) => {
     console.log('HandleProcessoChange chamado com:', value);
@@ -92,17 +49,7 @@ export const FormSection = ({ formData, onInputChange, onGenerateDescription, on
     }
   };
 
-  const handleGenerateSolucao = async () => {
-    if (!formData.notas) return;
-    setIsGeneratingSolucao(true);
-    const contextualText = formData.notas +
-      (formData.processos ? `\n\nNúmero do processo: ${formData.processos}` : '') +
-      (formData.orgaoJulgador ? `\nÓrgão julgador: ${formData.orgaoJulgador}` : '') +
-      (formData.grau ? `\nGrau: ${formData.grau}` : '');
-    const suggestion = await enhanceText(contextualText, 'sugestao_solucao');
-    if (suggestion) setSolucao(suggestion);
-    setIsGeneratingSolucao(false);
-  };
+
   return (
     <Card className="shadow-lg">
       <CardHeader className="bg-blue-600 text-white">
@@ -197,40 +144,13 @@ export const FormSection = ({ formData, onInputChange, onGenerateDescription, on
         )}
 
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <Label htmlFor="notas">Descrição do Problema *</Label>
-            <AIEnhanceButton
-              onClick={handleEnhanceDescricao}
-              isLoading={isEnhancing}
-              disabled={!formData.notas}
-            />
-          </div>
+          <Label htmlFor="notas">Descrição do Problema *</Label>
           <Textarea
             id="notas"
             value={formData.notas}
             onChange={(e) => onInputChange('notas', e.target.value)}
             placeholder="Descreva detalhadamente o problema, ações já realizadas e informações relevantes..."
             rows={4}
-          />
-        </div>
-
-        {/* Campo de Sugestão de Solução */}
-        <div>
-          <div className="flex items-center justify-between mb-2 mt-4">
-            <Label htmlFor="sugestaoSolucao">Sugestão de Solução (IA)</Label>
-            <AIEnhanceButton
-              onClick={handleGenerateSolucao}
-              isLoading={isGeneratingSolucao}
-              disabled={!formData.notas}
-            />
-          </div>
-          <Textarea
-            id="sugestaoSolucao"
-            value={solucao}
-            readOnly
-            placeholder="Clique no botão de IA para gerar uma sugestão de solução para o servidor."
-            rows={3}
-            className="bg-gray-50 text-gray-700"
           />
         </div>
 
@@ -243,7 +163,7 @@ export const FormSection = ({ formData, onInputChange, onGenerateDescription, on
         <div className="flex gap-3">
           <Button onClick={onGenerateDescription} className="flex-1 bg-blue-600 hover:bg-blue-700">
             <FileText className="h-4 w-4 mr-2" />
-            Gerar Assyst
+            Gerar Assyst com IA
           </Button>
           <Button onClick={onResetForm} variant="outline">
             Limpar

@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 export const useTextEnhancement = () => {
   const [isEnhancing, setIsEnhancing] = useState(false);
 
-  const enhanceText = async (text: string, type: 'resumo' | 'descricao' | 'geral' = 'geral'): Promise<string | null> => {
+  const enhanceText = async (text: string, type: 'resumo' | 'descricao' | 'sugestao_solucao' | 'geral' = 'geral'): Promise<string | null> => {
     if (!text.trim()) {
       toast.error('Digite algum texto para melhorar');
       return null;

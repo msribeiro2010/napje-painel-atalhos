@@ -7,6 +7,7 @@ import { FormData } from '@/types/form';
 import { FormSection } from '@/components/FormSection';
 import { GeneratedDescriptionSection } from '@/components/GeneratedDescriptionSection';
 import { UpcomingEventsAlert } from '@/components/UpcomingEventsAlert';
+import { AIAssystDialog } from '@/components/AIAssystDialog';
 import { validateForm } from '@/utils/form-validation';
 import { generateDescription, formatDescriptionSections, limparDescricaoProblema } from '@/utils/description-generator';
 import { useUsuarios } from '@/hooks/useUsuarios';
@@ -37,6 +38,9 @@ const CriarChamado = () => {
 
   const [generatedDescription, setGeneratedDescription] = useState('');
   const [isGenerated, setIsGenerated] = useState(false);
+  const [showAIDialog, setShowAIDialog] = useState(false);
+  const [aiEnhancedDescription, setAiEnhancedDescription] = useState('');
+  const [aiSuggestedSolution, setAiSuggestedSolution] = useState('');
 
   // Carregar dados dos parâmetros da URL (para funcionalidade de template)
   useEffect(() => {
@@ -89,7 +93,18 @@ const CriarChamado = () => {
     // Salvar chamado na base de dados
     await salvarChamado(formData);
 
-    const description = generateDescription(formData);
+    // Abrir dialog da IA
+    setShowAIDialog(true);
+  };
+
+  const handleProceedToGenerate = (enhancedDescription: string, suggestedSolution: string) => {
+    setAiEnhancedDescription(enhancedDescription);
+    setAiSuggestedSolution(suggestedSolution);
+    
+    // Atualizar os dados do formulário com a descrição melhorada
+    const updatedFormData = { ...formData, notas: enhancedDescription };
+    
+    const description = generateDescription(updatedFormData);
     setGeneratedDescription(description);
     setIsGenerated(true);
     toast.success('Descrição gerada com sucesso!');
@@ -110,6 +125,9 @@ const CriarChamado = () => {
     });
     setGeneratedDescription('');
     setIsGenerated(false);
+    setShowAIDialog(false);
+    setAiEnhancedDescription('');
+    setAiSuggestedSolution('');
     toast.info('Formulário resetado');
   };
 
@@ -172,6 +190,14 @@ const CriarChamado = () => {
             )}
           </div>
         </div>
+
+        {/* Dialog da IA */}
+        <AIAssystDialog
+          open={showAIDialog}
+          onOpenChange={setShowAIDialog}
+          formData={formData}
+          onProceedToGenerate={handleProceedToGenerate}
+        />
       </div>
     </div>
   );
