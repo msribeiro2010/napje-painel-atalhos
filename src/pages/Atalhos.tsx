@@ -414,7 +414,7 @@ const Atalhos = () => {
         {
           id: 'gmail',
           title: 'Gmail',
-          url: 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2F',
+          url: 'https://auth.trt15.jus.br/auth/realms/principal/protocol/saml?SAMLRequest=fVJdT8IwFH038T80fd/GZoimYSMIIZKgLjJ88K3r7qDQtbO3A/33joEBH%2BT19NzzcXsHw69KkR1YlEbHNPR7lIAWppB6FdNlNvUe6DC5vRkgr1TNRo1b6zf4bAAdaSc1su4hpo3VzHCUyDSvAJkTbDF6nrPI77HaGmeEUZTMJjEVRta5lFtQ2zzfClAKVJ1vN2UhirKQXFd1AXUlKXn/jRUdYs0QG5hpdFy7FupFfa9370VRFvZZdM%2Biuw9K0pPTo9THBtdi5UcSsqcsS730dZF1AjtZgH1p2TFdGbNS4AtTHexTjih3LVxyhUDJCBGsawOOjcamArsAu5MClm/zmK6dq5EFwX6/988yAQ%2BcdWHf3zTo5zbgAmnS7ZZ19ezFUq%2BH57/mNDnLD4ILqeT0Z4cqs0lqlBTfZKSU2Y8tcNf2cLZpa0yNrbj73y30ww6RhVd2VNZorEHIUkJBSZAcXf8eR3syPw%3D%3D&RelayState=https://accounts.google.com/CheckCookie?continue%3Dhttps://mail.google.com/mail/%2526ogbl/%26service%3Dmail%26ss%3D1%26scc%3D1%26rm%3Dfalse%26osid%3D1%26flowName%3DGlifWebSignIn%26ltmpl%3Ddefault%26ifkv%3DAdBytiMNWrwYEFQf_Fi5aYbktLQzVC0tesNaOqoOgDHzv4HNZuqWJZuNdC5vingIDoinwh-jBDsQSw',
           icon: Mail
         },
         {
