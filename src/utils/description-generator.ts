@@ -37,36 +37,44 @@ export const limparDescricaoProblema = (texto: string): string => {
 export const generateDescription = (formData: FormData): string => {
   const resumoFinal = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
 
-  // 1º lugar: Resumo
-  let description = `*Resumo\n\n${resumoFinal}`;
+  // Formato específico solicitado
+  let description = `Assunto: Tarefa – ${resumoFinal}`;
   if (formData.processos) {
     description += ` - ${formData.processos}`;
   }
   description += `\n\n`;
   
-  // 2º lugar: Descrição do Problema
-  description += `Descrição do Problema\n\n${limparDescricaoProblema(formData.notas)}\n\n`;
-  
-  // 3º lugar: Número dos processos
-  if (formData.processos) {
-    description += `Número dos processos\n\n${formData.processos}\n\n`;
-  }
-
-  // 4º lugar: Número do Chamado de Origem (se preenchido)
+  // Detalhes do Usuário/Processo
+  description += `Detalhes do Usuário/Processo:\n`;
   if (formData.chamadoOrigem) {
-    description += `Número do Chamado de Origem\n\n${formData.chamadoOrigem}\n\n`;
+    description += `- Número do Chamado de Origem: ${formData.chamadoOrigem}\n`;
   }
-
-  // 5º lugar: Perfil do serviço que abriu o chamado
-  if (formData.perfilUsuario || formData.cpfUsuario || formData.nomeUsuario || (formData.orgaoJulgador && formData.grau === '1º Grau')) {
-    description += `*Perfil/CPF/Nome completo do usuário\n\n`;
+  
+  // Pessoa Relacionada
+  if (formData.nomeUsuario || formData.perfilUsuario || formData.cpfUsuario || formData.orgaoJulgador) {
+    description += `- Pessoa Relacionada: `;
     const dadosUsuario = [];
     if (formData.nomeUsuario) dadosUsuario.push(formData.nomeUsuario);
     if (formData.perfilUsuario) dadosUsuario.push(formData.perfilUsuario);
     if (formData.cpfUsuario) dadosUsuario.push(formData.cpfUsuario);
     if (formData.orgaoJulgador && formData.grau === '1º Grau') dadosUsuario.push(limparCodigoOJ(formData.orgaoJulgador));
-    description += `${dadosUsuario.join('/')}\n\n`;
+    description += `${dadosUsuario.join('/')}\n`;
   }
+  
+  // Número do Processo
+  if (formData.processos) {
+    description += `- Número do Processo: ${formData.processos}\n`;
+  }
+  
+  // Grau da Instância
+  if (formData.grau) {
+    description += `- Grau da Instância: ${formData.grau}\n`;
+  }
+  
+  description += `\n`;
+  
+  // Descrição
+  description += `Descrição: ${limparDescricaoProblema(formData.notas)}`;
 
   return description;
 };
@@ -75,57 +83,55 @@ export const formatDescriptionSections = (formData: FormData): DescriptionSectio
   const resumoFinal = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
 
   const sections: DescriptionSection[] = [
-    // 1º lugar: Resumo
+    // Assunto
     {
-      title: 'Resumo',
-      content: resumoFinal + (formData.processos ? ` - ${formData.processos}` : ''),
-      key: 'resumo',
-      fullWidth: true
-    },
-    // 2º lugar: Descrição do Problema
-    {
-      title: 'Descrição do Problema',
-      content: limparDescricaoProblema(formData.notas),
-      key: 'notas',
+      title: 'Assunto',
+      content: `Tarefa – ${resumoFinal}${formData.processos ? ` - ${formData.processos}` : ''}`,
+      key: 'assunto',
       fullWidth: true
     }
   ];
 
-  // 3º lugar: Número dos processos se preenchido
-  if (formData.processos) {
-    sections.push({
-      title: 'Número dos processos',
-      content: formData.processos,
-      key: 'processos',
-      fullWidth: true
-    });
-  }
-
-  // 4º lugar: Número do Chamado de Origem se preenchido
+  // Detalhes do Usuário/Processo
+  let detalhesContent = '';
   if (formData.chamadoOrigem) {
-    sections.push({
-      title: 'Número do Chamado de Origem',
-      content: formData.chamadoOrigem,
-      key: 'chamadoOrigem',
-      fullWidth: true
-    });
+    detalhesContent += `- Número do Chamado de Origem: ${formData.chamadoOrigem}\n`;
   }
-
-  // 5º lugar: Perfil do serviço que abriu o chamado se preenchido
-  if (formData.perfilUsuario || formData.cpfUsuario || formData.nomeUsuario || (formData.orgaoJulgador && formData.grau === '1º Grau')) {
+  
+  if (formData.nomeUsuario || formData.perfilUsuario || formData.cpfUsuario || formData.orgaoJulgador) {
+    detalhesContent += `- Pessoa Relacionada: `;
     const dadosUsuario = [];
     if (formData.nomeUsuario) dadosUsuario.push(formData.nomeUsuario);
     if (formData.perfilUsuario) dadosUsuario.push(formData.perfilUsuario);
     if (formData.cpfUsuario) dadosUsuario.push(formData.cpfUsuario);
     if (formData.orgaoJulgador && formData.grau === '1º Grau') dadosUsuario.push(limparCodigoOJ(formData.orgaoJulgador));
-    
+    detalhesContent += `${dadosUsuario.join('/')}\n`;
+  }
+  
+  if (formData.processos) {
+    detalhesContent += `- Número do Processo: ${formData.processos}\n`;
+  }
+  
+  if (formData.grau) {
+    detalhesContent += `- Grau da Instância: ${formData.grau}\n`;
+  }
+
+  if (detalhesContent) {
     sections.push({
-      title: 'Perfil/CPF/Nome completo do usuário',
-      content: dadosUsuario.join('/'),
-      key: 'usuario',
+      title: 'Detalhes do Usuário/Processo',
+      content: detalhesContent.trim(),
+      key: 'detalhes_usuario',
       fullWidth: true
     });
   }
+
+  // Descrição
+  sections.push({
+    title: 'Descrição',
+    content: limparDescricaoProblema(formData.notas),
+    key: 'descricao',
+    fullWidth: true
+  });
 
   return sections;
 };

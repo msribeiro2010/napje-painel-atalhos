@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, FileText } from 'lucide-react';
+import { Check, Copy, FileText, RotateCcw } from 'lucide-react';
 import { DescriptionSection } from '@/types/form';
 import { toast } from 'sonner';
 
@@ -58,10 +58,10 @@ export const GeneratedDescriptionSection = ({
         <CardHeader className="bg-green-600 text-white">
           <CardTitle className="flex items-center text-xl">
             <Check className="h-6 w-6 mr-3" />
-            Template JIRA - Sustentação
+            Gerar Chamado com IA
           </CardTitle>
           <CardDescription className="text-green-100 text-base">
-            Template formatado e pronto para copiar no campo "Notas" do JIRA
+            3. Revise e Finalize
           </CardDescription>
         </CardHeader>
         <CardContent className="p-8">
@@ -147,22 +147,30 @@ export const GeneratedDescriptionSection = ({
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={copyFullDescription} className="flex-1 bg-green-600 hover:bg-green-700">
+              <Button onClick={copyFullDescription} className="flex-1 bg-blue-600 hover:bg-blue-700">
                 <Copy className="h-4 w-4 mr-2" />
-                Copiar Descrição Completa
+                Copiar
               </Button>
               <Button 
                 onClick={() => {
-                   const formattedText = sections
-                     .map(section => `${section.title}${section.title.includes('Resumo') ? ' *' : ''}\n${section.content}`)
-                     .join('\n\n');
-                  copyToClipboard(formattedText, 'Template formatado');
+                  // Simular regeneração - poderia chamar uma função de callback
+                  toast.success('Regenerando chamado...');
                 }}
                 variant="secondary" 
                 className="flex-1"
               >
-                <FileText className="h-4 w-4 mr-2" />
-                Copiar Template Formatado
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Gerar Novamente
+              </Button>
+              <Button 
+                onClick={() => {
+                  copyFullDescription();
+                  toast.success('Chamado salvo e finalizado!');
+                }}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Salvar e Finalizar
               </Button>
             </div>
           </div>
