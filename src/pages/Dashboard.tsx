@@ -15,6 +15,10 @@ import { EventsPanels } from '@/components/EventsPanels';
 import { ChatAssistant } from '@/components/ChatAssistant';
 import { UpcomingEventsAlert } from '@/components/UpcomingEventsAlert';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
+import { useVerificarFeriadosFaltantes, useCorrigirFeriado } from '@/hooks/useFeriados';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, CheckCircle, Plus } from 'lucide-react';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
 
 const Dashboard = () => {
@@ -27,6 +31,10 @@ const Dashboard = () => {
     editarChamado, 
     handleExcluirChamado 
   } = useChamadosRecentes();
+  
+  // Hooks para diagnóstico de feriados
+  const { data: feriadosFaltantes = [] } = useVerificarFeriadosFaltantes();
+  const corrigirFeriado = useCorrigirFeriado();
 
   // Verificar se o usuário é admin
   const { data: isAdmin } = useQuery({
@@ -146,13 +154,13 @@ const Dashboard = () => {
       variant: 'outline' as const
     });
     
-    // dashboardActions.push({
-    //   title: 'Gerenciar Feriados',
-    //   description: 'Administrar feriados e sugestões de férias',
-    //   icon: Calendar,
-    //   onClick: () => navigate('/admin/feriados'),
-    //   variant: 'outline' as const
-    // });
+    dashboardActions.push({
+      title: 'Gerenciar Feriados',
+      description: 'Administrar feriados e sugestões de férias',
+      icon: Calendar,
+      onClick: () => navigate('/admin/feriados'),
+      variant: 'outline' as const
+    });
   }
 
   return (
@@ -161,6 +169,54 @@ const Dashboard = () => {
         <DashboardHeader isAdmin={isAdmin} />
         
         <UpcomingEventsAlert />
+        
+        {/* Diagnóstico de Feriados - apenas para admins */}
+        {isAdmin && feriadosFaltantes.length > 0 && (
+          <div className="mb-6">
+            <Alert className="border-amber-300 bg-amber-50">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <strong>Feriados Faltantes Detectados:</strong> {feriadosFaltantes.length} feriado(s) de 2025 precisam ser adicionados.
+                    {feriadosFaltantes.some(f => f.data === '2025-08-11') && (
+                      <div className="mt-1 font-medium">
+                        🎓 Dia do Estudante (11/08/2025) está faltando!
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {feriadosFaltantes.slice(0, 3).map((feriado, index) => (
+                      <Button
+                        key={index}
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => corrigirFeriado.mutate(feriado)}
+                        disabled={corrigirFeriado.isPending}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        {feriado.descricao}
+                      </Button>
+                    ))}
+                    {feriadosFaltantes.length > 3 && (
+                      <Button
+                        size="sm"
+                        className="text-xs bg-amber-600 hover:bg-amber-700"
+                        onClick={() => {
+                          feriadosFaltantes.forEach(f => corrigirFeriado.mutate(f));
+                        }}
+                        disabled={corrigirFeriado.isPending}
+                      >
+                        Corrigir Todos ({feriadosFaltantes.length})
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
         
         <EventsPanels />
         

@@ -9,10 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Upload, Download, Calendar, FileText, Trash2, Plus, 
-  CheckCircle, AlertCircle, Globe, MapPin, Building
+  CheckCircle, AlertCircle, Globe, MapPin, Building, AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useFeriados, useCreateFeriado, useDeleteFeriado } from '@/hooks/useFeriados';
+import { useFeriados, useCreateFeriado, useDeleteFeriado, useVerificarFeriadosFaltantes, useCorrigirFeriado } from '@/hooks/useFeriados';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface HolidayData {
   data: string;
@@ -24,6 +25,8 @@ export const HolidayUploadManager = () => {
   const { data: feriados = [], isLoading } = useFeriados();
   const createFeriado = useCreateFeriado();
   const deleteFeriado = useDeleteFeriado();
+  const { data: feriadosFaltantes = [] } = useVerificarFeriadosFaltantes();
+  const corrigirFeriado = useCorrigirFeriado();
   
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear() + 1);
   const [uploadData, setUploadData] = useState<string>('');
@@ -210,6 +213,59 @@ export const HolidayUploadManager = () => {
 
   return (
     <div className="space-y-6">
+      {/* Diagnóstico de Feriados Faltantes */}
+      {feriadosFaltantes.length > 0 && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            <div className="space-y-3">
+              <div>
+                <strong>⚠️ Feriados Faltantes Detectados!</strong>
+                <div className="mt-1">
+                  Encontrados {feriadosFaltantes.length} feriados de 2025 que não estão cadastrados no sistema.
+                  {feriadosFaltantes.some(f => f.data === '2025-08-11') && (
+                    <div className="mt-1 font-medium">
+                      🎓 <strong>Dia do Estudante (11/08/2025)</strong> está faltando e precisa ser adicionado!
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                {feriadosFaltantes.slice(0, 5).map((feriado, index) => (
+                  <Button
+                    key={index}
+                    size="sm"
+                    variant="outline"
+                    className="text-xs border-amber-400 hover:bg-amber-100"
+                    onClick={() => corrigirFeriado.mutate(feriado)}
+                    disabled={corrigirFeriado.isPending}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    {feriado.descricao}
+                  </Button>
+                ))}
+                {feriadosFaltantes.length > 5 && (
+                  <span className="text-xs text-amber-700 self-center">
+                    +{feriadosFaltantes.length - 5} mais...
+                  </span>
+                )}
+                <Button
+                  size="sm"
+                  className="text-xs bg-amber-600 hover:bg-amber-700"
+                  onClick={() => {
+                    feriadosFaltantes.forEach(f => corrigirFeriado.mutate(f));
+                  }}
+                  disabled={corrigirFeriado.isPending}
+                >
+                  Corrigir Todos ({feriadosFaltantes.length})
+                </Button>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

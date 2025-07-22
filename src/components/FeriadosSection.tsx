@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarDays, Plus, Trash2, Edit2, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, Plus, Trash2, Edit2, Star, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useFeriados, useCreateFeriado, useUpdateFeriado, useDeleteFeriado } from "@/hooks/useFeriados";
+import { useFeriados, useCreateFeriado, useUpdateFeriado, useDeleteFeriado, useVerificarFeriadosFaltantes, useCorrigirFeriado, feriadosEssenciais2025 } from "@/hooks/useFeriados";
 import { useProfile } from "@/hooks/useProfile";
 
 const getTipoColor = (tipo: string) => {
@@ -33,6 +33,8 @@ export const FeriadosSection = () => {
   const createFeriado = useCreateFeriado();
   const updateFeriado = useUpdateFeriado();
   const deleteFeriado = useDeleteFeriado();
+  const { data: feriadosFaltantes = [] } = useVerificarFeriadosFaltantes();
+  const corrigirFeriado = useCorrigirFeriado();
 
   const mesAtual = currentDate.getMonth() + 1;
   const anoAtual = currentDate.getFullYear();
@@ -52,6 +54,10 @@ export const FeriadosSection = () => {
   });
 
   const isAdmin = profile?.is_admin && profile?.status === "aprovado";
+
+  const addMissingHoliday = async (holiday: {data: string, descricao: string, tipo: string}) => {
+    corrigirFeriado.mutate(holiday);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,6 +224,35 @@ export const FeriadosSection = () => {
             )}
           </div>
           
+          {/* Seção de feriados faltantes - apenas para admins */}
+          {isAdmin && feriadosFaltantes.length > 0 && (
+            <div className="px-4 py-2 bg-amber-50 border-t border-amber-200">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-medium text-amber-800">
+                  Feriados Faltantes
+                </span>
+              </div>
+                             <div className="space-y-1">
+                {feriadosFaltantes.map((holiday, index) => (
+                  <div key={index} className="flex items-center justify-between text-xs">
+                    <span className="text-amber-700">
+                      {format(new Date(holiday.data + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })} - {holiday.descricao}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => addMissingHoliday(holiday)}
+                    >
+                      Adicionar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div className="max-h-60 overflow-y-auto">
             {temFeriados ? (
               <div className="space-y-1 p-2">
@@ -275,6 +310,158 @@ export const FeriadosSection = () => {
           </div>
         </PopoverContent>
       </Popover>
+
+      {/* Botão para administração avançada de feriados - apenas para admins */}
+      {isAdmin && (
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-50"
+            >
+              <Star className="h-4 w-4" />
+              <span className="text-xs">Gerenciar Feriados</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Administração de Feriados</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Lista de anos disponíveis */}
+                <div>
+                  <h4 className="font-semibold mb-2">Feriados por Ano</h4>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {[2024, 2025, 2026, 2027].map(year => {
+                      const feriadosDoAno = feriados?.filter(f => 
+                        new Date(f.data + 'T12:00:00').getFullYear() === year
+                      ) || [];
+                      
+                      return (
+                        <div key={year} className="border rounded p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium">{year}</span>
+                            <Badge variant="outline">
+                              {feriadosDoAno.length} feriados
+                            </Badge>
+                          </div>
+                          <div className="space-y-1 text-sm">
+                            {feriadosDoAno.slice(0, 3).map(f => (
+                              <div key={f.id} className="flex justify-between">
+                                <span>{format(new Date(f.data + 'T12:00:00'), "dd/MM")}</span>
+                                <span className="truncate max-w-32">{f.descricao}</span>
+                              </div>
+                            ))}
+                            {feriadosDoAno.length > 3 && (
+                              <div className="text-gray-500">
+                                +{feriadosDoAno.length - 3} mais...
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Verificação de feriados faltantes */}
+                <div>
+                  <h4 className="font-semibold mb-2">Verificação de Integridade</h4>
+                  <div className="space-y-2">
+                    {feriadosFaltantes.length > 0 ? (
+                      <div className="bg-amber-50 border border-amber-200 rounded p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="h-4 w-4 text-amber-600" />
+                          <span className="font-medium text-amber-800">
+                            Feriados Faltantes Detectados
+                          </span>
+                        </div>
+                                                 <div className="space-y-2">
+                          {feriadosFaltantes.map((holiday, index) => (
+                            <div key={index} className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-sm">
+                                  {holiday.descricao}
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  {format(new Date(holiday.data + 'T12:00:00'), "dd/MM/yyyy")}
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() => addMissingHoliday(holiday)}
+                              >
+                                Adicionar
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-green-50 border border-green-200 rounded p-3">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-green-600" />
+                          <span className="text-green-800">
+                            Todos os feriados essenciais estão cadastrados
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Formulário para adicionar novos feriados */}
+                  <div className="mt-4 border-t pt-4">
+                    <h5 className="font-medium mb-2">Adicionar Novo Feriado</h5>
+                    <form onSubmit={handleSubmit} className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label htmlFor="admin-data" className="text-xs">Data</Label>
+                          <Input
+                            id="admin-data"
+                            type="date"
+                            value={formData.data}
+                            onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+                            required
+                            className="h-8"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="admin-tipo" className="text-xs">Tipo</Label>
+                          <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="Tipo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="nacional">Nacional</SelectItem>
+                              <SelectItem value="estadual">Estadual</SelectItem>
+                              <SelectItem value="municipal">Municipal</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="admin-descricao" className="text-xs">Descrição</Label>
+                        <Input
+                          id="admin-descricao"
+                          value={formData.descricao}
+                          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                          required
+                          className="h-8"
+                        />
+                      </div>
+                      <Button type="submit" size="sm" className="w-full">
+                        {editingId ? "Atualizar" : "Adicionar"} Feriado
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
