@@ -28,7 +28,16 @@ const calendarLabels = {
 function MinimalCalendar() {
   const today = new Date();
   const [month, setMonth] = useState(today);
-  const [marks, setMarks] = useState<{ [date: string]: 'presencial' | 'ferias' | 'remoto' | 'none' }>({});
+  
+  // Carregar marcações do localStorage na inicialização
+  const [marks, setMarks] = useState<{ [date: string]: 'presencial' | 'ferias' | 'remoto' | 'none' }>(() => {
+    try {
+      const saved = localStorage.getItem('calendar-marks');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
 
@@ -36,19 +45,40 @@ function MinimalCalendar() {
     const key = format(date, 'yyyy-MM-dd');
     const current = marks[key] || 'none';
     const next = current === 'none' ? 'presencial' : current === 'presencial' ? 'ferias' : current === 'ferias' ? 'remoto' : 'none';
-    setMarks({ ...marks, [key]: next });
+    const newMarks = { ...marks, [key]: next };
+    setMarks(newMarks);
+    
+    // Salvar no localStorage
+    try {
+      localStorage.setItem('calendar-marks', JSON.stringify(newMarks));
+    } catch (error) {
+      console.warn('Não foi possível salvar as marcações do calendário:', error);
+    }
+  };
+
+  const clearAllMarks = () => {
+    setMarks({});
+    try {
+      localStorage.removeItem('calendar-marks');
+    } catch (error) {
+      console.warn('Não foi possível limpar as marcações do calendário:', error);
+    }
   };
 
   return (
     <div className="bg-[#f8f5e4] border border-[#e2d8b8] rounded-xl shadow-sm p-4 mb-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-2">
-        <span className="font-semibold text-[#7c6a3c] text-base flex items-center gap-2">
-          <CalendarIcon className="h-5 w-5 text-[#bfae7c]" />
-          Meu Calendário de Trabalho
-        </span>
+        <div className="flex flex-col">
+          <span className="font-semibold text-[#7c6a3c] text-base flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 text-[#bfae7c]" />
+            Meu Calendário de Trabalho
+          </span>
+          <span className="text-[#bfae7c] text-sm">{format(month, 'MMMM yyyy')}</span>
+        </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" className="px-2 py-1 text-xs" onClick={() => setMonth(addDays(month, -30))}>Anterior</Button>
           <Button size="sm" variant="outline" className="px-2 py-1 text-xs" onClick={() => setMonth(addDays(month, 30))}>Próximo</Button>
+          <Button size="sm" variant="destructive" className="px-2 py-1 text-xs" onClick={clearAllMarks} title="Limpar todas as marcações">Limpar</Button>
         </div>
       </div>
       <div className="grid grid-cols-7 gap-1 text-xs">
