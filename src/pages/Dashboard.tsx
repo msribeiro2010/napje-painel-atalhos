@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, BookOpen, Shield, Plus, ExternalLink, StickyNote, Scale, Calendar } from 'lucide-react';
+import { FileText, BookOpen, Shield, Plus, ExternalLink, StickyNote, Scale, Calendar, Home, Umbrella, Laptop } from 'lucide-react';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import PostitNotes from '@/components/PostitNotes';
@@ -17,6 +17,8 @@ import { SmartEventNotifications } from '@/components/SmartEventNotifications';
 import { EventNotificationModal } from '@/components/EventNotificationModal';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
+import { useWorkCalendar, WorkStatus } from '@/hooks/useWorkCalendar';
+import { format, addDays } from 'date-fns';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
 
 const Dashboard = () => {
@@ -81,6 +83,21 @@ const Dashboard = () => {
     },
     enabled: !!user?.id
   });
+
+  // Buscar status do próximo dia
+  const tomorrow = addDays(new Date(), 1);
+  const { marks: tomorrowMarks, loading: marksLoading } = useWorkCalendar(tomorrow);
+  const tomorrowKey = format(tomorrow, 'yyyy-MM-dd');
+  const status: WorkStatus | 'none' = tomorrowMarks[tomorrowKey] || 'none';
+
+  const statusLabel = {
+    presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-4 w-4 text-[#bfae7c] inline" /> },
+    ferias: { label: 'Férias', color: '#ffe6e6', icon: <Umbrella className="h-4 w-4 text-[#e6a1a1] inline" /> },
+    remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Laptop className="h-4 w-4 text-[#7cc3e6] inline" /> },
+    plantao: { label: 'Plantão', color: '#e6ffe6', icon: <Shield className="h-4 w-4 text-[#4caf50] inline" /> },
+    folga: { label: 'Folga', color: '#e0e0e0', icon: <Calendar className="h-4 w-4 text-[#757575] inline" /> },
+    none: { label: 'Sem marcação', color: '#fff', icon: null },
+  };
 
   const handleExcluir = async (id: string) => {
     await handleExcluirChamado(id);
@@ -160,6 +177,15 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-bg p-4">
+      {/* Aviso do status do próximo dia */}
+      <div className="max-w-6xl mx-auto mb-4">
+        <div className="rounded-lg shadow p-4 flex items-center gap-3" style={{ background: statusLabel[status].color }}>
+          {statusLabel[status].icon}
+          <span className="font-semibold text-[#7c6a3c] text-base">
+            Amanhã: {statusLabel[status].label}
+          </span>
+        </div>
+      </div>
       <div className="max-w-6xl mx-auto">
         <DashboardHeader isAdmin={isAdmin} />
         

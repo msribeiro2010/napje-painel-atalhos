@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Home, Umbrella, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles } from 'lucide-react';
+import { Calendar as CalendarIcon, Home, Umbrella, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield } from 'lucide-react';
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
@@ -9,11 +9,14 @@ import { VacationSuggestionsPanel } from '@/components/VacationSuggestionsPanel'
 import { VacationSuggestion } from '@/hooks/useVacationSuggestions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useWorkCalendar, WorkStatus } from '@/hooks/useWorkCalendar';
+import { toast } from 'sonner';
 
 const calendarLabels = {
   presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-4 w-4 text-[#bfae7c]" /> },
   ferias: { label: 'Férias', color: '#ffe6e6', icon: <Umbrella className="h-4 w-4 text-[#e6a1a1]" /> },
   remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Laptop className="h-4 w-4 text-[#7cc3e6]" /> },
+  plantao: { label: 'Plantão', color: '#e6ffe6', icon: <Shield className="h-4 w-4 text-[#4caf50]" /> },
   none: { label: '', color: '#fff', icon: null },
 };
 
@@ -22,14 +25,8 @@ function CalendarComponent() {
   const [month, setMonth] = useState(today);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
   
-  const [marks, setMarks] = useState<{ [date: string]: 'presencial' | 'ferias' | 'remoto' | 'none' }>(() => {
-    try {
-      const saved = localStorage.getItem('calendar-marks');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  // Usar o hook para buscar/salvar marcações do Supabase
+  const { marks, loading: marksLoading, saveMark, removeMark, fetchMarks } = useWorkCalendar(month);
 
   const { data: events = [], isLoading: eventsLoading } = useCalendarEvents(month);
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
@@ -46,53 +43,52 @@ function CalendarComponent() {
   const handleDayClick = (date: Date) => {
     const key = format(date, 'yyyy-MM-dd');
     const current = marks[key] || 'none';
-    const next = current === 'none' ? 'presencial' : current === 'presencial' ? 'ferias' : current === 'ferias' ? 'remoto' : 'none';
-    const newMarks = { ...marks, [key]: next };
-    setMarks(newMarks);
-    
-    try {
-      localStorage.setItem('calendar-marks', JSON.stringify(newMarks));
-    } catch (error) {
-      console.warn('Não foi possível salvar as marcações do calendário:', error);
+    const dayEvents = eventsByDate[key] || [];
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    const isFeriado = dayEvents.some(e => e.type === 'feriado');
+
+    if (isWeekend || isFeriado) {
+      // Só pode marcar Plantão ou remover
+      if (current === 'none') {
+        saveMark(key, 'plantao');
+      } else if (current === 'plantao') {
+        removeMark(key);
+      } else {
+        toast.warning('Em finais de semana e feriados só é permitido marcar Plantão.');
+        saveMark(key, 'plantao');
+      }
+    } else {
+      // Ciclo normal
+      const next: WorkStatus =
+        current === 'none' ? 'presencial' :
+        current === 'presencial' ? 'ferias' :
+        current === 'ferias' ? 'remoto' :
+        current === 'remoto' ? 'plantao' :
+        'none';
+      if (next === 'none') {
+        removeMark(key);
+      } else {
+        saveMark(key, next);
+      }
     }
   };
 
-  const clearAllMarks = () => {
-    setMarks({});
-    try {
-      localStorage.removeItem('calendar-marks');
-    } catch (error) {
-      console.warn('Não foi possível limpar as marcações do calendário:', error);
-    }
-  };
+  // Remover clearAllMarks pois não faz mais sentido com Supabase (ou implementar para remover todas as marcações do mês via Supabase)
 
+  // Atualizar handleSelectVacationSuggestion para usar saveMark
   const handleSelectVacationSuggestion = (suggestion: VacationSuggestion) => {
     try {
       const startDate = new Date(suggestion.startDate);
       const endDate = new Date(suggestion.endDate);
-      const newMarks = { ...marks };
-      
-      // Marcar todos os dias da sugestão como férias
       let currentDate = new Date(startDate);
       while (currentDate <= endDate) {
         const key = format(currentDate, 'yyyy-MM-dd');
-        newMarks[key] = 'ferias';
+        saveMark(key, 'ferias');
         currentDate = addDays(currentDate, 1);
       }
-      
-      setMarks(newMarks);
-      
-      try {
-        localStorage.setItem('calendar-marks', JSON.stringify(newMarks));
-      } catch (error) {
-        console.warn('Não foi possível salvar as marcações do calendário:', error);
-      }
-      
-      // Navegar para o mês da sugestão se necessário
       if (startDate.getMonth() !== month.getMonth() || startDate.getFullYear() !== month.getFullYear()) {
         setMonth(startDate);
       }
-      
       setShowAISuggestions(false);
     } catch (error) {
       console.error('Erro ao aplicar sugestão de férias:', error);
@@ -123,7 +119,7 @@ function CalendarComponent() {
             <Brain className="h-4 w-4 mr-1" />
             IA Férias
           </Button>
-          <Button size="sm" variant="destructive" className="px-3 py-2" onClick={clearAllMarks} title="Limpar todas as marcações">Limpar</Button>
+          {/* Remover clearAllMarks pois não faz mais sentido com Supabase (ou implementar para remover todas as marcações do mês via Supabase) */}
         </div>
       </div>
       
@@ -219,6 +215,11 @@ function CalendarComponent() {
               <span className="inline-block w-4 h-4 rounded bg-[#e6f7ff] border border-[#e2d8b8]"></span>
               <Laptop className="h-4 w-4 text-[#7cc3e6]" />
               Remoto
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="inline-block w-4 h-4 rounded bg-[#e6ffe6] border border-[#e2d8b8]"></span>
+              <Shield className="h-4 w-4 text-[#4caf50]" />
+              Plantão
             </span>
           </div>
         </div>

@@ -34,55 +34,39 @@ const Auth = () => {
     return <Navigate to="/" replace />;
   }
 
-  const validateEmail = (email: string) => {
-    return email.endsWith('@trt15.jus.br');
-  };
+  // Remover validação de domínio
+  //const validateEmail = (email: string) => {
+  //  return email.endsWith('@trt15.jus.br');
+  //};
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    if (!validateEmail(email)) {
-      toast.error('Apenas emails do domínio @trt15.jus.br são permitidos');
-      setIsLoading(false);
-      return;
-    }
-
+    // Permitir qualquer e-mail
     const { error } = await signIn(email, password);
-    
     if (error) {
       toast.error(error.message || 'Erro ao fazer login');
     } else {
       toast.success('Login realizado com sucesso!');
     }
-    
     setIsLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    if (!validateEmail(email)) {
-      toast.error('Apenas emails do domínio @trt15.jus.br são permitidos');
-      setIsLoading(false);
-      return;
-    }
-
     if (password !== confirmPassword) {
       toast.error('As senhas não coincidem');
       setIsLoading(false);
       return;
     }
-
     if (password.length < 6) {
       toast.error('A senha deve ter pelo menos 6 caracteres');
       setIsLoading(false);
       return;
     }
-
+    // Permitir qualquer e-mail
     const { error } = await signUp(email, password);
-    
     if (error) {
       if (error.message.includes('User already registered')) {
         toast.error('Este email já está cadastrado. Tente fazer login.');
@@ -92,29 +76,20 @@ const Auth = () => {
     } else {
       toast.success('Conta criada com sucesso! Verifique seu email para confirmar a conta.');
     }
-    
     setIsLoading(false);
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    if (!validateEmail(email)) {
-      toast.error('Apenas emails do domínio @trt15.jus.br são permitidos');
-      setIsLoading(false);
-      return;
-    }
-
+    // Permitir qualquer e-mail
     const { error } = await resetPassword(email);
-    
     if (error) {
       toast.error(error.message || 'Erro ao enviar email de recuperação');
     } else {
       toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
       setIsForgotPassword(false);
     }
-    
     setIsLoading(false);
   };
 
@@ -125,16 +100,10 @@ const Auth = () => {
       </div>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <a href="https://trt15.jus.br/" target="_blank" rel="noopener noreferrer">
-                <img src="/lovable-uploads/622691d5-a295-40f0-ad0d-cb958024c4ba.png" alt="Brasão TRT15" className="h-6 w-6 cursor-pointer hover:opacity-80 transition-opacity" />
-              </a>
-            </div>
-          </div>
-          <CardTitle>Sistema de Chamados NAPJe</CardTitle>
+          {/* Remover brasão e textos do TRT15 */}
+          <CardTitle>Sistema de Chamados</CardTitle>
           <CardDescription>
-            Acesse com seu email institucional @trt15.jus.br
+            Acesse com seu e-mail (Gmail ou qualquer outro)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -143,7 +112,6 @@ const Auth = () => {
               <TabsTrigger value="signin">Entrar</TabsTrigger>
               <TabsTrigger value="signup">Cadastrar</TabsTrigger>
             </TabsList>
-            
             <TabsContent value="signin">
               {isForgotPassword ? (
                 <form onSubmit={handleForgotPassword} className="space-y-4">
@@ -152,7 +120,7 @@ const Auth = () => {
                     <Input
                       id="reset-email"
                       type="email"
-                      placeholder="seu.email@trt15.jus.br"
+                      placeholder="seu.email@gmail.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -177,7 +145,7 @@ const Auth = () => {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="seu.email@trt15.jus.br"
+                      placeholder="seu.email@gmail.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -223,7 +191,6 @@ const Auth = () => {
                 </form>
               )}
             </TabsContent>
-            
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
@@ -231,7 +198,7 @@ const Auth = () => {
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="seu.email@trt15.jus.br"
+                    placeholder="seu.email@gmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -239,60 +206,26 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="signup-password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={6}
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
+                  <Input
+                    id="signup-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirmar Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirm-password"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      minLength={6}
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
+                  <Label htmlFor="signup-confirm-password">Confirmar Senha</Label>
+                  <Input
+                    id="signup-confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Criando conta...' : 'Criar conta'}
+                  {isLoading ? 'Cadastrando...' : 'Cadastrar'}
                 </Button>
               </form>
             </TabsContent>
