@@ -35,20 +35,8 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
     setIsProcessing(true);
     
     try {
-      // Criar contexto adicional para a IA
-      let contextualText = formData.notas;
-      
-      if (formData.processos) {
-        contextualText += `\n\nNúmero do processo: ${formData.processos}`;
-      }
-      
-      if (formData.orgaoJulgador) {
-        contextualText += `\nÓrgão julgador: ${formData.orgaoJulgador}`;
-      }
-      
-      if (formData.grau) {
-        contextualText += `\nGrau: ${formData.grau}`;
-      }
+      // Enviar apenas a descrição do problema para a IA
+      const contextualText = formData.notas;
 
       // Gerar descrição melhorada e solução em paralelo
       const [enhanced, solution] = await Promise.all([
@@ -141,14 +129,12 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
                       <span className="text-base">{[
                         formData.nomeUsuario,
                         formData.cpfUsuario,
-                        formData.perfilUsuario,
-                        formData.orgaoJulgador
+                        formData.perfilUsuario
                       ].filter(Boolean).join(' / ') || '-'}</span>
                       <Button size="icon" variant="ghost" onClick={() => copyToClipboard([
                         formData.nomeUsuario,
                         formData.cpfUsuario,
-                        formData.perfilUsuario,
-                        formData.orgaoJulgador
+                        formData.perfilUsuario
                       ].filter(Boolean).join(' / ') || '-', 'nome')} title="Copiar Nome">
                         {copiedField === 'nome' ? <CheckCircle className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                       </Button>
