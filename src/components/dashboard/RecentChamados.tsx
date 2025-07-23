@@ -121,7 +121,7 @@ export const RecentChamados = ({ chamados, onEdit, onDuplicate, onDelete }: Rece
                             <Trash className="h-3 w-3" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-[#f8f5e4] dark:bg-[#2d2717] border-[#e2d8b8] dark:border-[#3a3320]">
+                        <AlertDialogContent className="bg-[#f8f5e4] dark:bg-[#2d2717] border-[#e2d8b8] dark:border-[#3a3320]" onClick={e => e.stopPropagation()}>
                           <AlertDialogHeader>
                             <AlertDialogTitle className="text-[#7c6a3c] dark:text-[#f8f5e4]">Confirmar exclusão</AlertDialogTitle>
                             <AlertDialogDescription className="text-[#bfae7c] dark:text-[#bfae7c]">
@@ -129,11 +129,11 @@ export const RecentChamados = ({ chamados, onEdit, onDuplicate, onDelete }: Rece
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="text-[#7c6a3c] dark:text-[#f8f5e4] border-[#e2d8b8] dark:border-[#3a3320] bg-[#f8f5e4] dark:bg-[#2d2717] hover:bg-[#f3ecd2] dark:hover:bg-[#28231a]">
+                            <AlertDialogCancel className="text-[#7c6a3c] dark:text-[#f8f5e4] border-[#e2d8b8] dark:border-[#3a3320] bg-[#f8f5e4] dark:bg-[#2d2717] hover:bg-[#f3ecd2] dark:hover:bg-[#28231a]" onClick={e => e.stopPropagation()}>
                               Cancelar
                             </AlertDialogCancel>
                             <AlertDialogAction 
-                              onClick={() => onDelete(chamado.id)}
+                              onClick={e => { e.stopPropagation(); onDelete(chamado.id); }}
                               className="bg-red-600 hover:bg-red-700"
                             >
                               Excluir

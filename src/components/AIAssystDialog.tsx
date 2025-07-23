@@ -35,8 +35,18 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
     setIsProcessing(true);
     
     try {
-      // Enviar apenas a descrição do problema para a IA
-      const contextualText = formData.notas;
+      // Montar contexto com nome e processo, se existirem
+      let contextualText = '';
+      if (formData.nomeUsuario) {
+        contextualText += `Usuário: ${formData.nomeUsuario}\n`;
+      }
+      if (formData.processos) {
+        contextualText += `Número do processo: ${formData.processos}\n`;
+      }
+      if (contextualText) {
+        contextualText += '\n';
+      }
+      contextualText += formData.notas;
 
       // Gerar descrição melhorada e solução em paralelo
       const [enhanced, solution] = await Promise.all([
@@ -129,12 +139,14 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
                       <span className="text-base">{[
                         formData.nomeUsuario,
                         formData.cpfUsuario,
-                        formData.perfilUsuario
+                        formData.perfilUsuario,
+                        formData.orgaoJulgador ? formData.orgaoJulgador.replace(/^\d+\s*-\s*/, '') : null
                       ].filter(Boolean).join(' / ') || '-'}</span>
                       <Button size="icon" variant="ghost" onClick={() => copyToClipboard([
                         formData.nomeUsuario,
                         formData.cpfUsuario,
-                        formData.perfilUsuario
+                        formData.perfilUsuario,
+                        formData.orgaoJulgador ? formData.orgaoJulgador.replace(/^\d+\s*-\s*/, '') : null
                       ].filter(Boolean).join(' / ') || '-', 'nome')} title="Copiar Nome">
                         {copiedField === 'nome' ? <CheckCircle className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                       </Button>
@@ -170,43 +182,6 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
                       rows={6}
                       className="font-medium"
                       placeholder="A IA irá melhorar a descrição do problema..."
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Solução Sugerida */}
-              <Card>
-                <CardHeader className="bg-green-50">
-                  <CardTitle className="text-lg flex items-center">
-                    <Bot className="h-5 w-5 mr-2 text-green-600" />
-                    Solução Sugerida pela IA
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">Sugestão baseada na base de conhecimento e análise:</Label>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyToClipboard(suggestedSolution, 'solution')}
-                        className="flex items-center gap-2"
-                      >
-                        {copiedField === 'solution' ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                        Copiar
-                      </Button>
-                    </div>
-                    <Textarea
-                      value={suggestedSolution?.trim() ? suggestedSolution : 'Abrir chamado no AssystNet.'}
-                      onChange={(e) => setSuggestedSolution(e.target.value)}
-                      rows={5}
-                      className="font-medium bg-green-50"
-                      placeholder="A IA irá sugerir uma solução baseada no problema descrito..."
                     />
                   </div>
                 </CardContent>
