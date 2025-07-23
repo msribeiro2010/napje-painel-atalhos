@@ -6,14 +6,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import AvatarUpload from '@/components/AvatarUpload';
 import { ArrowLeft, User, LogOut } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changing, setChanging] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || !confirmPassword) {
+      toast.error('Preencha todos os campos');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    setChanging(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setChanging(false);
+    if (error) {
+      toast.error(error.message || 'Erro ao alterar senha');
+    } else {
+      toast.success('Senha alterada com sucesso!');
+      setNewPassword('');
+      setConfirmPassword('');
+    }
   };
 
   return (
@@ -75,7 +107,45 @@ const Profile = () => {
                     Para alterar seu nome ou outras informações, entre em contato com o administrador do sistema.
                   </p>
                 </div>
-
+                {/* Card de alteração de senha */}
+                <div className="p-4 bg-gradient-accent rounded-lg border">
+                  <h3 className="font-medium mb-2">Alterar Senha</h3>
+                  <form onSubmit={handleChangePassword} className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Nova Senha</label>
+                      <input
+                        type="password"
+                        className="w-full rounded border px-3 py-2 text-sm"
+                        value={newPassword}
+                        onChange={e => setNewPassword(e.target.value)}
+                        minLength={6}
+                        required
+                        autoComplete="new-password"
+                        placeholder="Digite a nova senha"
+                        title="Nova Senha"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Confirmar Nova Senha</label>
+                      <input
+                        type="password"
+                        className="w-full rounded border px-3 py-2 text-sm"
+                        value={confirmPassword}
+                        onChange={e => setConfirmPassword(e.target.value)}
+                        minLength={6}
+                        required
+                        autoComplete="new-password"
+                        placeholder="Confirme a nova senha"
+                        title="Confirmar Nova Senha"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button type="submit" disabled={changing || !newPassword || !confirmPassword} className="bg-primary text-white hover:bg-primary/90">
+                        {changing ? 'Salvando...' : 'Alterar Senha'}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
                 <div className="pt-4 border-t">
                   <Button 
                     variant="destructive" 

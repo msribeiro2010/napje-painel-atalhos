@@ -110,6 +110,12 @@ const UserMenu = () => {
             <span className="text-sm font-medium">
               {profile.nome_completo || 'Nome não informado'}
             </span>
+            {/* Exibir perfil abaixo do nome */}
+            {profile.is_admin && (
+              <span className="text-xs text-primary font-semibold flex items-center gap-1 mt-0.5">
+                <Shield className="h-3 w-3 text-primary" /> Administrador
+              </span>
+            )}
             <span className="text-xs text-muted-foreground">
               {profile.email.split('@')[0]}
             </span>

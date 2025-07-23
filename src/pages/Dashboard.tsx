@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, BookOpen, Shield, Plus, ExternalLink, StickyNote, Scale, Calendar, Home, Umbrella, Laptop } from 'lucide-react';
+import { FileText, BookOpen, Shield, Plus, ExternalLink, StickyNote, Scale, Calendar, Home, Umbrella, Laptop, Video, Users, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import PostitNotes from '@/components/PostitNotes';
@@ -21,7 +21,6 @@ import { useWorkCalendar, WorkStatus } from '@/hooks/useWorkCalendar';
 import { format, addDays } from 'date-fns';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
-import { BookOpen, Video, Users, Sparkles } from 'lucide-react';
 
 const Dashboard = () => {
   const navigate = useNavigate();

@@ -120,6 +120,40 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
+                  {/* Campos no topo */}
+                  <div className="mb-3 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-base">Chamado Origem:</span>
+                      <span className="text-base">{formData.chamadoOrigem || '-'}</span>
+                      <Button size="icon" variant="ghost" onClick={() => copyToClipboard(formData.chamadoOrigem || '', 'chamadoOrigem')} title="Copiar Chamado Origem">
+                        {copiedField === 'chamadoOrigem' ? <CheckCircle className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-base">Assunto:</span>
+                      <span className="text-base">{formData.resumo || '-'}</span>
+                      <Button size="icon" variant="ghost" onClick={() => copyToClipboard(formData.resumo || '', 'assunto')} title="Copiar Assunto">
+                        {copiedField === 'assunto' ? <CheckCircle className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-base">Nome:</span>
+                      <span className="text-base">{[
+                        formData.nomeUsuario,
+                        formData.cpfUsuario,
+                        formData.perfilUsuario,
+                        formData.orgaoJulgador
+                      ].filter(Boolean).join(' / ') || '-'}</span>
+                      <Button size="icon" variant="ghost" onClick={() => copyToClipboard([
+                        formData.nomeUsuario,
+                        formData.cpfUsuario,
+                        formData.perfilUsuario,
+                        formData.orgaoJulgador
+                      ].filter(Boolean).join(' / ') || '-', 'nome')} title="Copiar Nome">
+                        {copiedField === 'nome' ? <CheckCircle className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-medium">Descrição Original:</Label>
@@ -182,7 +216,7 @@ export const AIAssystDialog = ({ open, onOpenChange, formData, onProceedToGenera
                       </Button>
                     </div>
                     <Textarea
-                      value={suggestedSolution}
+                      value={suggestedSolution?.trim() ? suggestedSolution : 'Abrir chamado no AssystNet.'}
                       onChange={(e) => setSuggestedSolution(e.target.value)}
                       rows={5}
                       className="font-medium bg-green-50"
