@@ -47,6 +47,14 @@ serve(async (req) => {
         systemPrompt = 'Você é um assistente especializado em suporte técnico do sistema NAPJe. Com base na descrição do problema fornecida, sugira uma possível solução ou orientação inicial para o servidor responsável, de forma clara, objetiva e profissional. Se não for possível sugerir uma solução, oriente o servidor a buscar mais informações ou encaminhar para o suporte especializado. Sempre responda em português brasileiro.';
         userPrompt = `Com base na descrição do problema abaixo, gere uma sugestão de solução ou orientação inicial para o servidor responsável. Seja claro, objetivo e profissional. Se não for possível sugerir uma solução, oriente a buscar mais informações ou encaminhar para o suporte especializado.\n\nDescrição do problema:\n"${text}"`;
         break;
+      case 'emoji':
+        systemPrompt = 'Você é um assistente especializado em sugerir emojis relevantes para títulos de grupos e atalhos. Analise o título fornecido e sugira apenas 1 emoji que represente bem o conteúdo ou função. Retorne apenas o emoji, sem texto adicional.';
+        userPrompt = `Sugira 1 emoji relevante para este título. Retorne apenas o emoji:\n\n"${text}"`;
+        break;
+      case 'nota':
+        systemPrompt = 'Você é um assistente especializado em melhorar notas pessoais e organizacionais. Sua tarefa é reescrever a nota de forma mais clara, organizada e profissional, mantendo o contexto original mas melhorando a legibilidade e estrutura. Use linguagem clara e objetiva, organize ideias em tópicos quando apropriado, e mantenha o tom pessoal quando necessário.';
+        userPrompt = `Melhore esta nota pessoal, tornando-a mais clara, organizada e legível. Mantenha o contexto original mas melhore a estrutura e clareza. Retorne apenas o texto melhorado:\n\n"${text}"`;
+        break;
       default:
         systemPrompt = 'Você é um assistente especializado em melhorar textos para comunicação profissional no contexto de suporte técnico. Mantenha a linguagem clara, objetiva e profissional.';
         userPrompt = `Melhore este texto mantendo o contexto original, mas tornando-o mais claro e profissional. Retorne apenas o texto melhorado:\n\n"${text}"`;

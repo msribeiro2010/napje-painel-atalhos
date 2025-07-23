@@ -39,17 +39,21 @@ const ChamadosRecentes = () => {
   }, [chamados, searchTerm]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-[#f8f5e4] dark:bg-[#23201a] p-4">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center">
-            <Button variant="outline" onClick={() => navigate('/')} className="mr-4">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/')} 
+              className="mr-4 text-[#7c6a3c] dark:text-[#f8f5e4] border-[#e2d8b8] dark:border-[#3a3320] bg-[#f8f5e4] dark:bg-[#2d2717] hover:bg-[#f3ecd2] dark:hover:bg-[#28231a]"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Chamados Recentes</h1>
-              <p className="text-gray-600">Histórico dos últimos chamados criados</p>
+              <h1 className="text-3xl font-bold text-[#7c6a3c] dark:text-[#f8f5e4]">Chamados Recentes</h1>
+              <p className="text-[#bfae7c] dark:text-[#bfae7c]">Histórico dos últimos chamados criados</p>
             </div>
           </div>
           
@@ -58,13 +62,13 @@ const ChamadosRecentes = () => {
             <DateDisplay />
             {/* Campo de busca */}
             <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#bfae7c] dark:text-[#bfae7c]" />
               <Input
                 type="text"
                 placeholder="Buscar por título, descrição, processo..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-[#f8f5e4] dark:bg-[#2d2717] border-[#e2d8b8] dark:border-[#3a3320] text-[#7c6a3c] dark:text-[#f8f5e4] placeholder:text-[#bfae7c] dark:placeholder:text-[#bfae7c]"
               />
             </div>
           </div>
@@ -72,17 +76,17 @@ const ChamadosRecentes = () => {
 
         {loading ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-600 mt-4">Carregando chamados...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bfae7c] dark:border-[#bfae7c] mx-auto"></div>
+            <p className="text-[#bfae7c] dark:text-[#bfae7c] mt-4">Carregando chamados...</p>
           </div>
         ) : filteredChamados.length === 0 ? (
-          <Card>
+          <Card className="bg-[#f8f5e4] dark:bg-[#2d2717] border-[#e2d8b8] dark:border-[#3a3320]">
             <CardContent className="p-8 text-center">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <FileText className="h-12 w-12 text-[#bfae7c] dark:text-[#bfae7c] mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-[#7c6a3c] dark:text-[#f8f5e4] mb-2">
                 {chamados.length === 0 ? 'Nenhum chamado encontrado' : 'Nenhum resultado encontrado'}
               </h3>
-              <p className="text-gray-600">
+              <p className="text-[#bfae7c] dark:text-[#bfae7c]">
                 {chamados.length === 0 
                   ? 'Ainda não há chamados criados no sistema.' 
                   : 'Tente ajustar os termos da sua busca.'
@@ -93,7 +97,7 @@ const ChamadosRecentes = () => {
         ) : (
           <div className="space-y-4">
             {searchTerm && (
-              <div className="mb-4 text-sm text-gray-600">
+              <div className="mb-4 text-sm text-[#bfae7c] dark:text-[#bfae7c]">
                 Mostrando {filteredChamados.length} de {chamados.length} chamados
               </div>
             )}
