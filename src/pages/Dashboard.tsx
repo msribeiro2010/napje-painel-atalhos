@@ -89,6 +89,7 @@ const Dashboard = () => {
   const { marks: tomorrowMarks, loading: marksLoading } = useWorkCalendar(tomorrow);
   const tomorrowKey = format(tomorrow, 'yyyy-MM-dd');
   const status: WorkStatus | 'none' = tomorrowMarks[tomorrowKey] || 'none';
+  const tomorrowDateStr = format(tomorrow, 'dd/MM/yyyy');
 
   const statusLabel = {
     presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-4 w-4 text-[#bfae7c] inline" /> },
@@ -182,7 +183,7 @@ const Dashboard = () => {
         <div className="rounded-lg shadow p-4 flex items-center gap-3" style={{ background: statusLabel[status].color }}>
           {statusLabel[status].icon}
           <span className="font-semibold text-[#7c6a3c] text-base">
-            Amanhã: {statusLabel[status].label}
+            Amanhã: {statusLabel[status].label} {tomorrowDateStr}
           </span>
         </div>
       </div>

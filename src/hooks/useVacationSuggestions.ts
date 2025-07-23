@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addDays, startOfYear, endOfYear, differenceInDays, isWeekend } from "date-fns";
+import { format, addDays, startOfYear, endOfYear, differenceInDays, isWeekend, isAfter } from "date-fns";
 
 export interface VacationSuggestion {
   id: string;
@@ -35,7 +35,14 @@ export const useVacationSuggestions = (year: number = new Date().getFullYear()) 
           return [];
         }
 
-        return generateVacationSuggestions(feriados || [], year);
+        // Filtrar apenas feriados futuros
+        const today = new Date();
+        const feriadosFuturos = (feriados || []).filter(f => {
+          const d = new Date(f.data);
+          return isAfter(d, today) || (d.toDateString() === today.toDateString());
+        });
+
+        return generateVacationSuggestions(feriadosFuturos, year);
       } catch (error) {
         console.error('Erro no useVacationSuggestions:', error);
         return [];
@@ -152,15 +159,20 @@ function identifyHolidayGroups(holidays: any[]) {
 
 function createHolidayBasedSuggestions(holidayGroup: any[], year: number, groupIndex: number): VacationSuggestion[] {
   const suggestions: VacationSuggestion[] = [];
-  
   if (holidayGroup.length === 0) return suggestions;
-  
+
+  // O grupo pode conter mais de um feriado próximo (em até 10 dias)
+  // A sugestão "após" deve sempre começar no dia seguinte ao último feriado do grupo
   const firstHoliday = new Date(holidayGroup[0].data);
   const lastHoliday = new Date(holidayGroup[holidayGroup.length - 1].data);
-  
-  const beforeStart = addDays(firstHoliday, -10);
-  const beforeEnd = addDays(firstHoliday, -1);
-  
+
+  // DEBUG LOGS
+  console.log('[IA Férias] Grupo de feriados:', holidayGroup.map(h => h.data));
+  console.log('[IA Férias] lastHoliday:', lastHoliday.toISOString());
+
+  // Antes do primeiro feriado do grupo
+  const beforeEnd = addDays(firstHoliday, -1); // Dia anterior ao feriado
+  const beforeStart = addDays(beforeEnd, -9); // 9 dias antes do beforeEnd (total 10 dias)
   if (beforeStart.getFullYear() === year) {
     suggestions.push({
       id: `before-${groupIndex}`,
@@ -180,9 +192,10 @@ function createHolidayBasedSuggestions(holidayGroup: any[], year: number, groupI
     });
   }
 
+  // Após o último feriado do grupo: férias começam no dia seguinte ao último feriado
   const afterStart = addDays(lastHoliday, 1);
-  const afterEnd = addDays(lastHoliday, 10);
-  
+  const afterEnd = addDays(afterStart, 9); // 10 dias de férias, de afterStart até afterEnd inclusive
+  console.log('[IA Férias] afterStart:', afterStart.toISOString(), 'afterEnd:', afterEnd.toISOString());
   if (afterEnd.getFullYear() === year) {
     suggestions.push({
       id: `after-${groupIndex}`,

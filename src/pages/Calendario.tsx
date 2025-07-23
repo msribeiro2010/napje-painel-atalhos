@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Home, Umbrella, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield } from 'lucide-react';
+import { Calendar as CalendarIcon, Home, Umbrella, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users } from 'lucide-react';
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
@@ -11,12 +11,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useWorkCalendar, WorkStatus } from '@/hooks/useWorkCalendar';
 import { toast } from 'sonner';
+import { CustomEventDialog } from '@/components/CustomEventDialog';
+import { useCustomEvents } from '@/hooks/useCustomEvents';
+import { ptBR } from 'date-fns/locale';
 
 const calendarLabels = {
   presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-4 w-4 text-[#bfae7c]" /> },
   ferias: { label: 'Férias', color: '#ffe6e6', icon: <Umbrella className="h-4 w-4 text-[#e6a1a1]" /> },
   remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Laptop className="h-4 w-4 text-[#7cc3e6]" /> },
   plantao: { label: 'Plantão', color: '#e6ffe6', icon: <Shield className="h-4 w-4 text-[#4caf50]" /> },
+  folga: { label: 'Folga', color: '#e0e0e0', icon: <CalendarIcon className="h-4 w-4 text-[#757575]" /> },
   none: { label: '', color: '#fff', icon: null },
 };
 
@@ -27,6 +31,11 @@ function CalendarComponent() {
   
   // Usar o hook para buscar/salvar marcações do Supabase
   const { marks, loading: marksLoading, saveMark, removeMark, fetchMarks } = useWorkCalendar(month);
+  const { customEvents, fetchCustomEvents, addCustomEvent } = useCustomEvents(month);
+
+  useEffect(() => {
+    fetchCustomEvents();
+  }, [month]);
 
   const { data: events = [], isLoading: eventsLoading } = useCalendarEvents(month);
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
@@ -58,12 +67,13 @@ function CalendarComponent() {
         saveMark(key, 'plantao');
       }
     } else {
-      // Ciclo normal
+      // Ciclo normal incluindo Folga
       const next: WorkStatus =
         current === 'none' ? 'presencial' :
         current === 'presencial' ? 'ferias' :
         current === 'ferias' ? 'remoto' :
-        current === 'remoto' ? 'plantao' :
+        current === 'remoto' ? 'folga' :
+        current === 'folga' ? 'plantao' :
         'none';
       if (next === 'none') {
         removeMark(key);
@@ -104,9 +114,10 @@ function CalendarComponent() {
             <CalendarIcon className="h-6 w-6 text-[#bfae7c]" />
             Meu Calendário de Trabalho
           </span>
-          <span className="text-[#bfae7c] text-base">{format(month, 'MMMM yyyy')}</span>
+          <span className="text-[#bfae7c] text-base">{format(month, 'MMMM yyyy', { locale: ptBR })}</span>
         </div>
         <div className="flex gap-2">
+          <CustomEventDialog onAdd={async (event) => { await addCustomEvent(event); await fetchCustomEvents(); }} />
           <Button size="sm" variant="outline" className="px-3 py-2" onClick={() => setMonth(addDays(month, -30))}>Anterior</Button>
           <Button size="sm" variant="outline" className="px-3 py-2" onClick={() => setMonth(addDays(month, 30))}>Próximo</Button>
           <Button 
@@ -137,7 +148,12 @@ function CalendarComponent() {
           const dayEvents = eventsByDate[key] || [];
           const hasFeriado = dayEvents.some(e => e.type === 'feriado');
           const hasAniversario = dayEvents.some(e => e.type === 'aniversario');
-          
+          const isPlantao = mark === 'plantao';
+          const isFolga = mark === 'folga';
+
+          // Eventos personalizados do dia
+          const customEventsOfDay = customEvents.filter(ev => ev.date === key);
+
           // Determinar cor de fundo - priorizar feriados
           let backgroundColor = calendarLabels[mark].color;
           if (hasFeriado && hasAniversario) {
@@ -147,28 +163,52 @@ function CalendarComponent() {
           } else if (hasAniversario) {
             backgroundColor = '#ff9800'; // Laranja para aniversários
           }
-          
+
+          // Definir classe animada
+          let animationClass = '';
+          if (hasFeriado) animationClass = 'animate-pulse-slow bg-yellow-100';
+          else if (isPlantao) animationClass = 'animate-bounce-slow bg-green-100';
+          else if (isFolga) animationClass = 'animate-fade-slow bg-gray-200';
+          else if (hasAniversario) animationClass = 'animate-bounce-slow bg-orange-100';
+
           const eventTitles = dayEvents.map(e => e.title).join('\n');
           const fullTitle = [calendarLabels[mark].label, eventTitles].filter(Boolean).join('\n');
-          
+
+          // Ícone do evento personalizado
+          const customEventIcons = {
+            curso: <BookOpen className="h-3 w-3 text-blue-600" />,
+            webinario: <Video className="h-3 w-3 text-purple-600" />,
+            reuniao: <Users className="h-3 w-3 text-green-600" />,
+            outro: <Sparkles className="h-3 w-3 text-amber-600" />,
+          };
+
           return (
             <TooltipProvider key={key}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => handleDayClick(date)}
-                    className={`rounded-lg border border-[#e2d8b8] flex flex-col items-center justify-center h-16 w-full transition-all duration-150 focus:outline-none hover:shadow-md relative ${isCurrent ? 'ring-2 ring-[#bfae7c]' : ''}`}
+                    className={`rounded-lg border border-[#e2d8b8] flex flex-col items-center justify-center h-16 w-full transition-all duration-150 focus:outline-none hover:shadow-md relative ${isCurrent ? 'ring-2 ring-[#bfae7c]' : ''} ${animationClass}`}
                     style={{ background: backgroundColor }}
                     title={fullTitle}
                   >
                     <span className="font-semibold text-[#7c6a3c] text-base">{date.getDate()}</span>
-                    
                     {/* Ícones de eventos */}
                     <div className="flex gap-1 absolute bottom-1 left-1">
                       {hasFeriado && <Star className="h-3 w-3 text-amber-700" />}
                       {hasAniversario && <Gift className="h-3 w-3 text-orange-700" />}
+                      {/* Ícones de eventos personalizados */}
+                      {customEventsOfDay.map(ev => (
+                        <span key={ev.id} title={ev.title} className="relative group">
+                          {customEventIcons[ev.type as keyof typeof customEventIcons]}
+                          {/* Tooltip customizada */}
+                          <span className="hidden group-hover:block absolute z-50 left-6 top-0 bg-white text-xs text-gray-700 rounded shadow px-2 py-1 min-w-[120px] border border-gray-200">
+                            <span className="font-semibold">{ev.title}</span>
+                            {ev.description && <><br />{ev.description}</>}
+                          </span>
+                        </span>
+                      ))}
                     </div>
-                    
                     {/* Ícone do tipo de trabalho */}
                     <div className="absolute bottom-1 right-1">
                       {calendarLabels[mark].icon}
@@ -186,6 +226,14 @@ function CalendarComponent() {
                             <Gift className="h-3 w-3 text-orange-500" />
                           )}
                           <span className="text-sm">{event.title}</span>
+                        </div>
+                      ))}
+                      {/* Eventos personalizados no tooltip principal */}
+                      {customEventsOfDay.map(ev => (
+                        <div key={ev.id} className="flex items-center gap-2">
+                          {customEventIcons[ev.type as keyof typeof customEventIcons]}
+                          <span className="text-sm font-semibold">{ev.title}</span>
+                          {ev.description && <span className="text-xs text-gray-500">{ev.description}</span>}
                         </div>
                       ))}
                     </div>
@@ -220,6 +268,11 @@ function CalendarComponent() {
               <span className="inline-block w-4 h-4 rounded bg-[#e6ffe6] border border-[#e2d8b8]"></span>
               <Shield className="h-4 w-4 text-[#4caf50]" />
               Plantão
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="inline-block w-4 h-4 rounded bg-[#e0e0e0] border border-[#e2d8b8]"></span>
+              <CalendarIcon className="h-4 w-4 text-[#757575]" />
+              Folga
             </span>
           </div>
         </div>

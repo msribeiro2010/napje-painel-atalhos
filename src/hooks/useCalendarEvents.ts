@@ -62,13 +62,11 @@ export const useCalendarEvents = (currentMonth: Date) => {
           if (birthMonth === currentMonthNum) {
             const anniversaryThisYear = `${currentYear}-${birthMonth.toString().padStart(2, '0')}-${birthDay.toString().padStart(2, '0')}`;
             
-            // Calcular idade
-            const age = currentYear - birthDate.getFullYear();
-            
+            // Remover idade do título
             events.push({
               id: aniversariante.id + 10000, // Offset para evitar conflito com IDs de feriados
               date: anniversaryThisYear,
-              title: `${aniversariante.nome} (${age} anos)`,
+              title: aniversariante.nome, // Apenas nome
               type: 'aniversario'
             });
           }

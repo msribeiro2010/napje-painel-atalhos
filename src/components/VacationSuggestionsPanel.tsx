@@ -7,6 +7,7 @@ import { useVacationSuggestions, VacationSuggestion } from '@/hooks/useVacationS
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface VacationSuggestionsPanelProps {
   year?: number;
@@ -17,8 +18,19 @@ export const VacationSuggestionsPanel = ({
   year = new Date().getFullYear(),
   onSelectSuggestion 
 }: VacationSuggestionsPanelProps) => {
+  const queryClient = useQueryClient();
   const { data: suggestions = [], isLoading, error } = useVacationSuggestions(year);
   const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(null);
+  // Removido: const [cleared, setCleared] = useState(false);
+
+  // Removido: Função para limpar sugestões
+  // const handleClear = () => {
+  //   setCleared(true);
+  //   setExpandedSuggestion(null);
+  // };
+
+  // Remover filtro, mostrar todas as sugestões
+  // const filteredSuggestions = suggestions.filter(s => s.reason.startsWith('Estender após'));
 
   // Se houver erro, mostrar mensagem amigável
   if (error) {
@@ -35,6 +47,9 @@ export const VacationSuggestionsPanel = ({
             <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-300" />
             <p>Erro ao carregar sugestões de IA</p>
             <p className="text-sm">Tente novamente mais tarde</p>
+            {error.message && error.message.includes('401') && (
+              <p className="text-red-500 text-xs mt-2">Erro de autenticação na API (verifique a chave da OpenAI)</p>
+            )}
           </div>
         </CardContent>
       </Card>
