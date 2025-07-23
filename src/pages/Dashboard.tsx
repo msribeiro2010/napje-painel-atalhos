@@ -20,6 +20,8 @@ import { useChatAssistant } from '@/hooks/useChatAssistant';
 import { useWorkCalendar, WorkStatus } from '@/hooks/useWorkCalendar';
 import { format, addDays } from 'date-fns';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
+import { useCustomEvents } from '@/hooks/useCustomEvents';
+import { BookOpen, Video, Users, Sparkles } from 'lucide-react';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -90,6 +92,19 @@ const Dashboard = () => {
   const tomorrowKey = format(tomorrow, 'yyyy-MM-dd');
   const status: WorkStatus | 'none' = tomorrowMarks[tomorrowKey] || 'none';
   const tomorrowDateStr = format(tomorrow, 'dd/MM/yyyy');
+
+  // Buscar eventos personalizados do próximo dia
+  const { customEvents, fetchCustomEvents } = useCustomEvents(tomorrow);
+  // Filtrar eventos do próximo dia
+  const customEventsTomorrow = customEvents.filter(ev => ev.date === tomorrowKey);
+
+  // Cores e ícones para tipos de evento
+  const customEventStyles = {
+    curso: { color: '#e3f2fd', border: '#2196f3', icon: <BookOpen className="h-5 w-5 text-blue-600 animate-bounce-slow" /> },
+    webinario: { color: '#ede7f6', border: '#7c3aed', icon: <Video className="h-5 w-5 text-purple-600 animate-pulse-slow" /> },
+    reuniao: { color: '#e8f5e9', border: '#43a047', icon: <Users className="h-5 w-5 text-green-600 animate-fade-slow" /> },
+    outro: { color: '#fff8e1', border: '#ffb300', icon: <Sparkles className="h-5 w-5 text-amber-500 animate-bounce-slow" /> },
+  };
 
   const statusLabel = {
     presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-4 w-4 text-[#bfae7c] inline" /> },
@@ -179,13 +194,28 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-bg p-4">
       {/* Aviso do status do próximo dia */}
-      <div className="max-w-6xl mx-auto mb-4">
+      <div className="max-w-6xl mx-auto mb-4 space-y-2">
         <div className="rounded-lg shadow p-4 flex items-center gap-3" style={{ background: statusLabel[status].color }}>
           {statusLabel[status].icon}
           <span className="font-semibold text-[#7c6a3c] text-base">
             Amanhã: {statusLabel[status].label} {tomorrowDateStr}
           </span>
         </div>
+        {/* Avisos de eventos personalizados do próximo dia */}
+        {customEventsTomorrow.map(ev => (
+          <div
+            key={ev.id}
+            className="rounded-lg shadow flex items-center gap-3 px-4 py-3 border-l-4 animate-fade-in"
+            style={{ background: customEventStyles[ev.type]?.color, borderColor: customEventStyles[ev.type]?.border }}
+          >
+            {customEventStyles[ev.type]?.icon}
+            <div>
+              <span className="font-semibold text-base mr-2">Amanhã: {ev.title}</span>
+              <span className="inline-block text-xs px-2 py-0.5 rounded bg-white/60 text-gray-700 ml-2">{ev.type.charAt(0).toUpperCase() + ev.type.slice(1)}</span>
+              {ev.description && <div className="text-xs text-gray-600 mt-1">{ev.description}</div>}
+            </div>
+          </div>
+        ))}
       </div>
       <div className="max-w-6xl mx-auto">
         <DashboardHeader isAdmin={isAdmin} />
