@@ -409,23 +409,20 @@ const Atalhos = () => {
   const queryClient = useQueryClient();
 
   // Buscar profile do usuário para verificar se é admin
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: userLoading } = useQuery({
     queryKey: ['user-profile'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) return null;
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('is_admin, status')
         .eq('id', user.id)
         .single();
-      
       if (error) {
         console.error('Erro ao buscar profile:', error);
         return null;
       }
-      
       return data;
     }
   });
@@ -440,10 +437,10 @@ const Atalhos = () => {
         .from('shortcut_groups')
         .select('*')
         .order('order', { ascending: true });
-
       if (error) throw error;
       return data as ShortcutGroup[];
-    }
+    },
+    enabled: !userLoading && !!profile // Só busca quando o usuário estiver carregado
   });
 
   // Buscar atalhos do banco de dados
@@ -457,13 +454,13 @@ const Atalhos = () => {
           shortcut_groups!inner(title)
         `)
         .order('order', { ascending: true });
-
       if (error) throw error;
       return data.map(item => ({
         ...item,
         group_title: item.shortcut_groups?.title
       })) as Shortcut[];
-    }
+    },
+    enabled: !userLoading && !!profile // Só busca quando o usuário estiver carregado
   });
 
   // Carregar favoritos salvos das preferências
