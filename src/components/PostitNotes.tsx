@@ -851,7 +851,7 @@ const PostitNotes = () => {
   return (
     <div 
       ref={containerRef}
-      className="h-full flex flex-col bg-[#f8f5e4]/70 dark:bg-[#23201a]/70 min-h-screen p-6 relative overflow-hidden backdrop-blur-md"
+      className="h-full flex flex-col bg-[#f8f5e4]/40 dark:bg-[#23201a]/40 min-h-screen p-6 relative overflow-hidden backdrop-blur-lg"
     >
       {/* Header moderno */}
       <div className="flex items-center justify-between mb-8 z-10 relative">
