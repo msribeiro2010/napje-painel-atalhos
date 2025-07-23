@@ -132,7 +132,7 @@ const Auth = () => {
               </a>
             </div>
           </div>
-          <CardTitle>Sistema de Chamados TRT15</CardTitle>
+          <CardTitle>Sistema de Chamados NAPJe</CardTitle>
           <CardDescription>
             Acesse com seu email institucional @trt15.jus.br
           </CardDescription>
