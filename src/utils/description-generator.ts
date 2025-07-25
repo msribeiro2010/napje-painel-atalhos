@@ -35,54 +35,33 @@ export const limparDescricaoProblema = (texto: string): string => {
 };
 
 export const generateDescription = (formData: FormData): string => {
-  const resumoFinal = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
-
-  // 1º lugar: Resumo
-  let description = `*Resumo\n\n${resumoFinal}`;
-  if (formData.processos) {
-    description += ` - ${formData.processos}`;
-  }
-  description += `\n\n`;
+  let description = '';
   
-  // 2º lugar: Descrição do Problema
-  description += `Descrição do Problema\n\n${limparDescricaoProblema(formData.notas)}\n\n`;
+  // Descrição do Problema
+  description += `Descrição do Problema:\n\n${limparDescricaoProblema(formData.notas)}\n\n`;
   
-  // 3º lugar: Número dos processos
-  if (formData.processos) {
-    description += `Número dos processos\n\n${formData.processos}\n\n`;
-  }
-
-  // 4º lugar: Número do Chamado de Origem (se preenchido)
-  if (formData.chamadoOrigem) {
-    description += `Número do Chamado de Origem\n\n${formData.chamadoOrigem}\n\n`;
-  }
-
-  // 5º lugar: Perfil do serviço que abriu o chamado
+  // Dados do Usuário (se preenchidos)
   if (formData.perfilUsuario || formData.cpfUsuario || formData.nomeUsuario || (formData.orgaoJulgador && formData.grau === '1º Grau')) {
-    description += `*Perfil/CPF/Nome completo do usuário\n\n`;
+    description += `Dados do Usuário:\n\n`;
     const dadosUsuario = [];
     if (formData.nomeUsuario) dadosUsuario.push(formData.nomeUsuario);
-    if (formData.perfilUsuario) dadosUsuario.push(formData.perfilUsuario);
     if (formData.cpfUsuario) dadosUsuario.push(formData.cpfUsuario);
+    if (formData.perfilUsuario) dadosUsuario.push(formData.perfilUsuario);
     if (formData.orgaoJulgador && formData.grau === '1º Grau') dadosUsuario.push(limparCodigoOJ(formData.orgaoJulgador));
-    description += `${dadosUsuario.join('/')}\n\n`;
+    description += `${dadosUsuario.join(' / ')}\n\n`;
   }
 
-  return description;
+  // Número do Chamado de Origem (se preenchido)
+  if (formData.chamadoOrigem) {
+    description += `Chamado Origem: ${formData.chamadoOrigem}\n\n`;
+  }
+
+  return description.trim();
 };
 
 export const formatDescriptionSections = (formData: FormData): DescriptionSection[] => {
-  const resumoFinal = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
-
   const sections: DescriptionSection[] = [
-    // 1º lugar: Resumo
-    {
-      title: 'Resumo',
-      content: resumoFinal + (formData.processos ? ` - ${formData.processos}` : ''),
-      key: 'resumo',
-      fullWidth: true
-    },
-    // 2º lugar: Descrição do Problema
+    // Descrição do Problema
     {
       title: 'Descrição do Problema',
       content: limparDescricaoProblema(formData.notas),
@@ -91,38 +70,28 @@ export const formatDescriptionSections = (formData: FormData): DescriptionSectio
     }
   ];
 
-  // 3º lugar: Número dos processos se preenchido
-  if (formData.processos) {
-    sections.push({
-      title: 'Número dos processos',
-      content: formData.processos,
-      key: 'processos',
-      fullWidth: true
-    });
-  }
-
-  // 4º lugar: Número do Chamado de Origem se preenchido
-  if (formData.chamadoOrigem) {
-    sections.push({
-      title: 'Número do Chamado de Origem',
-      content: formData.chamadoOrigem,
-      key: 'chamadoOrigem',
-      fullWidth: true
-    });
-  }
-
-  // 5º lugar: Perfil do serviço que abriu o chamado se preenchido
+  // Dados do Usuário (se preenchidos)
   if (formData.perfilUsuario || formData.cpfUsuario || formData.nomeUsuario || (formData.orgaoJulgador && formData.grau === '1º Grau')) {
     const dadosUsuario = [];
     if (formData.nomeUsuario) dadosUsuario.push(formData.nomeUsuario);
-    if (formData.perfilUsuario) dadosUsuario.push(formData.perfilUsuario);
     if (formData.cpfUsuario) dadosUsuario.push(formData.cpfUsuario);
+    if (formData.perfilUsuario) dadosUsuario.push(formData.perfilUsuario);
     if (formData.orgaoJulgador && formData.grau === '1º Grau') dadosUsuario.push(limparCodigoOJ(formData.orgaoJulgador));
     
     sections.push({
-      title: 'Perfil/CPF/Nome completo do usuário',
-      content: dadosUsuario.join('/'),
+      title: 'Dados do Usuário',
+      content: dadosUsuario.join(' / '),
       key: 'usuario',
+      fullWidth: true
+    });
+  }
+
+  // Número do Chamado de Origem (se preenchido)
+  if (formData.chamadoOrigem) {
+    sections.push({
+      title: 'Chamado Origem',
+      content: formData.chamadoOrigem,
+      key: 'chamadoOrigem',
       fullWidth: true
     });
   }

@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Search, User } from 'lucide-react';
+import { Search, User, CheckCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUsuarios, Usuario } from '@/hooks/useUsuarios';
+import { useSugestoes } from '@/hooks/useSugestoes';
+import { useChamados } from '@/hooks/useChamados';
+import { InputComSugestoes } from '@/components/InputComSugestoes';
 import { FormData } from '@/types/form';
 import { perfis } from '@/constants/form-options';
+import { formatarCPF, validarCPF, limparCPF } from '@/utils/cpf-utils';
 
 interface UsuarioAutoCompleteProps {
   formData: FormData;
@@ -15,7 +19,28 @@ interface UsuarioAutoCompleteProps {
 export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoCompleteProps) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [sugestoesPerfil, setSugestoesPerfil] = useState([]);
+  const [dadosEncontrados, setDadosEncontrados] = useState(false);
   const { buscarUsuarios } = useUsuarios();
+  const { buscarSugestoesPerfil, loading: sugestoesLoading } = useSugestoes();
+  const { buscarDadosUsuarioPorCPF } = useChamados();
+
+  // Carregar sugestões de perfil quando o componente montar
+  useEffect(() => {
+    const carregarSugestoesPerfil = async () => {
+      const sugestoes = await buscarSugestoesPerfil();
+      setSugestoesPerfil(sugestoes);
+    };
+    
+    carregarSugestoesPerfil();
+  }, []);
+
+  // Limpar indicador de dados encontrados quando campos forem modificados manualmente
+  useEffect(() => {
+    if (dadosEncontrados && (formData.nomeUsuario === '' || formData.perfilUsuario === '')) {
+      setDadosEncontrados(false);
+    }
+  }, [formData.nomeUsuario, formData.perfilUsuario, dadosEncontrados]);
 
   useEffect(() => {
     const buscarUsuariosDebounced = async () => {
@@ -34,53 +59,39 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
     return () => clearTimeout(timeout);
   }, [formData.cpfUsuario, formData.nomeUsuario, buscarUsuarios]);
 
-  const formatarCPF = (valor: string) => {
-    const somenteNumeros = valor.replace(/\D/g, '');
-    
-    if (somenteNumeros.length <= 11) {
-      return somenteNumeros
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d{1,2})/, '$1-$2');
-    }
-    return valor;
-  };
 
-  const validarCPF = (cpf: string) => {
-    const somenteNumeros = cpf.replace(/\D/g, '');
-    
-    if (somenteNumeros.length !== 11) return false;
-    if (/^(\d)\1{10}$/.test(somenteNumeros)) return false;
-    
-    let soma = 0;
-    for (let i = 0; i < 9; i++) {
-      soma += parseInt(somenteNumeros[i]) * (10 - i);
-    }
-    let resto = (soma * 10) % 11;
-    if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(somenteNumeros[9])) return false;
-    
-    soma = 0;
-    for (let i = 0; i < 10; i++) {
-      soma += parseInt(somenteNumeros[i]) * (11 - i);
-    }
-    resto = (soma * 10) % 11;
-    if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(somenteNumeros[10])) return false;
-    
-    return true;
-  };
 
-  const handleCPFChange = (valor: string) => {
+  const handleCPFChange = async (valor: string) => {
     const cpfFormatado = formatarCPF(valor);
     onInputChange('cpfUsuario', cpfFormatado);
+    
+    // Se o CPF for válido, buscar dados de chamados anteriores
+    if (validarCPF(cpfFormatado)) {
+      const dadosUsuario = await buscarDadosUsuarioPorCPF(cpfFormatado);
+      if (dadosUsuario) {
+        onInputChange('nomeUsuario', dadosUsuario.nome_usuario_afetado || '');
+        onInputChange('perfilUsuario', dadosUsuario.perfil_usuario_afetado || '');
+        setDadosEncontrados(true);
+        
+        // Limpar sugestões de usuários já que encontramos dados
+        setUsuarios([]);
+        setShowSuggestions(false);
+      } else {
+        setDadosEncontrados(false);
+      }
+    } else {
+      setDadosEncontrados(false);
+    }
   };
 
   const selecionarUsuario = (usuario: Usuario) => {
+    console.log('Selecionando usuário:', usuario);
     onInputChange('cpfUsuario', formatarCPF(usuario.cpf));
     onInputChange('nomeUsuario', usuario.nome_completo);
     onInputChange('perfilUsuario', usuario.perfil || '');
     setShowSuggestions(false);
+    setUsuarios([]);
+    setDadosEncontrados(true);
   };
 
   return (
@@ -96,15 +107,24 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
           </label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            {dadosEncontrados && (
+              <CheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+            )}
             <Input
               value={formData.cpfUsuario}
               onChange={(e) => handleCPFChange(e.target.value)}
               placeholder="000.000.000-00"
-              className={`pl-10 ${formData.cpfUsuario && !validarCPF(formData.cpfUsuario) ? 'border-red-500' : ''}`}
+              className={`pl-10 ${
+                dadosEncontrados ? 'border-green-500 bg-green-50' : 
+                formData.cpfUsuario && !validarCPF(formData.cpfUsuario) ? 'border-red-500' : ''
+              } ${dadosEncontrados ? 'pr-10' : ''}`}
               maxLength={14}
             />
             {formData.cpfUsuario && !validarCPF(formData.cpfUsuario) && (
               <p className="text-xs text-red-500 mt-1">CPF inválido</p>
+            )}
+            {dadosEncontrados && (
+              <p className="text-xs text-green-600 mt-1">Dados encontrados em chamados anteriores</p>
             )}
           </div>
         </div>
@@ -128,16 +148,13 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Perfil
           </label>
-          <Select value={formData.perfilUsuario} onValueChange={(value) => onInputChange('perfilUsuario', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o perfil" />
-            </SelectTrigger>
-            <SelectContent>
-              {perfis.map((perfil) => (
-                <SelectItem key={perfil} value={perfil}>{perfil}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <InputComSugestoes
+            value={formData.perfilUsuario}
+            onChange={(value) => onInputChange('perfilUsuario', value)}
+            placeholder="Selecione o perfil"
+            sugestoes={sugestoesPerfil}
+            loading={sugestoesLoading}
+          />
         </div>
 
       </div>
@@ -153,7 +170,11 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
               {usuarios.map((usuario) => (
                 <div
                   key={usuario.id}
-                  onClick={() => selecionarUsuario(usuario)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selecionarUsuario(usuario);
+                  }}
                   className="p-2 rounded cursor-pointer hover:bg-gray-50 border border-gray-100 transition-colors"
                 >
                   <div className="flex items-center space-x-2">

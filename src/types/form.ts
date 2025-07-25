@@ -9,6 +9,7 @@ export interface FormData {
   processos: string;
   notas: string;
   chamadoOrigem: string;
+  isDraft?: boolean;
 }
 
 export interface DescriptionSection {

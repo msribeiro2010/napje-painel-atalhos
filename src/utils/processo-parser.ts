@@ -37,16 +37,10 @@ export const buscarOrgaoJulgadorPorCodigo = (codigo: string): string | null => {
   // Remove zeros à esquerda para comparação
   const codigoLimpo = parseInt(codigo, 10).toString();
   
-  // Debug: vamos ver o que está acontecendo
-  console.log('Código extraído:', codigo, 'Código limpo:', codigoLimpo);
-  console.log('Órgãos disponíveis:', orgaosJulgadores.slice(0, 5).map(o => o.codigo));
-  
   const orgao = orgaosJulgadores.find(org => org.codigo === codigoLimpo);
   
-  console.log('Órgão encontrado:', orgao);
-  
   if (orgao) {
-    return `${orgao.codigo} - ${orgao.nome}`;
+    return orgao.nome;
   }
   
   return null;

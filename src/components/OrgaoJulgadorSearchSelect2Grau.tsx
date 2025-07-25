@@ -45,7 +45,7 @@ export const OrgaoJulgadorSearchSelect2Grau = ({
     }
   }, [searchTerm, orgaos]);
 
-  const selectedOrgao = orgaos.find(orgao => `${orgao.codigo} - ${orgao.nome}` === value);
+  const selectedOrgao = orgaos.find(orgao => orgao.nome === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -60,7 +60,7 @@ export const OrgaoJulgadorSearchSelect2Grau = ({
           <div className="flex items-center">
             <Search className="h-4 w-4 mr-2 text-gray-500" />
             {selectedOrgao ? (
-              <span className="truncate">{selectedOrgao.codigo} - {selectedOrgao.nome}</span>
+              <span className="truncate">{selectedOrgao.nome}</span>
             ) : (
               <span className="text-gray-500">
                 {isLoading ? "Carregando..." : placeholder}
@@ -88,18 +88,21 @@ export const OrgaoJulgadorSearchSelect2Grau = ({
                     key={orgao.id}
                     value={`${orgao.codigo} - ${orgao.nome}`}
                     onSelect={() => {
-                      onValueChange(`${orgao.codigo} - ${orgao.nome}`);
+                      onValueChange(orgao.nome);
                       setOpen(false);
                     }}
                   >
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        value === `${orgao.codigo} - ${orgao.nome}` ? "opacity-100" : "opacity-0"
+                        value === orgao.nome ? "opacity-100" : "opacity-0"
                       )}
                     />
                     <div className="flex flex-col">
-                      <span className="font-medium">{orgao.codigo} - {orgao.nome}</span>
+                      <span className="font-medium">{orgao.nome}</span>
+                      <span className="text-xs text-gray-500">
+                        Código: {orgao.codigo}
+                      </span>
                     </div>
                   </CommandItem>
                 ))}

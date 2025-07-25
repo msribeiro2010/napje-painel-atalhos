@@ -66,7 +66,7 @@ export const GeneratedDescriptionSection = ({
         </CardHeader>
         <CardContent className="p-8">
           <div className="space-y-4">
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm max-h-[70vh] overflow-y-auto">
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
               {(() => {
                 const { pairs, fullWidthSections } = renderSectionPairs();
                 return (

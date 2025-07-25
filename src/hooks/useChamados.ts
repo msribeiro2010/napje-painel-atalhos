@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FormData } from '@/types/form';
 import { toast } from 'sonner';
+import { limparCPF } from '@/utils/cpf-utils';
 
 export interface Chamado {
   id: string;
@@ -91,5 +92,28 @@ export const useChamados = () => {
     }
   };
 
-  return { salvarChamado, buscarChamadosRecentes, excluirChamado, loading };
+  const buscarDadosUsuarioPorCPF = async (cpf: string) => {
+    try {
+      // Remove formatação do CPF para busca
+      const cpfLimpo = limparCPF(cpf);
+      
+      const { data, error } = await supabase
+        .from('chamados')
+        .select('nome_usuario_afetado, perfil_usuario_afetado, cpf_usuario_afetado')
+        .eq('cpf_usuario_afetado', cpfLimpo)
+        .not('nome_usuario_afetado', 'is', null)
+        .not('perfil_usuario_afetado', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    } catch (err) {
+      console.error('Erro ao buscar dados do usuário por CPF:', err);
+      return null;
+    }
+  };
+
+  return { salvarChamado, buscarChamadosRecentes, excluirChamado, buscarDadosUsuarioPorCPF, loading };
 };
