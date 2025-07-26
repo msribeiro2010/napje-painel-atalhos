@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { addDays, format, isAfter, isBefore, startOfDay } from 'date-fns';
+import { addDays, format, isAfter, isBefore, startOfDay, differenceInDays } from 'date-fns';
 import { useCustomEvents } from './useCustomEvents';
 import { useFeriados } from './useFeriados';
 import { useWorkCalendar } from './useWorkCalendar';
@@ -43,8 +43,9 @@ export const useUpcomingEventsModal = () => {
   
   // Adicionar eventos personalizados dos próximos 2 dias
   customEvents.forEach(event => {
-    const eventDate = new Date(event.date);
-    const daysDiff = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const eventDate = startOfDay(new Date(event.date));
+    const todayStart = startOfDay(today);
+    const daysDiff = differenceInDays(eventDate, todayStart);
     
     if (daysDiff >= 0 && daysDiff <= 2) {
       upcomingEvents.push({
@@ -64,8 +65,9 @@ export const useUpcomingEventsModal = () => {
 
   // Adicionar feriados
   feriados.forEach(feriado => {
-    const feriadoDate = new Date(feriado.data);
-    const daysDiff = Math.ceil((feriadoDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const feriadoDate = startOfDay(new Date(feriado.data));
+    const todayStart = startOfDay(today);
+    const daysDiff = differenceInDays(feriadoDate, todayStart);
     
     if (daysDiff >= 0 && daysDiff <= 2) {
       upcomingEvents.push({
@@ -83,8 +85,9 @@ export const useUpcomingEventsModal = () => {
   // Adicionar eventos de trabalho especiais
   const workMarks = { ...todayMarks, ...tomorrowMarks, ...dayAfterMarks };
   Object.entries(workMarks).forEach(([date, status]) => {
-    const eventDate = new Date(date);
-    const daysDiff = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const eventDate = startOfDay(new Date(date));
+    const todayStart = startOfDay(today);
+    const daysDiff = differenceInDays(eventDate, todayStart);
     
     if (daysDiff >= 0 && daysDiff <= 2 && status !== 'presencial') {
       upcomingEvents.push({

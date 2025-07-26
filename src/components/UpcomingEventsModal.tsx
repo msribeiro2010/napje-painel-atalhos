@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, X, Bell, Sparkles, Play, CheckCircle, AlertCircle, Edit, Trash2 } from 'lucide-react';
-import { format, isToday, isTomorrow, addDays, isPast, isAfter, isBefore, parseISO } from 'date-fns';
+import { format, isToday, isTomorrow, addDays, isPast, isAfter, isBefore, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useUpcomingEventsModal, UpcomingEvent } from '@/hooks/useUpcomingEventsModal';
 import { useCustomEvents, CustomEvent } from '@/hooks/useCustomEvents';
@@ -88,7 +88,8 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
   };
 
   const getDateLabel = (dateStr: string) => {
-    const date = new Date(dateStr);
+    // Usar parseISO para evitar problemas de fuso horário
+    const date = parseISO(dateStr + 'T00:00:00');
     if (isToday(date)) return 'Hoje';
     if (isTomorrow(date)) return 'Amanhã';
     if (format(date, 'yyyy-MM-dd') === format(addDays(new Date(), 2), 'yyyy-MM-dd')) {
@@ -130,14 +131,11 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
 
   const getEventStatus = (event: UpcomingEvent) => {
     const now = new Date();
-    const eventDate = new Date(event.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const eventDate = parseISO(event.date + 'T00:00:00');
+    const today = startOfDay(new Date());
+    const eventDateOnly = startOfDay(eventDate);
     
-    const eventDateOnly = new Date(eventDate);
-    eventDateOnly.setHours(0, 0, 0, 0);
-    
-    const daysDiff = Math.ceil((eventDateOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const daysDiff = differenceInDays(eventDateOnly, today);
     
     // Se o evento tem horário específico
     if (event.start_time && event.end_time) {
@@ -176,15 +174,18 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
   };
 
   const formatEventDateTime = (event: UpcomingEvent) => {
-    const eventDate = new Date(event.date);
+    // Usar parseISO para evitar problemas de fuso horário
+    const eventDate = parseISO(event.date + 'T00:00:00');
     const dateStr = format(eventDate, "dd/MM/yyyy", { locale: ptBR });
+    const dayOfWeek = format(eventDate, "EEEE", { locale: ptBR });
+    const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
     
     if (event.start_time && event.end_time) {
-      return `${dateStr} • ${event.start_time} às ${event.end_time}`;
+      return `${capitalizedDayOfWeek}, ${dateStr} • ${event.start_time} às ${event.end_time}`;
     } else if (event.start_time) {
-      return `${dateStr} • ${event.start_time}`;
+      return `${capitalizedDayOfWeek}, ${dateStr} • ${event.start_time}`;
     } else {
-      return dateStr;
+      return `${capitalizedDayOfWeek}, ${dateStr}`;
     }
   };
 
@@ -198,23 +199,23 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
-        <DialogHeader className="relative">
-          <div className="flex items-center gap-3">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50/30 border-0 shadow-2xl">
+        <DialogHeader className="relative pb-6 border-b border-gradient-to-r from-blue-100 to-purple-100">
+          <div className="flex items-center gap-4">
             <div className="relative">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
-                <Bell className="h-6 w-6 text-white" />
+              <div className="p-4 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 rounded-2xl shadow-xl animate-pulse">
+                <Bell className="h-7 w-7 text-white drop-shadow-sm" />
               </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                <Sparkles className="h-2 w-2 text-white" />
+              <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                <Sparkles className="h-2.5 w-2.5 text-white" />
               </div>
             </div>
-            <div>
-              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Eventos Próximos
+            <div className="flex-1">
+              <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-1">
+                🎯 Eventos Próximos
               </DialogTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                {events.length} evento{events.length !== 1 ? 's' : ''} nos próximos dias
+              <p className="text-sm text-slate-600 font-medium">
+                {events.length} evento{events.length !== 1 ? 's' : ''} nos próximos dias • Fique sempre atualizado
               </p>
             </div>
           </div>
@@ -222,7 +223,7 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="absolute top-0 right-0 h-8 w-8 p-0 hover:bg-gray-100"
+            className="absolute top-2 right-2 h-9 w-9 p-0 hover:bg-red-50 hover:text-red-600 rounded-full transition-all duration-200"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -246,28 +247,34 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
                     <div
                       key={event.id}
                       className={cn(
-                        "relative p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]",
-                        "bg-gradient-to-r from-white to-gray-50"
+                        "relative p-5 rounded-2xl border transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1",
+                        "bg-gradient-to-br from-white via-slate-50/50 to-white backdrop-blur-sm",
+                        "border-slate-200/60 shadow-lg"
                       )}
                       style={{
-                        borderColor: event.color ? `${event.color}80` : '#e5e7eb',
-                        backgroundColor: event.color ? `${event.color}20` : '#f9fafb'
+                        boxShadow: `0 8px 32px ${event.color ? `${event.color}40` : 'rgba(0,0,0,0.1)'}`,
                       }}
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="text-2xl mt-1 animate-bounce">
-                          {event.icon}
+                      <div className="flex items-start gap-4">
+                        <div className="relative">
+                          <div className="text-3xl p-2 rounded-xl bg-gradient-to-br from-white to-slate-100 shadow-md animate-pulse">
+                            {event.icon}
+                          </div>
+                          <div 
+                            className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full shadow-sm"
+                            style={{ backgroundColor: event.color || '#3b82f6' }}
+                          />
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <h4 className="font-semibold text-gray-900 truncate">
+                          <div className="flex items-center gap-2 mb-3 flex-wrap">
+                            <h4 className="font-bold text-lg text-slate-800 truncate">
                               {event.title}
                             </h4>
                             <Badge 
                               variant="outline" 
                               className={cn(
-                                "text-xs font-medium border",
+                                "text-xs font-semibold border-2 px-2 py-1 rounded-full shadow-sm",
                                 getEventTypeColor(event.type, event.category)
                               )}
                             >
@@ -276,7 +283,7 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
                             <Badge 
                               variant="outline" 
                               className={cn(
-                                "text-xs font-medium border flex items-center gap-1",
+                                "text-xs font-semibold border-2 flex items-center gap-1 px-2 py-1 rounded-full shadow-sm",
                                 eventStatus.color
                               )}
                             >
@@ -285,27 +292,29 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
                             </Badge>
                           </div>
                           
-                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                            <Calendar className="h-3 w-3" />
-                            <span className="font-medium">
+                          <div className="flex items-center gap-2 text-sm text-slate-700 mb-3 bg-slate-50/80 rounded-lg p-2">
+                            <Calendar className="h-4 w-4 text-blue-600" />
+                            <span className="font-semibold">
                               {formatEventDateTime(event)}
                             </span>
                           </div>
                           
                           {event.description && (
-                            <p className="text-sm text-gray-600 mb-2 leading-relaxed">
-                              {event.description}
-                            </p>
+                            <div className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 rounded-lg p-3 mb-3 border border-slate-200/50">
+                              <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                                {event.description}
+                              </p>
+                            </div>
                           )}
                           
                           {/* Botões de ação para eventos personalizados */}
                           {event.type === 'custom' && (
-                            <div className="flex gap-2 mt-3">
+                            <div className="flex gap-2 mt-4">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleEditEvent(event)}
-                                className="flex items-center gap-1 text-xs hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+                                className="flex items-center gap-2 text-xs font-semibold hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 rounded-full px-4 py-2 transition-all duration-200 shadow-sm"
                               >
                                 <Edit className="h-3 w-3" />
                                 Editar
@@ -315,7 +324,7 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
                                 size="sm"
                                 onClick={() => handleDeleteEvent(event)}
                                 disabled={deletingEventId === event.id}
-                                className="flex items-center gap-1 text-xs hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                                className="flex items-center gap-2 text-xs font-semibold hover:bg-red-50 hover:text-red-700 hover:border-red-300 rounded-full px-4 py-2 transition-all duration-200 shadow-sm"
                               >
                                 <Trash2 className="h-3 w-3" />
                                 {deletingEventId === event.id ? 'Excluindo...' : 'Excluir'}
@@ -327,9 +336,17 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
                      
                        {/* Decorative gradient border */}
                        <div 
-                         className="absolute inset-0 rounded-xl opacity-20 pointer-events-none"
+                         className="absolute inset-0 rounded-2xl opacity-10 pointer-events-none"
                          style={{
-                           background: `linear-gradient(135deg, ${event.color || '#e5e7eb'}, transparent 70%)`
+                           background: `linear-gradient(135deg, ${event.color || '#3b82f6'}, transparent 60%)`
+                         }}
+                       />
+                       
+                       {/* Subtle glow effect */}
+                       <div 
+                         className="absolute -inset-1 rounded-2xl opacity-20 blur-sm pointer-events-none"
+                         style={{
+                           background: `linear-gradient(135deg, ${event.color || '#3b82f6'}20, transparent 50%)`
                          }}
                        />
                      </div>
@@ -340,23 +357,29 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
           ))}
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="hover:bg-gray-50"
-          >
-            Fechar
-          </Button>
-          <Button
-            onClick={() => {
-              // Navegar para o calendário
-              window.location.href = '/calendario';
-            }}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-          >
-            Ver Calendário
-          </Button>
+        <div className="flex justify-between items-center gap-4 pt-6 border-t border-gradient-to-r from-blue-100 to-purple-100 bg-gradient-to-r from-slate-50/50 to-blue-50/30 -mx-6 -mb-6 px-6 py-4 rounded-b-2xl">
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <Calendar className="h-4 w-4 text-blue-500" />
+            <span className="font-medium">Mantenha-se sempre atualizado</span>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="hover:bg-slate-50 border-slate-300 text-slate-700 font-semibold px-6 rounded-full transition-all duration-200"
+            >
+              Fechar
+            </Button>
+            <Button
+              onClick={() => {
+                // Navegar para o calendário
+                window.location.href = '/calendario';
+              }}
+              className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 text-white font-semibold px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+            >
+              📅 Ver Calendário
+            </Button>
+          </div>
         </div>
         </DialogContent>
       </Dialog>
