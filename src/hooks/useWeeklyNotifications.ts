@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -54,6 +54,7 @@ export const useWeeklyNotifications = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
+        
         setNotificationItems(data || []);
       } catch (error) {
         console.error('Erro ao buscar itens:', error);
@@ -61,7 +62,7 @@ export const useWeeklyNotifications = () => {
     };
 
   // Verificar se deve notificar
-  const shouldShowNotifications = (): boolean => {
+  const shouldShowNotifications = useCallback((): boolean => {
     if (!settings.enabled || notificationItems.length === 0) return false;
 
     const now = new Date();
@@ -73,34 +74,32 @@ export const useWeeklyNotifications = () => {
 
     const todayString = now.toISOString().split('T')[0];
     return settings.lastNotificationDate !== todayString;
-  };
+  }, [settings.enabled, settings.notificationDay, settings.notificationTime, settings.lastNotificationDate, notificationItems.length]);
 
   // Mostrar notificações
-  const showWeeklyNotifications = () => {
+  const showWeeklyNotifications = useCallback(() => {
     if (!shouldShowNotifications()) return;
 
     notificationItems.forEach((item, index) => {
        setTimeout(() => {
           const message = item.mensagem_notificacao || 
-            `Lembrete: ${item.titulo} - Verifique os procedimentos necessários`;
+            `📋 Lembrete: ${item.titulo} - Verifique os procedimentos relacionados a ${item.categoria || 'este item'}.`;
           
           toast({
-            title: "📅 Lembrete Semanal",
+            title: "🔔 Notificação Semanal",
             description: message,
-            duration: 10000,
+            duration: 8000,
           });
         }, index * 2000);
-     });
+    });
 
-    const todayString = new Date().toISOString().split('T')[0];
-    setSettings(prev => ({
-      ...prev,
-      lastNotificationDate: todayString
-    }));
-  };
+    const now = new Date();
+    const todayString = now.toISOString().split('T')[0];
+    setSettings(prev => ({ ...prev, lastNotificationDate: todayString }));
+  }, [notificationItems, shouldShowNotifications, toast]);
 
   // Forçar notificação
-  const forceNotification = () => {
+  const forceNotification = useCallback(() => {
     if (notificationItems.length === 0) {
       toast({
         title: "ℹ️ Nenhum item configurado",
@@ -122,12 +121,12 @@ export const useWeeklyNotifications = () => {
           });
         }, index * 1500);
      });
-  };
+  }, [notificationItems, toast]);
 
   // Atualizar configurações
-  const updateSettings = (newSettings: Partial<WeeklyNotificationSettings>) => {
+  const updateSettings = useCallback((newSettings: Partial<WeeklyNotificationSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
-  };
+  }, []);
 
   const getDayName = (dayNumber: number): string => {
     const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -137,15 +136,24 @@ export const useWeeklyNotifications = () => {
   // Verificação automática
   useEffect(() => {
     fetchNotificationItems();
+  }, []);
+
+  // Configurar intervalo de verificação apenas quando habilitado
+  useEffect(() => {
+    if (!settings.enabled) return;
     
     const interval = setInterval(() => {
       showWeeklyNotifications();
     }, 30 * 60 * 1000);
 
-    setTimeout(showWeeklyNotifications, 5000);
+    // Verificação inicial após 5 segundos
+    const timeout = setTimeout(showWeeklyNotifications, 5000);
 
-    return () => clearInterval(interval);
-  }, [settings.enabled]);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [settings.enabled, showWeeklyNotifications]);
 
   return {
     settings,

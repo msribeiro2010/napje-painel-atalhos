@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { KnowledgeBaseItem, KnowledgeBaseFormData, MediaFile } from '@/types/knowledge-base';
+import { KnowledgeBaseItem, KnowledgeBaseFormData } from '@/types/knowledge-base';
 
 export const useKnowledgeBase = () => {
   const [items, setItems] = useState<KnowledgeBaseItem[]>([]);
@@ -57,14 +57,9 @@ export const useKnowledgeBase = () => {
 
       if (error) throw error;
       
-      // Converter media_files de Json para MediaFile[]
+      // Processar dados sem media_files
       const processedData = (data || []).map(item => ({
-        ...item,
-        media_files: item.media_files ? (
-          typeof item.media_files === 'string' 
-            ? JSON.parse(item.media_files)
-            : item.media_files
-        ) : []
+        ...item
       }));
       
       setItems(processedData);
@@ -84,10 +79,21 @@ export const useKnowledgeBase = () => {
       }
 
       let arquivo_print_url = '';
-      let mediaFiles: MediaFile[] = [];
 
-      // Upload da imagem se existir (compatibilidade)
-      if (formData.arquivo_print) {
+      // Upload da primeira imagem como arquivo_print (compatibilidade)
+      if (formData.images && formData.images.length > 0) {
+        const file = formData.images[0]; // Usar apenas a primeira imagem
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('knowledge-base-files')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+        arquivo_print_url = uploadData.path;
+      } else if (formData.arquivo_print) {
+        // Fallback para arquivo_print se não houver images
         const fileExt = formData.arquivo_print.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
         
@@ -99,47 +105,19 @@ export const useKnowledgeBase = () => {
         arquivo_print_url = uploadData.path;
       }
 
-      // Upload de múltiplas mídias
-      if (formData.media_files && formData.media_files.length > 0) {
-        for (const file of formData.media_files) {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-          
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('knowledge-base-files')
-            .upload(fileName, file);
 
-          if (uploadError) {
-            console.error('Erro no upload:', uploadError);
-            continue;
-          }
-
-          mediaFiles.push({
-            id: crypto.randomUUID(),
-            url: uploadData.path,
-            name: file.name,
-            type: file.type.startsWith('image/') ? 'image' : 'video',
-            size: file.size
-          });
-        }
-      }
-
-      const itemData = {
-        titulo: formData.titulo,
-        problema_descricao: formData.problema_descricao,
-        solucao: formData.solucao,
-        categoria: formData.categoria || null,
-        tags: formData.tags.length > 0 ? formData.tags : null,
-        arquivo_print: arquivo_print_url || null,
-        media_files: mediaFiles.length > 0 ? JSON.stringify(mediaFiles) : null,
-        notificacao_semanal: formData.notificacao_semanal,
-        mensagem_notificacao: formData.mensagem_notificacao || null
-      };
 
       if (editingItem) {
         const { error } = await supabase
           .from('base_conhecimento')
-          .update(itemData)
+          .update({
+            titulo: formData.titulo,
+            problema_descricao: formData.problema_descricao,
+            solucao: formData.solucao,
+            categoria: formData.categoria || null,
+            tags: formData.tags.length > 0 ? formData.tags : null,
+            arquivo_print: arquivo_print_url || null
+          })
           .eq('id', editingItem.id);
 
         if (error) throw error;
@@ -147,7 +125,14 @@ export const useKnowledgeBase = () => {
       } else {
         const { error } = await supabase
           .from('base_conhecimento')
-          .insert(itemData);
+          .insert({
+            titulo: formData.titulo,
+            problema_descricao: formData.problema_descricao,
+            solucao: formData.solucao,
+            categoria: formData.categoria || null,
+            tags: formData.tags.length > 0 ? formData.tags : null,
+            arquivo_print: arquivo_print_url || null
+          });
 
         if (error) throw error;
         toast.success('Item adicionado com sucesso!');

@@ -1,6 +1,17 @@
+/// <reference types="https://deno.land/x/types/deno.d.ts" />
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
+
+// Declare Deno globals for TypeScript
+declare global {
+  const Deno: {
+    env: {
+      get(key: string): string | undefined;
+    };
+  };
+}
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -69,6 +80,39 @@ serve(async (req) => {
       .from('assuntos')
       .select('id, nome, categoria');
 
+    // Get calendar events (feriados)
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const { data: feriados } = await supabase
+      .from('feriados')
+      .select('id, data, descricao, tipo')
+      .gte('data', today.toISOString().split('T')[0])
+      .lte('data', nextMonth.toISOString().split('T')[0])
+      .order('data', { ascending: true });
+
+    // Get aniversariantes (birthdays)
+    const { data: aniversariantes } = await supabase
+      .from('aniversariantes')
+      .select('id, nome, data_nascimento')
+      .order('data_nascimento', { ascending: true });
+
+    // Get important memories (limited to avoid token overflow)
+    const { data: importantMemories } = await supabase
+      .from('important_memories')
+      .select('id, title, description, category, url, notes')
+      .limit(10)
+      .order('created_at', { ascending: false });
+
+    // Get custom events for current month
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const { data: customEvents } = await supabase
+      .from('user_custom_events')
+      .select('id, date, type, title, description, start_time, end_time, url')
+      .gte('date', monthStart.toISOString().split('T')[0])
+      .lte('date', monthEnd.toISOString().split('T')[0])
+      .order('date', { ascending: true });
+
     console.log('Searching for additional context from external sources...');
     
     // Function to search web for TRT15 and judicial content
@@ -127,9 +171,30 @@ serve(async (req) => {
       return `Título: ${chamado.titulo}\nDescrição: ${chamado.descricao}\nTipo: ${chamado.tipo || 'N/A'}\nStatus: ${chamado.status}\nAssunto: ${assunto?.nome || 'N/A'}\nData: ${new Date(chamado.created_at).toLocaleDateString('pt-BR')}`;
     }).join('\n\n---\n\n') || '';
 
+    // Create calendar context
+    const feriadosContext = feriados?.map(feriado => 
+      `Data: ${new Date(feriado.data).toLocaleDateString('pt-BR')}\nFeriado: ${feriado.descricao}\nTipo: ${feriado.tipo}`
+    ).join('\n\n---\n\n') || '';
+
+    const aniversariantesContext = aniversariantes?.slice(0, 10).map(aniversariante => {
+      const nascimento = new Date(aniversariante.data_nascimento);
+      const hoje = new Date();
+      const aniversarioEsteAno = new Date(hoje.getFullYear(), nascimento.getMonth(), nascimento.getDate());
+      const idade = hoje.getFullYear() - nascimento.getFullYear();
+      return `Nome: ${aniversariante.nome}\nData de Nascimento: ${nascimento.toLocaleDateString('pt-BR')}\nIdade: ${idade} anos\nPróximo Aniversário: ${aniversarioEsteAno.toLocaleDateString('pt-BR')}`;
+    }).join('\n\n---\n\n') || '';
+
+    const memoriesContext = importantMemories?.map(memory => 
+      `Título: ${memory.title}\nDescrição: ${memory.description || 'N/A'}\nCategoria: ${memory.category}\nURL: ${memory.url || 'N/A'}\nNotas: ${memory.notes || 'N/A'}`
+    ).join('\n\n---\n\n') || '';
+
+    const customEventsContext = customEvents?.map(event => 
+      `Data: ${new Date(event.date).toLocaleDateString('pt-BR')}\nTipo: ${event.type}\nTítulo: ${event.title}\nDescrição: ${event.description || 'N/A'}\nHorário: ${event.start_time || 'N/A'} - ${event.end_time || 'N/A'}\nURL: ${event.url || 'N/A'}`
+    ).join('\n\n---\n\n') || '';
+
     const systemPrompt = `Você é um assistente de TI especializado no sistema do TRT15 (Tribunal Regional do Trabalho da 15ª Região). 
 
-Sua função é ajudar os usuários com base na base de conhecimento existente, nos chamados recentes do sistema e em informações atualizadas de fontes oficiais.
+Sua função é ajudar os usuários com base na base de conhecimento existente, nos chamados recentes do sistema, informações de calendário, memórias importantes e em informações atualizadas de fontes oficiais.
 
 CONTEXTO DA BASE DE CONHECIMENTO (PRIORIDADE ALTA):
 ${knowledgeContext}
@@ -137,26 +202,52 @@ ${knowledgeContext}
 CONTEXTO DOS CHAMADOS RECENTES (PRIORIDADE ALTA):
 ${chamadosContext}
 
+${feriadosContext ? `CONTEXTO DE FERIADOS E DATAS IMPORTANTES:
+${feriadosContext}
+
+` : ''}
+
+${aniversariantesContext ? `CONTEXTO DE ANIVERSARIANTES:
+${aniversariantesContext}
+
+` : ''}
+
+${memoriesContext ? `CONTEXTO DE MEMÓRIAS IMPORTANTES:
+${memoriesContext}
+
+` : ''}
+
+${customEventsContext ? `CONTEXTO DE EVENTOS PERSONALIZADOS:
+${customEventsContext}
+
+` : ''}
+
 ${webContext ? `CONTEXTO ADICIONAL DA WEB (sites oficiais do TRT15, CNJ, TST):
 ${webContext}` : ''}
 
 INSTRUÇÕES PRIORITÁRIAS:
 1. **SEMPRE CONSULTE PRIMEIRO** a base de conhecimento interna e chamados recentes antes de dar qualquer resposta
 2. Use PRIORITARIAMENTE as informações da base de conhecimento e chamados recentes do TRT15
-3. Complemente com informações dos sites oficiais (TRT15, CNJ, TST) quando disponíveis
-4. Se a informação não estiver disponível em nenhuma fonte consultada, informe claramente
-5. Responda sempre em português brasileiro de forma educada e profissional
-6. Para problemas já solucionados na base de conhecimento, referencie a solução existente
-7. Para problemas similares aos chamados recentes, mencione isso no contexto
-8. Para problemas técnicos, sugira passos claros baseados nas soluções conhecidas
-9. Se necessário, recomende a criação de um novo chamado
-10. **IMPORTANTE**: Nunca invente informações - use apenas o que está disponível nas fontes consultadas
+3. Para perguntas sobre calendário, feriados, aniversários ou eventos, consulte as informações de calendário disponíveis
+4. Para perguntas sobre informações importantes, senhas, URLs ou notas pessoais, consulte as memórias importantes
+5. Complemente com informações dos sites oficiais (TRT15, CNJ, TST) quando disponíveis
+6. Se a informação não estiver disponível em nenhuma fonte consultada, informe claramente
+7. Responda sempre em português brasileiro de forma educada e profissional
+8. Para problemas já solucionados na base de conhecimento, referencie a solução existente
+9. Para problemas similares aos chamados recentes, mencione isso no contexto
+10. Para problemas técnicos, sugira passos claros baseados nas soluções conhecidas
+11. Se necessário, recomende a criação de um novo chamado
+12. **IMPORTANTE**: Nunca invente informações - use apenas o que está disponível nas fontes consultadas
+13. Para informações de calendário, sempre mencione datas próximas relevantes
+14. Para memórias importantes, mantenha a confidencialidade e só forneça informações quando solicitado diretamente
 
 ORDEM DE PRIORIDADE DAS FONTES:
 1. Base de conhecimento interna do TRT15
 2. Chamados recentes similares
-3. Sites oficiais (TRT15, CNJ, TST)
-4. Conhecimento geral sobre tecnologia e direito trabalhista
+3. Informações de calendário (feriados, aniversários, eventos)
+4. Memórias importantes (quando relevante)
+5. Sites oficiais (TRT15, CNJ, TST)
+6. Conhecimento geral sobre tecnologia e direito trabalhista
 
 Responda de forma útil e contextualizada baseando-se OBRIGATORIAMENTE nas informações fornecidas.`;
 
@@ -164,6 +255,10 @@ Responda de forma útil e contextualizada baseando-se OBRIGATORIAMENTE nas infor
       knowledgeBaseItems: knowledgeBase?.length || 0,
       chamadosItems: chamados?.length || 0,
       assuntosItems: assuntos?.length || 0,
+      feriadosItems: feriados?.length || 0,
+      aniversariantesItems: aniversariantes?.length || 0,
+      importantMemoriesItems: importantMemories?.length || 0,
+      customEventsItems: customEvents?.length || 0,
       webContextAvailable: webContext.length > 0,
       webContextLength: webContext.length
     });
@@ -227,11 +322,11 @@ Responda de forma útil e contextualizada baseando-se OBRIGATORIAMENTE nas infor
         // Remove código `código`
         .replace(/`([^`]+)`/g, '$1')
         // Remove listas (* item ou - item)
-        .replace(/^[\*\-\+]\s+/gm, '')
+        .replace(/^[*\-+]\s+/gm, '')
         // Remove números de listas (1. item, 2. item)
         .replace(/^\d+\.\s+/gm, '')
         // Remove linhas horizontais (--- ou ***)
-        .replace(/^[\-\*]{3,}$/gm, '')
+        .replace(/^[-*]{3,}$/gm, '')
         // Remove múltiplas quebras de linha
         .replace(/\n{3,}/g, '\n\n')
         // Remove espaços extras no início e fim

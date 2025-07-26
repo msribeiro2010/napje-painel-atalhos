@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Eye, ThumbsUp, Image, Edit, Trash2, Play } from 'lucide-react';
+import { Eye, ThumbsUp, Image, Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { KnowledgeBaseItem, MediaFile } from '@/types/knowledge-base';
+import { KnowledgeBaseItem } from '@/types/knowledge-base';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -152,53 +152,10 @@ export const KnowledgeBaseCard = ({ item, onEdit, onDelete, onIncrementView, onI
             </h4>
             <p className="text-foreground/80 whitespace-pre-wrap leading-relaxed">{item.solucao}</p>
           </div>
-          {/* Exibir múltiplas mídias se disponíveis */}
-          {item.media_files && (() => {
-            try {
-              const mediaFiles: MediaFile[] = typeof item.media_files === 'string' 
-                ? JSON.parse(item.media_files) 
-                : item.media_files;
-              
-              if (mediaFiles && mediaFiles.length > 0) {
-                return (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Image className="h-4 w-4 text-primary" />
-                      <span>Mídias anexadas ({mediaFiles.length}):</span>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {mediaFiles.map((media, index) => (
-                        <div key={media.id || index} className="border rounded-lg overflow-hidden bg-muted/20 relative group">
-                          {media.type === 'image' ? (
-                            <img 
-                              src={`https://zpufcvesenbhtmizmjiz.supabase.co/storage/v1/object/public/knowledge-base-files/${media.url}`}
-                              alt={media.name}
-                              className="w-full h-32 object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
-                              onClick={() => window.open(`https://zpufcvesenbhtmizmjiz.supabase.co/storage/v1/object/public/knowledge-base-files/${media.url}`, '_blank')}
-                            />
-                          ) : (
-                            <div className="w-full h-32 bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors duration-300"
-                                 onClick={() => window.open(`https://zpufcvesenbhtmizmjiz.supabase.co/storage/v1/object/public/knowledge-base-files/${media.url}`, '_blank')}>
-                              <Play className="h-8 w-8 text-gray-600" />
-                            </div>
-                          )}
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1 truncate">
-                            {media.name}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              }
-            } catch (error) {
-              console.error('Erro ao parsear media_files:', error);
-            }
-            return null;
-          })()}
+          {/* Funcionalidade de media_files removida */}
           
           {/* Fallback para arquivo_print (compatibilidade) */}
-          {!item.media_files && item.arquivo_print && (
+          {item.arquivo_print && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Image className="h-4 w-4 text-primary" />

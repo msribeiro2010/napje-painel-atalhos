@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { addDays, format, isAfter, isBefore, startOfDay, differenceInDays } from 'date-fns';
 import { useCustomEvents } from './useCustomEvents';
 import { useFeriados } from './useFeriados';
@@ -23,89 +23,89 @@ export const useUpcomingEventsModal = () => {
   const [hasShownToday, setHasShownToday] = useState(false);
   
   // Buscar eventos dos próximos 2 dias
-  const today = new Date();
-  const tomorrow = addDays(today, 1);
-  const dayAfterTomorrow = addDays(today, 2);
+  const today = useMemo(() => new Date(), []);
   
   // Buscar eventos do mês atual para cobrir todos os próximos dias
   const { customEvents, fetchCustomEvents } = useCustomEvents(today);
   const { data: feriados = [] } = useFeriados();
-  const { marks: todayMarks } = useWorkCalendar(today);
-  const { marks: tomorrowMarks } = useWorkCalendar(tomorrow);
-  const { marks: dayAfterMarks } = useWorkCalendar(dayAfterTomorrow);
+  // Usar apenas um hook useWorkCalendar para o mês atual
+  const { marks: workMarks } = useWorkCalendar(today);
 
-  // Combinar todos os eventos
-  const upcomingEvents: UpcomingEvent[] = [];
+  // Combinar todos os eventos usando useMemo para otimização
+  const upcomingEvents: UpcomingEvent[] = useMemo(() => {
+    const events: UpcomingEvent[] = [];
+
+    // Adicionar eventos personalizados dos próximos 2 dias
+    customEvents.forEach(event => {
+      const eventDate = startOfDay(new Date(event.date));
+      const todayStart = startOfDay(today);
+      const daysDiff = differenceInDays(eventDate, todayStart);
+      
+      if (daysDiff >= 0 && daysDiff <= 2) {
+        events.push({
+          id: `custom-${event.id}`,
+          title: event.title,
+          date: event.date,
+          type: 'custom',
+          description: event.description || undefined,
+          start_time: event.start_time || undefined,
+          end_time: event.end_time || undefined,
+          category: event.type,
+          icon: getCustomEventIcon(event.type),
+          color: getCustomEventColor(event.type),
+          url: event.url || undefined
+        });
+      }
+    });
+
+    // Adicionar feriados
+    feriados.forEach(feriado => {
+      const feriadoDate = startOfDay(new Date(feriado.data));
+      const todayStart = startOfDay(today);
+      const daysDiff = differenceInDays(feriadoDate, todayStart);
+      
+      if (daysDiff >= 0 && daysDiff <= 2) {
+        events.push({
+          id: `holiday-${feriado.id}`,
+          title: feriado.descricao,
+          date: format(feriadoDate, 'yyyy-MM-dd'),
+          type: 'holiday',
+          description: feriado.descricao || undefined,
+          icon: '🎉',
+          color: '#fef3c7'
+        });
+      }
+    });
+
+    // Adicionar eventos de trabalho especiais
+    Object.entries(workMarks).forEach(([date, status]) => {
+      const eventDate = startOfDay(new Date(date));
+      const todayStart = startOfDay(today);
+      const daysDiff = differenceInDays(eventDate, todayStart);
+      
+      if (daysDiff >= 0 && daysDiff <= 2 && status !== 'presencial') {
+        events.push({
+          id: `work-${date}`,
+          title: getWorkStatusTitle(status),
+          date,
+          type: 'work',
+          description: getWorkStatusDescription(status),
+          icon: getWorkStatusIcon(status),
+          color: getWorkStatusColor(status)
+        });
+      }
+    });
+
+    // Ordenar eventos por data
+    events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    return events;
+  }, [customEvents, feriados, workMarks, today]);
 
   // Buscar eventos personalizados automaticamente
   useEffect(() => {
     fetchCustomEvents();
   }, [fetchCustomEvents]);
-  
-  // Adicionar eventos personalizados dos próximos 2 dias
-  customEvents.forEach(event => {
-    const eventDate = startOfDay(new Date(event.date));
-    const todayStart = startOfDay(today);
-    const daysDiff = differenceInDays(eventDate, todayStart);
-    
-    if (daysDiff >= 0 && daysDiff <= 2) {
-      upcomingEvents.push({
-        id: `custom-${event.id}`,
-        title: event.title,
-        date: event.date,
-        type: 'custom',
-        description: event.description || undefined,
-        start_time: event.start_time || undefined,
-        end_time: event.end_time || undefined,
-        category: event.type,
-        icon: getCustomEventIcon(event.type),
-        color: getCustomEventColor(event.type),
-        url: event.url || undefined
-      });
-    }
-  });
-
-  // Adicionar feriados
-  feriados.forEach(feriado => {
-    const feriadoDate = startOfDay(new Date(feriado.data));
-    const todayStart = startOfDay(today);
-    const daysDiff = differenceInDays(feriadoDate, todayStart);
-    
-    if (daysDiff >= 0 && daysDiff <= 2) {
-      upcomingEvents.push({
-        id: `holiday-${feriado.id}`,
-        title: feriado.descricao,
-        date: format(feriadoDate, 'yyyy-MM-dd'),
-        type: 'holiday',
-        description: feriado.descricao || undefined,
-        icon: '🎉',
-        color: '#fef3c7'
-      });
-    }
-  });
-
-  // Adicionar eventos de trabalho especiais
-  const workMarks = { ...todayMarks, ...tomorrowMarks, ...dayAfterMarks };
-  Object.entries(workMarks).forEach(([date, status]) => {
-    const eventDate = startOfDay(new Date(date));
-    const todayStart = startOfDay(today);
-    const daysDiff = differenceInDays(eventDate, todayStart);
-    
-    if (daysDiff >= 0 && daysDiff <= 2 && status !== 'presencial') {
-      upcomingEvents.push({
-        id: `work-${date}`,
-        title: getWorkStatusTitle(status),
-        date,
-        type: 'work',
-        description: getWorkStatusDescription(status),
-        icon: getWorkStatusIcon(status),
-        color: getWorkStatusColor(status)
-      });
-    }
-  });
-
-  // Ordenar eventos por data
-  upcomingEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   // Auto-abrir modal se houver eventos e ainda não foi mostrado hoje
   useEffect(() => {

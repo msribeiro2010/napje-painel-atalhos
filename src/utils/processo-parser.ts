@@ -9,7 +9,7 @@ export const extrairCodigoOrgaoJulgador = (numeroProcesso: string): string | nul
   if (!numeroProcesso) return null;
   
   // Remove espaços e caracteres especiais, mantendo apenas números e pontos/hífens
-  const processoLimpo = numeroProcesso.replace(/[^\d\.\-]/g, '');
+  const processoLimpo = numeroProcesso.replace(/[^\d.-]/g, '');
   
   // Verifica se está no formato correto (pelo menos os elementos básicos)
   const regex = /^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$/;

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Save Button</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Test Save Button Functionality</h1>
+    <button onclick="testSave()">Test Save</button>
+    <div id="result"></div>
+
+    <script>
+        const supabaseUrl = 'https://zpufcvesenbhtmizmjiz.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwdWZjdmVzZW5iaHRtaXptaml6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU3NjE2NjAsImV4cCI6MjA1MTMzNzY2MH0.Zt7Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function testSave() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                // Test inserting a simple record
+                const { data, error } = await supabase
+                    .from('base_conhecimento')
+                    .insert({
+                        titulo: 'Test Item',
+                        media_files: JSON.stringify([{id: '1', name: 'test.jpg', url: 'test.jpg', type: 'image/jpeg', size: 1024}])
+                    })
+                    .select();
+                
+                if (error) {
+                    resultDiv.innerHTML = `Error: ${error.message}`;
+                    console.error('Supabase error:', error);
+                } else {
+                    resultDiv.innerHTML = `Success: ${JSON.stringify(data)}`;
+                    console.log('Success:', data);
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `Exception: ${err.message}`;
+                console.error('Exception:', err);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { X, Image, Bell, Clock } from 'lucide-react';
+import { X, Image } from 'lucide-react';
 import { MediaUpload } from './MediaUpload';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { toast } from 'sonner';
 import { KnowledgeBaseFormData, KnowledgeBaseItem } from '@/types/knowledge-base';
 
@@ -109,10 +108,10 @@ export const KnowledgeBaseDialog = ({
           </div>
           <div>
             <MediaUpload
-              files={formData.media_files || []}
-              onFilesChange={(files) => setFormData(prev => ({ ...prev, media_files: files }))}
-              maxFiles={5}
-              maxFileSize={50}
+              files={formData.images || []}
+              onFilesChange={(files) => setFormData(prev => ({ ...prev, images: files }))}
+              maxFiles={3}
+              maxFileSize={10}
             />
           </div>
           <div>
@@ -142,50 +141,7 @@ export const KnowledgeBaseDialog = ({
             </div>
           </div>
           
-          <Card className="border-2 border-dashed border-blue-200 bg-blue-50/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Bell className="h-5 w-5 text-blue-600" />
-                Notificações Semanais
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label className="text-sm font-medium">Ativar lembretes semanais</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Receba notificações regulares sobre este procedimento
-                  </p>
-                </div>
-                <Switch
-                  checked={formData.notificacao_semanal}
-                  onCheckedChange={(checked) => 
-                    setFormData(prev => ({ ...prev, notificacao_semanal: checked }))
-                  }
-                />
-              </div>
-              
-              {formData.notificacao_semanal && (
-                <div className="space-y-2">
-                  <Label htmlFor="mensagem-notificacao" className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Mensagem de Lembrete
-                  </Label>
-                  <Textarea
-                    id="mensagem-notificacao"
-                    value={formData.mensagem_notificacao}
-                    onChange={(e) => setFormData(prev => ({ ...prev, mensagem_notificacao: e.target.value }))}
-                    placeholder="Ex: IMPORTANTE: Sempre que houver uma paralização no sistema, temos que publicar no calendário do PJE que os prazos têm que ficar suspensos"
-                    rows={3}
-                    className="resize-none"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Esta mensagem será exibida nas notificações semanais
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
         </div>
         <div className="flex justify-end gap-3 mt-6">
           <Button variant="outline" onClick={onCancel}>

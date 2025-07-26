@@ -115,7 +115,8 @@ export const BulkUploadDialog = ({
       solucao: item.solucao,
       categoria: item.categoria,
       tags: item.tags,
-      arquivo_print: null
+      arquivo_print: null,
+      images: []
     }));
 
     try {

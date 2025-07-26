@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Supabase</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Teste de Conexão Supabase</h1>
+    <div id="result"></div>
+    
+    <script>
+        const { createClient } = supabase;
+        
+        const supabaseUrl = 'https://zpufcvesenbhtmizmjiz.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwdWZjdmVzZW5iaHRtaXptaml6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1MDY5ODMsImV4cCI6MjA2NTA4Mjk4M30.aD0E3fkuTjaYnHRdWpYjCk_hPK-sKhVT2VdIfXy3Hy8';
+        
+        const client = createClient(supabaseUrl, supabaseKey);
+        
+        async function testConnection() {
+            try {
+                const { data, error } = await client.from('profiles').select('count').limit(1);
+                
+                if (error) {
+                    document.getElementById('result').innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`;
+                } else {
+                    document.getElementById('result').innerHTML = `<p style="color: green;">Conexão OK! Dados: ${JSON.stringify(data)}</p>`;
+                }
+            } catch (err) {
+                document.getElementById('result').innerHTML = `<p style="color: red;">Erro de rede: ${err.message}</p>`;
+            }
+        }
+        
+        testConnection();
+    </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, X, Image, Video, FileText, Eye } from 'lucide-react';
+import { Upload, X, Image, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,8 +17,8 @@ interface MediaUploadProps {
 export const MediaUpload = ({ 
   files, 
   onFilesChange, 
-  maxFiles = 5, 
-  maxFileSize = 50 
+  maxFiles = 3, 
+  maxFileSize = 10 
 }: MediaUploadProps) => {
   const [dragActive, setDragActive] = useState(false);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -58,12 +58,11 @@ export const MediaUpload = ({
         break;
       }
       
-      // Verificar tipo de arquivo
+      // Verificar tipo de arquivo - apenas imagens
       const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
       
-      if (!isImage && !isVideo) {
-        toast.error(`Arquivo ${file.name} não é uma imagem ou vídeo válido`);
+      if (!isImage) {
+        toast.error(`Arquivo ${file.name} não é uma imagem válida`);
         continue;
       }
       
@@ -102,12 +101,7 @@ export const MediaUpload = ({
   };
 
   const getFileIcon = (file: File) => {
-    if (file.type.startsWith('image/')) {
-      return <Image className="h-4 w-4" />;
-    } else if (file.type.startsWith('video/')) {
-      return <Video className="h-4 w-4" />;
-    }
-    return <FileText className="h-4 w-4" />;
+    return <Image className="h-4 w-4" />;
   };
 
   const getPreviewUrl = (file: File) => {
@@ -116,7 +110,7 @@ export const MediaUpload = ({
 
   return (
     <div className="space-y-4">
-      <Label>Imagens e Vídeos (máximo {maxFiles})</Label>
+      <Label>Imagens (máximo {maxFiles})</Label>
       
       {/* Área de upload */}
       <div
@@ -134,7 +128,7 @@ export const MediaUpload = ({
           ref={inputRef}
           type="file"
           multiple
-          accept="image/*,video/*"
+          accept="image/*"
           onChange={handleFileInput}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
@@ -145,7 +139,7 @@ export const MediaUpload = ({
             <span className="font-medium">Clique para selecionar</span> ou arraste arquivos aqui
           </div>
           <div className="text-xs text-gray-500">
-            Imagens: PNG, JPG, JPEG, GIF, WebP | Vídeos: MP4, WebM, MOV
+            Formatos aceitos: PNG, JPG, JPEG, GIF, WebP
             <br />
             Máximo {maxFileSize}MB por arquivo
           </div>
@@ -169,7 +163,7 @@ export const MediaUpload = ({
                         <p className="text-sm font-medium truncate">{file.name}</p>
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <Badge variant="outline" className="text-xs">
-                            {file.type.startsWith('image/') ? 'Imagem' : 'Vídeo'}
+                            Imagem
                           </Badge>
                           <span>{formatFileSize(file.size)}</span>
                         </div>
@@ -192,21 +186,11 @@ export const MediaUpload = ({
                             <DialogTitle>{file.name}</DialogTitle>
                           </DialogHeader>
                           <div className="flex justify-center">
-                            {file.type.startsWith('image/') ? (
-                              <img
-                                src={getPreviewUrl(file)}
-                                alt={file.name}
-                                className="max-w-full max-h-[70vh] object-contain"
-                              />
-                            ) : (
-                              <video
-                                src={getPreviewUrl(file)}
-                                controls
-                                className="max-w-full max-h-[70vh]"
-                              >
-                                Seu navegador não suporta o elemento de vídeo.
-                              </video>
-                            )}
+                            <img
+                              src={getPreviewUrl(file)}
+                              alt={file.name}
+                              className="max-w-full max-h-[70vh] object-contain"
+                            />
                           </div>
                         </DialogContent>
                       </Dialog>
@@ -232,8 +216,8 @@ export const MediaUpload = ({
       <p className="text-xs text-muted-foreground">
         💡 <strong>Dicas:</strong>
         <br />• Use imagens para mostrar prints de tela, capturas de erro, interfaces
-        <br />• Use vídeos para demonstrar procedimentos passo a passo
-        <br />• Organize os arquivos na ordem que faz mais sentido para o entendimento
+        <br />• Organize as imagens na ordem que faz mais sentido para o entendimento
+        <br />• Prefira imagens claras e com boa resolução
       </p>
     </div>
   );

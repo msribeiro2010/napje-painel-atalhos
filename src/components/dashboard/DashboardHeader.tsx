@@ -5,7 +5,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Clock } from '@/components/ui/clock';
 import { DateDisplay } from '@/components/ui/date-display';
 import { EventNotificationBadge } from '@/components/EventNotificationBadge';
-import { WeeklyNotificationSettings } from '@/components/notifications/WeeklyNotificationSettings';
+import { WeeklyNotificationsManager } from '@/components/weekly-notifications/WeeklyNotificationsManager';
 
 interface DashboardHeaderProps {
   isAdmin?: boolean;
@@ -41,7 +41,7 @@ export const DashboardHeader = ({ isAdmin }: DashboardHeaderProps) => {
         {/* Grupo de notificações e eventos */}
         <div className="flex items-center gap-2">
           <EventNotificationBadge />
-          <WeeklyNotificationSettings />
+          <WeeklyNotificationsManager />
         </div>
         
         {/* Grupo de ferramentas */}

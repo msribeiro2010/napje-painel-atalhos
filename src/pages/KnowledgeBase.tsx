@@ -29,9 +29,7 @@ const KnowledgeBase = () => {
     categoria: '',
     tags: [],
     arquivo_print: null,
-    media_files: [],
-    notificacao_semanal: false,
-    mensagem_notificacao: ''
+    media_files: []
   });
 
 
@@ -56,9 +54,7 @@ const KnowledgeBase = () => {
       categoria: item.categoria || '',
       tags: item.tags || [],
       arquivo_print: null,
-      media_files: [],
-      notificacao_semanal: item.notificacao_semanal || false,
-      mensagem_notificacao: item.mensagem_notificacao || ''
+      media_files: []
     });
     setIsDialogOpen(true);
   };
@@ -75,9 +71,7 @@ const KnowledgeBase = () => {
         categoria: '',
         tags: [],
         arquivo_print: null,
-        media_files: [],
-        notificacao_semanal: false,
-        mensagem_notificacao: ''
+        media_files: []
       });
     }
   };
@@ -98,9 +92,7 @@ const KnowledgeBase = () => {
       categoria: '',
       tags: [],
       arquivo_print: null,
-      media_files: [],
-      notificacao_semanal: false,
-      mensagem_notificacao: ''
+      media_files: []
     });
   };
 
