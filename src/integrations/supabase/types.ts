@@ -119,6 +119,9 @@ export type Database = {
           categoria: string | null
           created_at: string
           id: string
+          media_files: Json | null
+          mensagem_notificacao: string | null
+          notificacao_semanal: boolean | null
           problema_descricao: string
           solucao: string
           tags: string[] | null
@@ -132,6 +135,9 @@ export type Database = {
           categoria?: string | null
           created_at?: string
           id?: string
+          media_files?: Json | null
+          mensagem_notificacao?: string | null
+          notificacao_semanal?: boolean | null
           problema_descricao: string
           solucao: string
           tags?: string[] | null
@@ -145,6 +151,9 @@ export type Database = {
           categoria?: string | null
           created_at?: string
           id?: string
+          media_files?: Json | null
+          mensagem_notificacao?: string | null
+          notificacao_semanal?: boolean | null
           problema_descricao?: string
           solucao?: string
           tags?: string[] | null
@@ -485,6 +494,51 @@ export type Database = {
           description?: string | null
           start_time?: string | null
           end_time?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      important_memories: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          description: string | null
+          category: string
+          username: string | null
+          password: string | null
+          url: string | null
+          notes: string | null
+          is_favorite: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          description?: string | null
+          category?: string
+          username?: string | null
+          password?: string | null
+          url?: string | null
+          notes?: string | null
+          is_favorite?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          description?: string | null
+          category?: string
+          username?: string | null
+          password?: string | null
+          url?: string | null
+          notes?: string | null
+          is_favorite?: boolean | null
           created_at?: string
           updated_at?: string
         }

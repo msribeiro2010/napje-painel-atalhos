@@ -28,7 +28,10 @@ const KnowledgeBase = () => {
     solucao: '',
     categoria: '',
     tags: [],
-    arquivo_print: null
+    arquivo_print: null,
+    media_files: [],
+    notificacao_semanal: false,
+    mensagem_notificacao: ''
   });
 
 
@@ -52,7 +55,10 @@ const KnowledgeBase = () => {
       solucao: item.solucao,
       categoria: item.categoria || '',
       tags: item.tags || [],
-      arquivo_print: null
+      arquivo_print: null,
+      media_files: [],
+      notificacao_semanal: item.notificacao_semanal || false,
+      mensagem_notificacao: item.mensagem_notificacao || ''
     });
     setIsDialogOpen(true);
   };
@@ -68,7 +74,10 @@ const KnowledgeBase = () => {
         solucao: '',
         categoria: '',
         tags: [],
-        arquivo_print: null
+        arquivo_print: null,
+        media_files: [],
+        notificacao_semanal: false,
+        mensagem_notificacao: ''
       });
     }
   };
@@ -88,7 +97,10 @@ const KnowledgeBase = () => {
       solucao: '',
       categoria: '',
       tags: [],
-      arquivo_print: null
+      arquivo_print: null,
+      media_files: [],
+      notificacao_semanal: false,
+      mensagem_notificacao: ''
     });
   };
 

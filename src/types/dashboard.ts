@@ -16,6 +16,7 @@ export type DashboardAction = {
   icon: any;
   onClick: () => void;
   variant: 'default' | 'outline';
+  customComponent?: React.ReactNode;
 };
 
 export type AITool = {

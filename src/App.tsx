@@ -19,6 +19,7 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminShortcuts from "./pages/AdminShortcuts";
 // import AdminHolidays from "./pages/AdminHolidays";
 import OrgaosJulgadores from "./pages/OrgaosJulgadores";
+import ImportantMemories from "./pages/ImportantMemories";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -86,6 +87,11 @@ const App = () => (
              <Route path="/orgaos-julgadores" element={
                <ProtectedRoute>
                  <OrgaosJulgadores />
+               </ProtectedRoute>
+             } />
+             <Route path="/memorias-importantes" element={
+               <ProtectedRoute>
+                 <ImportantMemories />
                </ProtectedRoute>
              } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

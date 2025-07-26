@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FileText, BookOpen, Shield, Plus, ExternalLink, StickyNote, Scale, Calendar, Home, Umbrella, Laptop, Video, Users, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+
 import PostitNotes from '@/components/PostitNotes';
 import { useChamadosRecentes } from '@/hooks/useChamadosRecentes';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -31,6 +32,8 @@ const Dashboard = () => {
   const { isOpen, toggleChat } = useChatAssistant();
   const { modalOpen, setModalOpen } = useEventNotifications();
   const [postItOpen, setPostItOpen] = useState(false);
+  
+
   
   // Hook para eventos próximos
   const { 
@@ -176,58 +179,44 @@ const Dashboard = () => {
     }
   ];
 
-  if (isAdmin) {
-    dashboardActions.push({
-      title: 'Gerenciar Usuários',
-      description: 'Administrar acesso ao sistema',
-      icon: Shield,
-      onClick: () => navigate('/admin/usuarios'),
-      variant: 'outline' as const
-    });
-    
-    dashboardActions.push({
-      title: 'Gerenciar Atalhos',
-      description: 'Criar e editar grupos e atalhos',
-      icon: ExternalLink,
-      onClick: () => navigate('/admin/atalhos'),
-      variant: 'outline' as const
-    });
-    
-    // dashboardActions.push({
-    //   title: 'Gerenciar Feriados',
-    //   description: 'Administrar feriados e sugestões de férias',
-    //   icon: Calendar,
-    //   onClick: () => navigate('/admin/feriados'),
-    //   variant: 'outline' as const
-    // });
-  }
+
+
+  // Botões administrativos foram movidos para o menu do usuário
+
+  // Verificar se há informações relevantes para mostrar
+  const hasWorkInfo = status !== 'none' || customEventsTomorrow.length > 0;
 
   return (
     <div className="min-h-screen bg-gradient-bg p-4">
-      {/* Aviso do status do próximo dia */}
-      <div className="max-w-6xl mx-auto mb-4 space-y-2">
-        <div className="rounded-lg shadow p-4 flex items-center gap-3" style={{ background: statusLabel[status].color }}>
-          {statusLabel[status].icon}
-          <span className="font-semibold text-[#7c6a3c] text-base">
-            Amanhã: {statusLabel[status].label} {tomorrowDateStr}
-          </span>
-        </div>
-        {/* Avisos de eventos personalizados do próximo dia */}
-        {customEventsTomorrow.map(ev => (
-          <div
-            key={ev.id}
-            className="rounded-lg shadow flex items-center gap-3 px-4 py-3 border-l-4 animate-fade-in"
-            style={{ background: customEventStyles[ev.type]?.color, borderColor: customEventStyles[ev.type]?.border }}
-          >
-            {customEventStyles[ev.type]?.icon}
-            <div>
-              <span className="font-semibold text-base mr-2">Amanhã: {ev.title}</span>
-              <span className="inline-block text-xs px-2 py-0.5 rounded bg-white/60 text-gray-700 ml-2">{ev.type.charAt(0).toUpperCase() + ev.type.slice(1)}</span>
-              {ev.description && <div className="text-xs text-gray-600 mt-1">{ev.description}</div>}
+      {/* Aviso do status do próximo dia - só aparece quando há marcação */}
+      {hasWorkInfo && (
+        <div className="max-w-6xl mx-auto mb-4 space-y-2">
+          {/* Status de trabalho - só mostra se não for 'none' */}
+          {status !== 'none' && (
+            <div className="rounded-lg shadow p-4 flex items-center gap-3" style={{ background: statusLabel[status].color }}>
+              {statusLabel[status].icon}
+              <span className="font-semibold text-[#7c6a3c] text-base">
+                Amanhã: {statusLabel[status].label} {tomorrowDateStr}
+              </span>
             </div>
-          </div>
-        ))}
-      </div>
+          )}
+          {/* Avisos de eventos personalizados do próximo dia */}
+          {customEventsTomorrow.map(ev => (
+            <div
+              key={ev.id}
+              className="rounded-lg shadow flex items-center gap-3 px-4 py-3 border-l-4 animate-fade-in"
+              style={{ background: customEventStyles[ev.type]?.color, borderColor: customEventStyles[ev.type]?.border }}
+            >
+              {customEventStyles[ev.type]?.icon}
+              <div>
+                <span className="font-semibold text-base mr-2">Amanhã: {ev.title}</span>
+                <span className="inline-block text-xs px-2 py-0.5 rounded bg-white/60 text-gray-700 ml-2">{ev.type.charAt(0).toUpperCase() + ev.type.slice(1)}</span>
+                {ev.description && <div className="text-xs text-gray-600 mt-1">{ev.description}</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="max-w-6xl mx-auto">
         <DashboardHeader isAdmin={isAdmin} />
         

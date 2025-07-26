@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { KnowledgeBaseItem, KnowledgeBaseFormData } from '@/types/knowledge-base';
+import { KnowledgeBaseItem, KnowledgeBaseFormData, MediaFile } from '@/types/knowledge-base';
 
 export const useKnowledgeBase = () => {
   const [items, setItems] = useState<KnowledgeBaseItem[]>([]);
@@ -25,15 +25,8 @@ export const useKnowledgeBase = () => {
       
       // Categorias padrão para sempre estar disponível
       const defaultCategories = [
-        'PJe - Sistema',
-        'PJe - Certificado Digital', 
-        'PJe - Peticionamento',
-        'PJe - Audiência Virtual',
-        'PJe - Consulta Processual',
-        'Hardware',
-        'Software', 
-        'Rede',
-        'Email',
+        'PJe-1o.Grau',
+        'PJe-2o.Grau',
         'Outros'
       ];
       
@@ -47,15 +40,8 @@ export const useKnowledgeBase = () => {
       console.error('Erro ao buscar categorias:', error);
       // Em caso de erro, usar apenas as categorias padrão
       setCategories([
-        'PJe - Sistema',
-        'PJe - Certificado Digital', 
-        'PJe - Peticionamento',
-        'PJe - Audiência Virtual',
-        'PJe - Consulta Processual',
-        'Hardware',
-        'Software', 
-        'Rede',
-        'Email',
+        'PJe-1o.Grau',
+        'PJe-2o.Grau',
         'Outros'
       ]);
     }
@@ -70,7 +56,18 @@ export const useKnowledgeBase = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setItems(data || []);
+      
+      // Converter media_files de Json para MediaFile[]
+      const processedData = (data || []).map(item => ({
+        ...item,
+        media_files: item.media_files ? (
+          typeof item.media_files === 'string' 
+            ? JSON.parse(item.media_files)
+            : item.media_files
+        ) : []
+      }));
+      
+      setItems(processedData);
     } catch (error) {
       console.error('Erro ao buscar itens:', error);
       toast.error('Erro ao carregar base de conhecimento');
@@ -87,8 +84,9 @@ export const useKnowledgeBase = () => {
       }
 
       let arquivo_print_url = '';
+      let mediaFiles: MediaFile[] = [];
 
-      // Upload da imagem se existir
+      // Upload da imagem se existir (compatibilidade)
       if (formData.arquivo_print) {
         const fileExt = formData.arquivo_print.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
@@ -101,13 +99,41 @@ export const useKnowledgeBase = () => {
         arquivo_print_url = uploadData.path;
       }
 
+      // Upload de múltiplas mídias
+      if (formData.media_files && formData.media_files.length > 0) {
+        for (const file of formData.media_files) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('knowledge-base-files')
+            .upload(fileName, file);
+
+          if (uploadError) {
+            console.error('Erro no upload:', uploadError);
+            continue;
+          }
+
+          mediaFiles.push({
+            id: crypto.randomUUID(),
+            url: uploadData.path,
+            name: file.name,
+            type: file.type.startsWith('image/') ? 'image' : 'video',
+            size: file.size
+          });
+        }
+      }
+
       const itemData = {
         titulo: formData.titulo,
         problema_descricao: formData.problema_descricao,
         solucao: formData.solucao,
         categoria: formData.categoria || null,
         tags: formData.tags.length > 0 ? formData.tags : null,
-        arquivo_print: arquivo_print_url || null
+        arquivo_print: arquivo_print_url || null,
+        media_files: mediaFiles.length > 0 ? JSON.stringify(mediaFiles) : null,
+        notificacao_semanal: formData.notificacao_semanal,
+        mensagem_notificacao: formData.mensagem_notificacao || null
       };
 
       if (editingItem) {
@@ -129,6 +155,7 @@ export const useKnowledgeBase = () => {
 
       fetchItems();
       fetchCategories(); // Atualizar categorias após salvar
+      return true;
     } catch (error) {
       console.error('Erro ao salvar item:', error);
       toast.error('Erro ao salvar item');

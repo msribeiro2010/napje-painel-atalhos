@@ -9,10 +9,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Shield, Link } from 'lucide-react';
+import { User, Settings, LogOut, Shield, Lock, Bot, ExternalLink } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -117,7 +121,7 @@ const UserMenu = () => {
               </span>
             )}
             <span className="text-xs text-muted-foreground">
-              {profile.email.split('@')[0]}
+              
             </span>
           </div>
         </Button>
@@ -162,6 +166,13 @@ const UserMenu = () => {
           <User className="mr-2 h-4 w-4" />
           <span>Meu Perfil</span>
         </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => navigate('/memorias-importantes')}
+          className="cursor-pointer hover:bg-gradient-accent"
+        >
+          <Lock className="mr-2 h-4 w-4" />
+          <span>Memórias Importantes</span>
+        </DropdownMenuItem>
         {profile.is_admin && (
           <DropdownMenuItem 
             onClick={() => navigate('/admin/usuarios')}
@@ -176,9 +187,63 @@ const UserMenu = () => {
             onClick={() => navigate('/admin/atalhos')}
             className="cursor-pointer hover:bg-gradient-accent"
           >
-            <Link className="mr-2 h-4 w-4" />
+            <ExternalLink className="mr-2 h-4 w-4" />
             <span>Gerenciar Atalhos</span>
           </DropdownMenuItem>
+        )}
+        {profile.is_admin && (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="cursor-pointer">
+              <Bot className="mr-2 h-4 w-4" />
+              <span>Ferramentas IA</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent className="w-48">
+                <DropdownMenuItem 
+                  onClick={() => window.open('https://chat.openai.com', '_blank')}
+                  className="cursor-pointer"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  <span>ChatGPT</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => window.open('https://claude.ai', '_blank')}
+                  className="cursor-pointer"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  <span>Claude.ai</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => window.open('https://www.perplexity.ai', '_blank')}
+                  className="cursor-pointer"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  <span>Perplexity</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => window.open('https://lovable.dev', '_blank')}
+                  className="cursor-pointer"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  <span>Lovable</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => window.open('https://base44.com.br', '_blank')}
+                  className="cursor-pointer"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  <span>Base44</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => window.open('https://abacus.ai', '_blank')}
+                  className="cursor-pointer"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  <span>Abacus</span>
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
         )}
         {/* {profile.is_admin && (
           <DropdownMenuItem 
