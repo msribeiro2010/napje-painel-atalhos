@@ -13,7 +13,7 @@ const EVENT_TYPES = [
   { value: 'outro', label: 'Outro', icon: <Sparkles className="h-4 w-4 mr-1 text-amber-600" /> },
 ];
 
-export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, type: string, title: string, description?: string, start_time?: string, end_time?: string }) => void }) {
+export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, type: string, title: string, description?: string, start_time?: string, end_time?: string, url?: string }) => void }) {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState('');
   const [type, setType] = useState('curso');
@@ -21,12 +21,13 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
   const [description, setDescription] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await onAdd({ date, type, title, description, start_time: startTime || undefined, end_time: endTime || undefined });
+    await onAdd({ date, type, title, description, start_time: startTime || undefined, end_time: endTime || undefined, url: url || undefined });
     setLoading(false);
     setOpen(false);
     setDate('');
@@ -35,6 +36,7 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
     setDescription('');
     setStartTime('');
     setEndTime('');
+    setUrl('');
   };
 
   return (
@@ -100,7 +102,11 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Descrição (opcional)</label>
-            <Textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={256} placeholder="Detalhes, link, local, etc." />
+            <Textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={256} placeholder="Detalhes, local, etc." />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Link/URL (opcional)</label>
+            <Input value={url} onChange={e => setUrl(e.target.value)} type="url" placeholder="https://exemplo.com" />
           </div>
           <div className="flex justify-end">
             <Button type="submit" disabled={loading || !date || !title} className="bg-primary text-white hover:bg-primary/90">

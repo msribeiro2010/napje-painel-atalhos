@@ -28,6 +28,7 @@ export function EditCustomEventDialog({ isOpen, onOpenChange, event, onUpdate }:
   const [description, setDescription] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Preencher o formulário quando o evento for carregado
@@ -39,6 +40,7 @@ export function EditCustomEventDialog({ isOpen, onOpenChange, event, onUpdate }:
       setDescription(event.description || '');
       setStartTime(event.start_time || '');
       setEndTime(event.end_time || '');
+      setUrl(event.url || '');
     }
   }, [event]);
 
@@ -54,7 +56,8 @@ export function EditCustomEventDialog({ isOpen, onOpenChange, event, onUpdate }:
         title,
         description: description || undefined,
         start_time: startTime || undefined,
-        end_time: endTime || undefined
+        end_time: endTime || undefined,
+        url: url || undefined
       });
       onOpenChange(false);
     } catch (error) {
@@ -71,6 +74,7 @@ export function EditCustomEventDialog({ isOpen, onOpenChange, event, onUpdate }:
     setDescription('');
     setStartTime('');
     setEndTime('');
+    setUrl('');
   };
 
   const handleClose = () => {
@@ -135,7 +139,11 @@ export function EditCustomEventDialog({ isOpen, onOpenChange, event, onUpdate }:
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Descrição (opcional)</label>
-            <Textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={256} placeholder="Detalhes, link, local, etc." />
+            <Textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={256} placeholder="Detalhes, local, etc." />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Link/URL (opcional)</label>
+            <Input value={url} onChange={e => setUrl(e.target.value)} type="url" placeholder="https://exemplo.com" />
           </div>
           <div className="flex justify-end gap-2">
             <Button 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, X, Bell, Sparkles, Play, CheckCircle, AlertCircle, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Clock, X, Bell, Sparkles, Play, CheckCircle, AlertCircle, Edit, Trash2, Copy, ExternalLink } from 'lucide-react';
 import { format, isToday, isTomorrow, addDays, isPast, isAfter, isBefore, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useUpcomingEventsModal, UpcomingEvent } from '@/hooks/useUpcomingEventsModal';
@@ -28,6 +28,22 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
 
+  const handleCopyUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copiado!",
+        description: "O link do evento foi copiado para a área de transferência.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o link. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleEditEvent = (event: UpcomingEvent) => {
     if (event.type === 'custom') {
       const customEvent: CustomEvent = {
@@ -38,7 +54,8 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
         title: event.title,
         description: event.description,
         start_time: event.start_time,
-        end_time: event.end_time
+        end_time: event.end_time,
+        url: event.url
       };
       setEditingEvent(customEvent);
       setIsEditDialogOpen(true);
@@ -199,14 +216,14 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50/30 border-0 shadow-2xl">
-        <DialogHeader className="relative pb-6 border-b border-gradient-to-r from-blue-100 to-purple-100">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl">
+        <DialogHeader className="relative pb-6 border-b border-white/30">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <div className="p-4 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 rounded-2xl shadow-xl animate-pulse">
+              <div className="p-4 bg-gradient-to-br from-blue-500/80 via-purple-500/80 to-indigo-600/80 rounded-2xl shadow-xl backdrop-blur-sm">
                 <Bell className="h-7 w-7 text-white drop-shadow-sm" />
               </div>
-              <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+              <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-red-500/90 to-pink-500/90 rounded-full flex items-center justify-center shadow-lg animate-bounce backdrop-blur-sm">
                 <Sparkles className="h-2.5 w-2.5 text-white" />
               </div>
             </div>
@@ -214,28 +231,20 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
               <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-1">
                 🎯 Eventos Próximos
               </DialogTitle>
-              <p className="text-sm text-slate-600 font-medium">
+              <p className="text-sm text-slate-600/80 font-medium">
                 {events.length} evento{events.length !== 1 ? 's' : ''} nos próximos dias • Fique sempre atualizado
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="absolute top-2 right-2 h-9 w-9 p-0 hover:bg-red-50 hover:text-red-600 rounded-full transition-all duration-200"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         <div className="overflow-y-auto max-h-[60vh] space-y-6 pr-2">
           {Object.entries(groupedEvents).map(([dateLabel, dayEvents]) => (
             <div key={dateLabel} className="space-y-3">
-              <div className="flex items-center gap-2 sticky top-0 bg-white/95 backdrop-blur-sm py-2 z-10">
+              <div className="flex items-center gap-2 sticky top-0 bg-white/80 backdrop-blur-md py-2 z-10 rounded-lg">
                 <Calendar className="h-4 w-4 text-blue-600" />
                 <h3 className="font-semibold text-lg text-gray-800">{dateLabel}</h3>
-                <div className="flex-1 h-px bg-gradient-to-r from-blue-200 to-transparent" />
+                <div className="flex-1 h-px bg-gradient-to-r from-blue-200/60 to-transparent" />
               </div>
               
               <div className="space-y-3 ml-6">
@@ -248,11 +257,11 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
                       key={event.id}
                       className={cn(
                         "relative p-5 rounded-2xl border transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1",
-                        "bg-gradient-to-br from-white via-slate-50/50 to-white backdrop-blur-sm",
-                        "border-slate-200/60 shadow-lg"
+                        "bg-white/60 backdrop-blur-md",
+                        "border-white/40 shadow-lg"
                       )}
                       style={{
-                        boxShadow: `0 8px 32px ${event.color ? `${event.color}40` : 'rgba(0,0,0,0.1)'}`,
+                        boxShadow: `0 8px 32px ${event.color ? `${event.color}30` : 'rgba(0,0,0,0.08)'}`,
                       }}
                     >
                       <div className="flex items-start gap-4">
@@ -292,7 +301,7 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
                             </Badge>
                           </div>
                           
-                          <div className="flex items-center gap-2 text-sm text-slate-700 mb-3 bg-slate-50/80 rounded-lg p-2">
+                          <div className="flex items-center gap-2 text-sm text-slate-700 mb-3 bg-white/50 backdrop-blur-sm rounded-lg p-2 border border-white/30">
                             <Calendar className="h-4 w-4 text-blue-600" />
                             <span className="font-semibold">
                               {formatEventDateTime(event)}
@@ -300,10 +309,39 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
                           </div>
                           
                           {event.description && (
-                            <div className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 rounded-lg p-3 mb-3 border border-slate-200/50">
+                            <div className="bg-white/40 backdrop-blur-sm rounded-lg p-3 mb-3 border border-white/30">
                               <p className="text-sm text-slate-700 leading-relaxed font-medium">
                                 {event.description}
                               </p>
+                            </div>
+                          )}
+                          
+                          {/* Link do evento */}
+                          {event.url && (
+                            <div className="bg-white/40 backdrop-blur-sm rounded-lg p-3 mb-3 border border-white/30">
+                              <div className="flex items-center gap-2 mb-2">
+                                <ExternalLink className="h-4 w-4 text-blue-600" />
+                                <span className="text-sm font-semibold text-slate-700">Link do evento:</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <a 
+                                  href={event.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-blue-600 hover:text-blue-800 underline truncate flex-1 font-medium"
+                                >
+                                  {event.url}
+                                </a>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleCopyUrl(event.url!)}
+                                  className="flex items-center gap-1 text-xs font-semibold hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 rounded-full px-3 py-1 transition-all duration-200 shadow-sm"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                  Copiar
+                                </Button>
+                              </div>
                             </div>
                           )}
                           
@@ -357,8 +395,8 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
           ))}
         </div>
 
-        <div className="flex justify-between items-center gap-4 pt-6 border-t border-gradient-to-r from-blue-100 to-purple-100 bg-gradient-to-r from-slate-50/50 to-blue-50/30 -mx-6 -mb-6 px-6 py-4 rounded-b-2xl">
-          <div className="flex items-center gap-2 text-sm text-slate-600">
+        <div className="flex justify-between items-center gap-4 pt-6 border-t border-white/30 bg-white/40 backdrop-blur-md -mx-6 -mb-6 px-6 py-4 rounded-b-3xl">
+          <div className="flex items-center gap-2 text-sm text-slate-600/80">
             <Calendar className="h-4 w-4 text-blue-500" />
             <span className="font-medium">Mantenha-se sempre atualizado</span>
           </div>
@@ -366,7 +404,7 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
             <Button
               variant="outline"
               onClick={onClose}
-              className="hover:bg-slate-50 border-slate-300 text-slate-700 font-semibold px-6 rounded-full transition-all duration-200"
+              className="hover:bg-white/50 border-white/40 text-slate-700 font-semibold px-6 rounded-full transition-all duration-200 backdrop-blur-sm"
             >
               Fechar
             </Button>
@@ -375,7 +413,7 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
                 // Navegar para o calendário
                 window.location.href = '/calendario';
               }}
-              className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 text-white font-semibold px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+              className="bg-gradient-to-r from-blue-600/90 via-purple-600/90 to-indigo-600/90 hover:from-blue-700/90 hover:via-purple-700/90 hover:to-indigo-700/90 text-white font-semibold px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 backdrop-blur-sm"
             >
               📅 Ver Calendário
             </Button>

@@ -11,6 +11,7 @@ export interface CustomEvent {
   description?: string;
   start_time?: string; // HH:MM
   end_time?: string; // HH:MM
+  url?: string; // URL/link do evento
 }
 
 export const useCustomEvents = (month: Date) => {
