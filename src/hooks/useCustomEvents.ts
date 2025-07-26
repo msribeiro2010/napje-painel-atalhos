@@ -9,6 +9,8 @@ export interface CustomEvent {
   type: string;
   title: string;
   description?: string;
+  start_time?: string; // HH:MM
+  end_time?: string; // HH:MM
 }
 
 export const useCustomEvents = (month: Date) => {
@@ -57,6 +59,25 @@ export const useCustomEvents = (month: Date) => {
     }
   };
 
+  const updateCustomEvent = async (id: string, event: Omit<CustomEvent, 'id' | 'user_id'>) => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from('user_custom_events')
+        .update(event)
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      await fetchCustomEvents();
+    } catch (err: any) {
+      setError(err.message || 'Erro ao atualizar evento');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const removeCustomEvent = async (id: string) => {
     setLoading(true);
     setError(null);
@@ -74,5 +95,5 @@ export const useCustomEvents = (month: Date) => {
     }
   };
 
-  return { customEvents, fetchCustomEvents, addCustomEvent, removeCustomEvent, loading, error };
-}; 
+  return { customEvents, fetchCustomEvents, addCustomEvent, updateCustomEvent, removeCustomEvent, loading, error };
+};

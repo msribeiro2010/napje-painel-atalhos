@@ -21,6 +21,9 @@ import { useWorkCalendar, WorkStatus } from '@/hooks/useWorkCalendar';
 import { format, addDays } from 'date-fns';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
+import { useUpcomingEventsModal } from '@/hooks/useUpcomingEventsModal';
+import UpcomingEventsModal from '@/components/UpcomingEventsModal';
+import UpcomingEventsButton from '@/components/UpcomingEventsButton';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -28,6 +31,15 @@ const Dashboard = () => {
   const { isOpen, toggleChat } = useChatAssistant();
   const { modalOpen, setModalOpen } = useEventNotifications();
   const [postItOpen, setPostItOpen] = useState(false);
+  
+  // Hook para eventos próximos
+  const { 
+    isOpen: upcomingEventsOpen, 
+    upcomingEvents, 
+    openModal: openUpcomingEvents, 
+    closeModal: closeUpcomingEvents, 
+    hasEvents 
+  } = useUpcomingEventsModal();
   const { 
     duplicarChamado, 
     editarChamado, 
@@ -254,6 +266,20 @@ const Dashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Modal de Eventos Próximos */}
+      <UpcomingEventsModal 
+        isOpen={upcomingEventsOpen}
+        onClose={closeUpcomingEvents}
+        events={upcomingEvents}
+      />
+      
+      {/* Botão Flutuante de Eventos Próximos */}
+      <UpcomingEventsButton 
+        eventCount={upcomingEvents.length}
+        onClick={openUpcomingEvents}
+        hasNewEvents={hasEvents}
+      />
     </div>
   );
 };

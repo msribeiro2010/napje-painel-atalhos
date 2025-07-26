@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, BookOpen, Video, Users, Sparkles, Plus } from 'lucide-react';
+import { Calendar, BookOpen, Video, Users, Sparkles, Edit } from 'lucide-react';
 import { format } from 'date-fns';
+import { CustomEvent } from '@/hooks/useCustomEvents';
 
 const EVENT_TYPES = [
   { value: 'curso', label: 'Curso', icon: <BookOpen className="h-4 w-4 mr-1 text-blue-600" /> },
@@ -13,8 +14,14 @@ const EVENT_TYPES = [
   { value: 'outro', label: 'Outro', icon: <Sparkles className="h-4 w-4 mr-1 text-amber-600" /> },
 ];
 
-export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, type: string, title: string, description?: string, start_time?: string, end_time?: string }) => void }) {
-  const [open, setOpen] = useState(false);
+interface EditCustomEventDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  event: CustomEvent | null;
+  onUpdate: (id: string, event: Omit<CustomEvent, 'id' | 'user_id'>) => Promise<void>;
+}
+
+export function EditCustomEventDialog({ isOpen, onOpenChange, event, onUpdate }: EditCustomEventDialogProps) {
   const [date, setDate] = useState('');
   const [type, setType] = useState('curso');
   const [title, setTitle] = useState('');
@@ -23,12 +30,41 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
   const [endTime, setEndTime] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Preencher o formulário quando o evento for carregado
+  useEffect(() => {
+    if (event) {
+      setDate(event.date);
+      setType(event.type);
+      setTitle(event.title);
+      setDescription(event.description || '');
+      setStartTime(event.start_time || '');
+      setEndTime(event.end_time || '');
+    }
+  }, [event]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!event) return;
+    
     setLoading(true);
-    await onAdd({ date, type, title, description, start_time: startTime || undefined, end_time: endTime || undefined });
-    setLoading(false);
-    setOpen(false);
+    try {
+      await onUpdate(event.id, {
+        date,
+        type,
+        title,
+        description: description || undefined,
+        start_time: startTime || undefined,
+        end_time: endTime || undefined
+      });
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Erro ao atualizar evento:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
     setDate('');
     setType('curso');
     setTitle('');
@@ -37,19 +73,18 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
     setEndTime('');
   };
 
+  const handleClose = () => {
+    onOpenChange(false);
+    resetForm();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2 text-sm font-medium px-3 py-2 border-dashed border-2 border-primary hover:bg-primary/10">
-          <Plus className="h-4 w-4" />
-          Adicionar Evento
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md w-full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            Novo Evento Personalizado
+            <Edit className="h-5 w-5 text-primary" />
+            Editar Evento Personalizado
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
@@ -102,9 +137,21 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
             <label className="block text-sm font-medium mb-1">Descrição (opcional)</label>
             <Textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={256} placeholder="Detalhes, link, local, etc." />
           </div>
-          <div className="flex justify-end">
-            <Button type="submit" disabled={loading || !date || !title} className="bg-primary text-white hover:bg-primary/90">
-              Salvar Evento
+          <div className="flex justify-end gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={loading || !date || !title} 
+              className="bg-primary text-white hover:bg-primary/90"
+            >
+              {loading ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </div>
         </form>

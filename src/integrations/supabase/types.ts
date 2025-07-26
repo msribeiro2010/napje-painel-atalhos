@@ -451,6 +451,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_custom_events: {
+        Row: {
+          id: string
+          user_id: string
+          date: string
+          type: string
+          title: string
+          description: string | null
+          start_time: string | null
+          end_time: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          date: string
+          type: string
+          title: string
+          description?: string | null
+          start_time?: string | null
+          end_time?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          date?: string
+          type?: string
+          title?: string
+          description?: string | null
+          start_time?: string | null
+          end_time?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       usuarios: {
         Row: {
           cpf: string

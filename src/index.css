@@ -71,6 +71,22 @@
   .animate-scale-in {
     animation: scaleIn 0.3s ease-out;
   }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 3s ease-in-out infinite;
+  }
+
+  .animate-bounce-slow {
+    animation: bounce-slow 2s ease-in-out infinite;
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+
+  .animate-fade-slow {
+    animation: fade-slow 2s ease-in-out infinite;
+  }
 }
 
 @keyframes ring {
@@ -151,6 +167,42 @@
   to { 
     transform: scale(1); 
     opacity: 1; 
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { 
+    opacity: 1; 
+  }
+  50% { 
+    opacity: 0.7; 
+  }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { 
+    transform: translateY(0); 
+  }
+  50% { 
+    transform: translateY(-5px); 
+  }
+}
+
+@keyframes spin-slow {
+  from { 
+    transform: rotate(0deg); 
+  }
+  to { 
+    transform: rotate(360deg); 
+  }
+}
+
+@keyframes fade-slow {
+  0%, 100% { 
+    opacity: 1; 
+  }
+  50% { 
+    opacity: 0.5; 
   }
 }
 
