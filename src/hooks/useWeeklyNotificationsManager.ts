@@ -7,6 +7,8 @@ export interface WeeklyNotification {
   titulo: string;
   mensagem: string;
   ativo: boolean;
+  dayofweek: number; // 0 = Sunday, 1 = Monday, etc.
+  time: string; // HH:MM format
   created_at: string;
   updated_at: string;
 }
@@ -15,12 +17,14 @@ export interface WeeklyNotificationFormData {
   titulo: string;
   mensagem: string;
   ativo: boolean;
+  dayofweek: number; // 0 = Sunday, 1 = Monday, etc.
+  time: string; // HH:MM format
 }
 
 export interface WeeklyNotificationSettings {
   enabled: boolean;
   frequency: 'weekly' | 'biweekly' | 'monthly';
-  dayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
+  dayofweek: number; // 0 = Sunday, 1 = Monday, etc.
   time: string; // HH:MM format
 }
 
@@ -30,7 +34,7 @@ export const useWeeklyNotificationsManager = () => {
   const [settings, setSettings] = useState<WeeklyNotificationSettings>({
     enabled: true,
     frequency: 'weekly',
-    dayOfWeek: 1, // Monday
+    dayofweek: 1, // Monday
     time: '09:00'
   });
 
@@ -38,7 +42,19 @@ export const useWeeklyNotificationsManager = () => {
   useEffect(() => {
     const savedSettings = localStorage.getItem('weeklyNotificationSettings');
     if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        // Ensure all required properties exist with defaults
+        setSettings({
+          enabled: parsedSettings.enabled ?? true,
+          frequency: parsedSettings.frequency ?? 'weekly',
+          dayofweek: parsedSettings.dayofweek ?? 1,
+          time: parsedSettings.time ?? '09:00'
+        });
+      } catch (error) {
+        console.error('Error parsing saved settings:', error);
+        // Keep default settings if parsing fails
+      }
     }
   }, []);
 
@@ -54,16 +70,7 @@ export const useWeeklyNotificationsManager = () => {
     try {
       setIsLoading(true);
       
-      // Check authentication first
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError) {
-        console.error('Auth error in fetchNotifications:', authError);
-        toast.error('Erro de autenticação ao carregar notificações.');
-        return;
-      }
-      
-      console.log('Fetching notifications for user:', user?.id);
+      console.log('Fetching notifications...');
       
       const { data, error } = await supabase
         .from('weekly_notifications')
@@ -93,22 +100,6 @@ export const useWeeklyNotificationsManager = () => {
   // Save notification to database
   const saveNotification = async (formData: WeeklyNotificationFormData, editingId?: string) => {
     try {
-      // Check if user is authenticated
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError) {
-        console.error('Auth error:', authError);
-        toast.error('Erro de autenticação. Faça login novamente.');
-        return false;
-      }
-      
-      if (!user) {
-        console.error('User not authenticated');
-        toast.error('Usuário não autenticado. Faça login.');
-        return false;
-      }
-
-      console.log('Saving notification for user:', user.id);
       console.log('Form data:', formData);
       console.log('Editing ID:', editingId);
 
@@ -120,6 +111,8 @@ export const useWeeklyNotificationsManager = () => {
             titulo: formData.titulo,
             mensagem: formData.mensagem,
             ativo: formData.ativo,
+            dayofweek: formData.dayofweek,
+            time: formData.time,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingId)
@@ -139,7 +132,9 @@ export const useWeeklyNotificationsManager = () => {
           .insert({
             titulo: formData.titulo,
             mensagem: formData.mensagem,
-            ativo: formData.ativo
+            ativo: formData.ativo,
+            dayofweek: formData.dayofweek,
+            time: formData.time
           })
           .select();
 

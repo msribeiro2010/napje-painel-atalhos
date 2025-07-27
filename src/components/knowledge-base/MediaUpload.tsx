@@ -50,6 +50,8 @@ export const MediaUpload = ({
 
   const handleFiles = (newFiles: File[]) => {
     const validFiles: File[] = [];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const maxNameLength = 255;
     
     for (const file of newFiles) {
       // Verificar se já atingiu o limite
@@ -58,17 +60,28 @@ export const MediaUpload = ({
         break;
       }
       
-      // Verificar tipo de arquivo - apenas imagens
-      const isImage = file.type.startsWith('image/');
+      // Sanitizar nome do arquivo
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      if (sanitizedName.length > maxNameLength) {
+        toast.error(`Nome do arquivo ${file.name} é muito longo`);
+        continue;
+      }
       
-      if (!isImage) {
-        toast.error(`Arquivo ${file.name} não é uma imagem válida`);
+      // Verificar tipo de arquivo com lista específica
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Arquivo ${file.name} não é um tipo de imagem permitido (JPEG, PNG, GIF, WebP)`);
         continue;
       }
       
       // Verificar tamanho
       if (file.size > maxFileSize * 1024 * 1024) {
         toast.error(`Arquivo ${file.name} excede o tamanho máximo de ${maxFileSize}MB`);
+        continue;
+      }
+      
+      // Verificar tamanho mínimo (evitar arquivos vazios)
+      if (file.size < 100) {
+        toast.error(`Arquivo ${file.name} é muito pequeno`);
         continue;
       }
       

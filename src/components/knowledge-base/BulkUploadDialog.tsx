@@ -37,12 +37,43 @@ export const BulkUploadDialog = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile && selectedFile.type === 'application/pdf') {
-      setFile(selectedFile);
-      setExtractedItems([]);
-    } else {
-      toast.error('Por favor, selecione um arquivo PDF válido');
+    
+    if (!selectedFile) {
+      return;
     }
+    
+    // Validações de segurança
+    const maxFileSize = 10 * 1024 * 1024; // 10MB
+    const allowedType = 'application/pdf';
+    
+    if (selectedFile.type !== allowedType) {
+      toast.error('Por favor, selecione apenas arquivos PDF válidos');
+      e.target.value = ''; // Limpar input
+      return;
+    }
+    
+    if (selectedFile.size > maxFileSize) {
+      toast.error('Arquivo muito grande. Máximo permitido: 10MB');
+      e.target.value = ''; // Limpar input
+      return;
+    }
+    
+    if (selectedFile.size < 1024) {
+      toast.error('Arquivo muito pequeno ou corrompido');
+      e.target.value = ''; // Limpar input
+      return;
+    }
+    
+    // Sanitizar nome do arquivo
+    const sanitizedName = selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    if (sanitizedName.length > 255) {
+      toast.error('Nome do arquivo muito longo');
+      e.target.value = ''; // Limpar input
+      return;
+    }
+    
+    setFile(selectedFile);
+    setExtractedItems([]);
   };
 
   const handleExtractContent = async () => {
@@ -56,10 +87,17 @@ export const BulkUploadDialog = ({
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('https://zpufcvesenbhtmizmjiz.supabase.co/functions/v1/extract-multiple-knowledge-items', {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Configuração do Supabase não encontrada');
+      }
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/extract-multiple-knowledge-items`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwdWZjdmVzZW5iaHRtaXptaml6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1MDY5ODMsImV4cCI6MjA2NTA4Mjk4M30.aD0E3fkuTjaYnHRdWpYjCk_hPK-sKhVT2VdIfXy3Hy8`,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
         },
         body: formData,
       });
