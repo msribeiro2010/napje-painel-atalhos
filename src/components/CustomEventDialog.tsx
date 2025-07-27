@@ -42,7 +42,11 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2 text-sm font-medium px-3 py-2 border-dashed border-2 border-primary hover:bg-primary/10">
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="flex items-center gap-2 text-sm font-medium px-3 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:from-green-100 hover:to-emerald-100 hover:border-green-300 transition-all duration-200 shadow-sm hover:shadow-md text-green-700 hover:text-green-800"
+        >
           <Plus className="h-4 w-4" />
           Adicionar Evento
         </Button>

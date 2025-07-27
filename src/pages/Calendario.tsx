@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Home, Umbrella, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users } from 'lucide-react';
+import { Calendar as CalendarIcon, Home, Sun, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users } from 'lucide-react';
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
@@ -16,11 +16,11 @@ import { useCustomEvents } from '@/hooks/useCustomEvents';
 import { ptBR } from 'date-fns/locale';
 
 const calendarLabels = {
-  presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-4 w-4 text-[#bfae7c]" /> },
-  ferias: { label: 'Férias', color: '#ffe6e6', icon: <Umbrella className="h-4 w-4 text-[#e6a1a1]" /> },
-  remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Laptop className="h-4 w-4 text-[#7cc3e6]" /> },
-  plantao: { label: 'Plantão', color: '#e6ffe6', icon: <Shield className="h-4 w-4 text-[#4caf50]" /> },
-  folga: { label: 'Folga', color: '#e0e0e0', icon: <CalendarIcon className="h-4 w-4 text-[#757575]" /> },
+  presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-5 w-5 text-[#8b7355] drop-shadow-sm" /> },
+  ferias: { label: 'Férias', color: '#ffe6e6', icon: <Sun className="h-5 w-5 text-[#d4756b] drop-shadow-sm" /> },
+  remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Laptop className="h-5 w-5 text-[#5ba3d4] drop-shadow-sm" /> },
+  plantao: { label: 'Plantão', color: '#e6ffe6', icon: <Shield className="h-5 w-5 text-[#2e7d32] drop-shadow-sm" /> },
+  folga: { label: 'Folga', color: '#e0e0e0', icon: <CalendarIcon className="h-5 w-5 text-[#424242] drop-shadow-sm" /> },
   none: { label: '', color: '#fff', icon: null },
 };
 
@@ -51,14 +51,14 @@ function CalendarComponent() {
 
   const handleDayClick = (date: Date) => {
     const key = format(date, 'yyyy-MM-dd');
-    const current = marks[key] || 'none';
+    const current = marks[key] || null;
     const dayEvents = eventsByDate[key] || [];
     const isWeekend = date.getDay() === 0 || date.getDay() === 6;
     const isFeriado = dayEvents.some(e => e.type === 'feriado');
 
     if (isWeekend || isFeriado) {
       // Só pode marcar Plantão ou remover
-      if (current === 'none') {
+      if (current === null) {
         saveMark(key, 'plantao');
       } else if (current === 'plantao') {
         removeMark(key);
@@ -68,14 +68,14 @@ function CalendarComponent() {
       }
     } else {
       // Ciclo normal incluindo Folga
-      const next: WorkStatus =
-        current === 'none' ? 'presencial' :
+      const next: WorkStatus | null =
+        current === null ? 'presencial' :
         current === 'presencial' ? 'ferias' :
         current === 'ferias' ? 'remoto' :
         current === 'remoto' ? 'folga' :
         current === 'folga' ? 'plantao' :
-        'none';
-      if (next === 'none') {
+        null;
+      if (next === null) {
         removeMark(key);
       } else {
         saveMark(key, next);
@@ -118,12 +118,26 @@ function CalendarComponent() {
         </div>
         <div className="flex gap-2">
           <CustomEventDialog onAdd={async (event) => { await addCustomEvent(event); await fetchCustomEvents(); }} />
-          <Button size="sm" variant="outline" className="px-3 py-2" onClick={() => setMonth(addDays(month, -30))}>Anterior</Button>
-          <Button size="sm" variant="outline" className="px-3 py-2" onClick={() => setMonth(addDays(month, 30))}>Próximo</Button>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="px-3 py-2 hover:bg-gray-50 transition-colors" 
+            onClick={() => setMonth(addDays(month, -30))}
+          >
+            Anterior
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="px-3 py-2 hover:bg-gray-50 transition-colors" 
+            onClick={() => setMonth(addDays(month, 30))}
+          >
+            Próximo
+          </Button>
           <Button 
             size="sm" 
             variant={showAISuggestions ? "default" : "outline"}
-            className="px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700" 
+            className="px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg" 
             onClick={() => setShowAISuggestions(!showAISuggestions)}
             title="Sugestões inteligentes de férias com IA"
           >
@@ -143,7 +157,7 @@ function CalendarComponent() {
         ))}
         {days.map((date) => {
           const key = format(date, 'yyyy-MM-dd');
-          const mark = marks[key] || 'none';
+          const mark = marks[key];
           const isCurrent = isToday(date);
           const dayEvents = eventsByDate[key] || [];
           const hasFeriado = dayEvents.some(e => e.type === 'feriado');
@@ -155,7 +169,7 @@ function CalendarComponent() {
           const customEventsOfDay = customEvents.filter(ev => ev.date === key);
 
           // Determinar cor de fundo - priorizar feriados
-          let backgroundColor = calendarLabels[mark].color;
+          let backgroundColor = mark ? calendarLabels[mark].color : calendarLabels.presencial.color;
           if (hasFeriado && hasAniversario) {
             backgroundColor = 'linear-gradient(45deg, #ffeb3b 50%, #ff9800 50%)'; // Gradiente para ambos
           } else if (hasFeriado) {
@@ -172,14 +186,14 @@ function CalendarComponent() {
           else if (hasAniversario) animationClass = 'animate-bounce-slow bg-orange-100';
 
           const eventTitles = dayEvents.map(e => e.title).join('\n');
-          const fullTitle = [calendarLabels[mark].label, eventTitles].filter(Boolean).join('\n');
+          const fullTitle = [mark ? calendarLabels[mark].label : '', eventTitles].filter(Boolean).join('\n');
 
           // Ícone do evento personalizado
           const customEventIcons = {
-            curso: <BookOpen className="h-3 w-3 text-blue-600" />,
-            webinario: <Video className="h-3 w-3 text-purple-600" />,
-            reuniao: <Users className="h-3 w-3 text-green-600" />,
-            outro: <Sparkles className="h-3 w-3 text-amber-600" />,
+            curso: <BookOpen className="h-4 w-4 text-blue-700 drop-shadow-sm" />,
+            webinario: <Video className="h-4 w-4 text-purple-700 drop-shadow-sm" />,
+            reuniao: <Users className="h-4 w-4 text-green-700 drop-shadow-sm" />,
+            outro: <Sparkles className="h-4 w-4 text-amber-700 drop-shadow-sm" />,
           };
 
           return (
@@ -195,12 +209,22 @@ function CalendarComponent() {
                     <span className="font-semibold text-[#7c6a3c] text-base">{date.getDate()}</span>
                     {/* Ícones de eventos */}
                     <div className="flex gap-1 absolute bottom-1 left-1">
-                      {hasFeriado && <Star className="h-3 w-3 text-amber-700" />}
-                      {hasAniversario && <Gift className="h-3 w-3 text-orange-700" />}
+                      {hasFeriado && (
+                        <div className="bg-white/90 rounded-full p-1 shadow-md">
+                          <Star className="h-4 w-4 text-amber-600 drop-shadow-sm" />
+                        </div>
+                      )}
+                      {hasAniversario && (
+                        <div className="bg-white/90 rounded-full p-1 shadow-md">
+                          <Gift className="h-4 w-4 text-orange-600 drop-shadow-sm" />
+                        </div>
+                      )}
                       {/* Ícones de eventos personalizados */}
                       {customEventsOfDay.map(ev => (
                         <span key={ev.id} title={ev.title} className="relative group">
-                          {customEventIcons[ev.type as keyof typeof customEventIcons]}
+                          <div className="bg-white/90 rounded-full p-1 shadow-md">
+                            {customEventIcons[ev.type as keyof typeof customEventIcons]}
+                          </div>
                           {/* Tooltip customizada */}
                           <span className="hidden group-hover:block absolute z-50 left-6 top-0 bg-white text-xs text-gray-700 rounded shadow px-2 py-1 min-w-[120px] border border-gray-200">
                             <span className="font-semibold">{ev.title}</span>
@@ -210,9 +234,13 @@ function CalendarComponent() {
                       ))}
                     </div>
                     {/* Ícone do tipo de trabalho */}
-                    <div className="absolute bottom-1 right-1">
-                      {calendarLabels[mark].icon}
-                    </div>
+                    {mark && (
+                      <div className="absolute bottom-1 right-1">
+                        <div className="bg-white/90 rounded-full p-1 shadow-md">
+                          {calendarLabels[mark].icon}
+                        </div>
+                      </div>
+                    )}
                   </button>
                 </TooltipTrigger>
                 {dayEvents.length > 0 && (
@@ -245,49 +273,53 @@ function CalendarComponent() {
         })}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-white/50 p-4 rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-white/70 dark:bg-gray-800/80 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
         <div className="space-y-2">
-          <h4 className="font-semibold text-[#7c6a3c] text-sm">Modalidade de Trabalho</h4>
+          <h4 className="font-semibold text-[#7c6a3c] dark:text-amber-300 text-sm">Modalidade de Trabalho</h4>
           <div className="flex flex-wrap gap-4">
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-4 h-4 rounded bg-[#f5e7c4] border border-[#e2d8b8]"></span>
-              <Home className="h-4 w-4 text-[#bfae7c]" />
+            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+              <span className="inline-block w-4 h-4 rounded bg-[#f5e7c4] dark:bg-amber-200 border border-[#e2d8b8] dark:border-amber-300 shadow-sm"></span>
+              <Home className="h-5 w-5 text-amber-700 dark:text-amber-400 drop-shadow-sm" />
               Presencial
             </span>
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-4 h-4 rounded bg-[#ffe6e6] border border-[#e2d8b8]"></span>
-              <Umbrella className="h-4 w-4 text-[#e6a1a1]" />
+            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+              <span className="inline-block w-4 h-4 rounded bg-[#ffe6e6] dark:bg-red-200 border border-[#e2d8b8] dark:border-red-300 shadow-sm"></span>
+              <Sun className="h-5 w-5 text-red-600 dark:text-red-400 drop-shadow-sm" />
               Férias
             </span>
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-4 h-4 rounded bg-[#e6f7ff] border border-[#e2d8b8]"></span>
-              <Laptop className="h-4 w-4 text-[#7cc3e6]" />
+            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+              <span className="inline-block w-4 h-4 rounded bg-[#e6f7ff] dark:bg-blue-200 border border-[#e2d8b8] dark:border-blue-300 shadow-sm"></span>
+              <Laptop className="h-5 w-5 text-blue-600 dark:text-blue-400 drop-shadow-sm" />
               Remoto
             </span>
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-4 h-4 rounded bg-[#e6ffe6] border border-[#e2d8b8]"></span>
-              <Shield className="h-4 w-4 text-[#4caf50]" />
+            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+              <span className="inline-block w-4 h-4 rounded bg-[#e6ffe6] dark:bg-green-200 border border-[#e2d8b8] dark:border-green-300 shadow-sm"></span>
+              <Shield className="h-5 w-5 text-green-600 dark:text-green-400 drop-shadow-sm" />
               Plantão
             </span>
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-4 h-4 rounded bg-[#e0e0e0] border border-[#e2d8b8]"></span>
-              <CalendarIcon className="h-4 w-4 text-[#757575]" />
+            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+              <span className="inline-block w-4 h-4 rounded bg-[#e0e0e0] dark:bg-gray-300 border border-[#e2d8b8] dark:border-gray-400 shadow-sm"></span>
+              <CalendarIcon className="h-5 w-5 text-gray-600 dark:text-gray-400 drop-shadow-sm" />
               Folga
             </span>
           </div>
         </div>
         
         <div className="space-y-2">
-          <h4 className="font-semibold text-[#7c6a3c] text-sm">Eventos</h4>
+          <h4 className="font-semibold text-[#7c6a3c] dark:text-amber-300 text-sm">Eventos</h4>
           <div className="flex flex-wrap gap-4">
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-4 h-4 rounded bg-[#ffeb3b] border border-[#e2d8b8]"></span>
-              <Star className="h-4 w-4 text-amber-700" />
+            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+              <span className="inline-block w-4 h-4 rounded bg-[#ffeb3b] dark:bg-yellow-300 border border-[#e2d8b8] dark:border-yellow-400 shadow-sm"></span>
+              <div className="bg-white/90 dark:bg-gray-700/90 rounded-full p-1 shadow-sm">
+                <Star className="h-4 w-4 text-amber-600 dark:text-yellow-400 drop-shadow-sm" />
+              </div>
               Feriados
             </span>
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-4 h-4 rounded bg-[#ff9800] border border-[#e2d8b8]"></span>
-              <Gift className="h-4 w-4 text-orange-700" />
+            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+              <span className="inline-block w-4 h-4 rounded bg-[#ff9800] dark:bg-orange-300 border border-[#e2d8b8] dark:border-orange-400 shadow-sm"></span>
+              <div className="bg-white/90 dark:bg-gray-700/90 rounded-full p-1 shadow-sm">
+                <Gift className="h-4 w-4 text-orange-600 dark:text-orange-400 drop-shadow-sm" />
+              </div>
               Aniversários
             </span>
           </div>
