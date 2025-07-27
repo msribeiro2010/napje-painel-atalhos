@@ -103,7 +103,8 @@ export const WeeklyNotificationsManager = () => {
             size="sm" 
             className={cn(
               "flex items-center gap-2 transition-all duration-200 hover:shadow-md",
-              settings.enabled && activeNotifications.length > 0 && "border-blue-200 bg-blue-50 hover:bg-blue-100"
+              "dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200",
+              settings.enabled && activeNotifications.length > 0 && "border-blue-200 bg-blue-50 hover:bg-blue-100 dark:border-blue-400 dark:bg-blue-900/30 dark:hover:bg-blue-800/40"
             )}
           >
             <div className="relative">
@@ -114,14 +115,14 @@ export const WeeklyNotificationsManager = () => {
             </div>
             Notificações Semanais
             {settings.enabled && activeNotifications.length > 0 && (
-              <Badge variant="secondary" className="ml-1 bg-blue-100 text-blue-700">
+              <Badge variant="secondary" className="ml-1 bg-blue-100 text-blue-700 dark:bg-blue-800/50 dark:text-blue-300 dark:border-blue-600">
                 {activeNotifications.length}
               </Badge>
             )}
           </Button>
         </DialogTrigger>
         
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
           <DialogHeader className="space-y-4 pb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -132,24 +133,24 @@ export const WeeklyNotificationsManager = () => {
                   <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                     Notificações Semanais
                   </DialogTitle>
-                  <DialogDescription className="text-base mt-1">
+                  <DialogDescription className="text-base mt-1 dark:text-gray-300">
                     Configure lembretes automáticos para procedimentos importantes
                   </DialogDescription>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 {settings.enabled ? (
-                  <Badge className="bg-green-100 text-green-700 border-green-200">
+                  <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-600">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Ativo
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600">
                     <XCircle className="h-3 w-3 mr-1" />
                     Inativo
                   </Badge>
                 )}
-                <Badge variant="outline" className="text-sm">
+                <Badge variant="outline" className="text-sm dark:border-gray-600 dark:text-gray-300">
                   {notifications.length} {notifications.length === 1 ? 'notificação' : 'notificações'}
                 </Badge>
               </div>
@@ -158,17 +159,17 @@ export const WeeklyNotificationsManager = () => {
           
           <div className="space-y-6">
             {/* Configurações Gerais */}
-            <Card className="border-2 border-dashed border-gray-200 hover:border-blue-300 transition-colors duration-200">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-lg">
+            <Card className="border-2 border-dashed border-gray-200 hover:border-blue-300 transition-colors duration-200 dark:border-gray-700 dark:hover:border-blue-500 dark:bg-gray-800">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-lg dark:from-blue-900/20 dark:to-purple-900/20">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <div className="p-1.5 bg-white rounded-md shadow-sm">
+                  <div className="p-1.5 bg-white rounded-md shadow-sm dark:bg-gray-700">
                     <Settings className="h-4 w-4 text-blue-600" />
                   </div>
                   Configurações Gerais
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6 p-6">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border dark:bg-gray-800 dark:border-gray-600">
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       "p-2 rounded-full transition-colors duration-200",
@@ -181,10 +182,10 @@ export const WeeklyNotificationsManager = () => {
                       )}
                     </div>
                     <div>
-                      <Label htmlFor="enable-notifications" className="text-base font-medium cursor-pointer">
+                      <Label htmlFor="enable-notifications" className="text-base font-medium cursor-pointer dark:text-gray-200">
                         Ativar Notificações Semanais
                       </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-muted-foreground mt-1 dark:text-gray-400">
                         Receba lembretes automáticos sobre procedimentos importantes
                       </p>
                     </div>
@@ -198,14 +199,14 @@ export const WeeklyNotificationsManager = () => {
                 </div>
                 
                 {settings.enabled && (
-                  <div className="space-y-4 pt-4 border-t border-gray-200">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
+                  <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3 dark:text-gray-300">
                       <Sparkles className="h-4 w-4 text-purple-500" />
                       Configurações de Agendamento
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-3">
-                        <Label className="flex items-center gap-2 text-sm font-medium">
+                        <Label className="flex items-center gap-2 text-sm font-medium dark:text-gray-200">
                           <Calendar className="h-4 w-4 text-blue-500" />
                           Dia da Semana
                         </Label>
@@ -213,7 +214,7 @@ export const WeeklyNotificationsManager = () => {
                           value={settings.dayofweek?.toString() || '1'}
                 onValueChange={(value) => saveSettings({ ...settings, dayofweek: parseInt(value) })}
                         >
-                          <SelectTrigger className="h-11 border-2 hover:border-blue-300 transition-colors">
+                          <SelectTrigger className="h-11 border-2 hover:border-blue-300 transition-colors dark:border-gray-600 dark:hover:border-blue-500 dark:bg-gray-800">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -230,7 +231,7 @@ export const WeeklyNotificationsManager = () => {
                       </div>
                       
                       <div className="space-y-3">
-                        <Label className="flex items-center gap-2 text-sm font-medium">
+                        <Label className="flex items-center gap-2 text-sm font-medium dark:text-gray-200">
                           <Clock className="h-4 w-4 text-green-500" />
                           Horário
                         </Label>
@@ -238,7 +239,7 @@ export const WeeklyNotificationsManager = () => {
                           value={settings.time} 
                           onValueChange={(value) => saveSettings({ ...settings, time: value })}
                         >
-                          <SelectTrigger className="h-11 border-2 hover:border-green-300 transition-colors">
+                          <SelectTrigger className="h-11 border-2 hover:border-green-300 transition-colors dark:border-gray-600 dark:hover:border-green-500 dark:bg-gray-800">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -255,8 +256,8 @@ export const WeeklyNotificationsManager = () => {
                       </div>
                     </div>
                     
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center gap-2 text-sm text-blue-700">
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
+                      <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
                         <Bell className="h-4 w-4" />
                         <span className="font-medium">
                           Próxima notificação: {dayOptions.find(d => d.value === (settings.dayofweek || 1))?.label || 'Dia não definido'} às {settings.time || '09:00'}
@@ -269,15 +270,15 @@ export const WeeklyNotificationsManager = () => {
             </Card>
 
             {/* Lista de Notificações */}
-            <Card className="border-2 border-dashed border-gray-200 hover:border-purple-300 transition-colors duration-200">
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-lg">
+            <Card className="border-2 border-dashed border-gray-200 hover:border-purple-300 transition-colors duration-200 dark:border-gray-700 dark:hover:border-purple-500 dark:bg-gray-800">
+              <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-lg dark:from-purple-900/20 dark:to-pink-900/20">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <div className="p-1.5 bg-white rounded-md shadow-sm">
+                    <div className="p-1.5 bg-white rounded-md shadow-sm dark:bg-gray-700">
                       <Bell className="h-4 w-4 text-purple-600" />
                     </div>
                     Suas Notificações
-                    <Badge variant="outline" className="ml-2 bg-white">
+                    <Badge variant="outline" className="ml-2 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300">
                       {notifications.length}
                     </Badge>
                   </CardTitle>
@@ -295,15 +296,15 @@ export const WeeklyNotificationsManager = () => {
                 {isLoading ? (
                   <div className="text-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Carregando notificações...</p>
+                    <p className="text-muted-foreground dark:text-gray-400">Carregando notificações...</p>
                   </div>
                 ) : notifications.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="p-4 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                    <div className="p-4 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center dark:from-purple-900/30 dark:to-pink-900/30">
                       <Bell className="h-10 w-10 text-purple-500" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">Nenhuma notificação ainda</h3>
-                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    <h3 className="text-lg font-semibold mb-2 dark:text-gray-200">Nenhuma notificação ainda</h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto dark:text-gray-400">
                       Crie sua primeira notificação semanal para receber lembretes automáticos sobre procedimentos importantes.
                     </p>
                     <Button 
@@ -327,8 +328,8 @@ export const WeeklyNotificationsManager = () => {
                         className={cn(
                           "group relative p-5 border-2 rounded-xl transition-all duration-200 hover:shadow-lg",
                           notification.ativo 
-                            ? "border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 hover:border-green-300" 
-                            : "border-gray-200 bg-gradient-to-br from-gray-50 to-slate-50 hover:border-gray-300"
+                            ? "border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 hover:border-green-300 dark:border-green-700 dark:from-green-900/20 dark:to-emerald-900/20 dark:hover:border-green-600" 
+                            : "border-gray-200 bg-gradient-to-br from-gray-50 to-slate-50 hover:border-gray-300 dark:border-gray-700 dark:from-gray-800 dark:to-slate-800 dark:hover:border-gray-600"
                         )}
                         style={{
                           animationDelay: `${index * 100}ms`

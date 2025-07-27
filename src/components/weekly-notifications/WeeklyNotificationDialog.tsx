@@ -61,13 +61,13 @@ export const WeeklyNotificationDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl dark:bg-gray-900 dark:border-gray-700">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
             {editingNotification ? 'Editar Notificação' : 'Nova Notificação Semanal'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="dark:text-gray-400">
             {editingNotification 
               ? 'Edite as informações da notificação semanal'
               : 'Crie uma nova notificação para lembretes semanais'
@@ -78,7 +78,7 @@ export const WeeklyNotificationDialog = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div>
-              <Label htmlFor="titulo">Título *</Label>
+              <Label htmlFor="titulo" className="text-sm font-medium dark:text-gray-300">Título *</Label>
               <Input
                 id="titulo"
                 value={formData.titulo}
@@ -89,7 +89,7 @@ export const WeeklyNotificationDialog = ({
             </div>
             
             <div>
-              <Label htmlFor="mensagem">Mensagem de Lembrete *</Label>
+              <Label htmlFor="mensagem" className="text-sm font-medium dark:text-gray-300">Mensagem de Lembrete *</Label>
               <Textarea
                 id="mensagem"
                 value={formData.mensagem}
@@ -99,23 +99,23 @@ export const WeeklyNotificationDialog = ({
                 className="resize-none"
                 required
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground dark:text-gray-400 mt-1">
                 Esta mensagem será exibida nas notificações semanais
               </p>
             </div>
             
             {/* Campos de Agendamento */}
-            <Card className="border-2 border-dashed border-green-200 bg-green-50/50">
+            <Card className="border-2 border-dashed border-green-200 bg-green-50/50 dark:border-green-700 dark:bg-green-900/20">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Calendar className="h-5 w-5 text-green-600" />
+                <CardTitle className="flex items-center gap-2 text-lg dark:text-gray-200">
+                  <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
                   Agendamento da Notificação
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="dayOfWeek">Dia da Semana *</Label>
+                    <Label htmlFor="dayOfWeek" className="text-sm font-medium dark:text-gray-300">Dia da Semana *</Label>
                     <Select 
                       value={formData.dayofweek?.toString() || '1'} 
                       onValueChange={(value) => setFormData(prev => ({ ...prev, dayofweek: parseInt(value) }))}
@@ -134,7 +134,7 @@ export const WeeklyNotificationDialog = ({
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="time">Horário *</Label>
+                    <Label htmlFor="time" className="text-sm font-medium dark:text-gray-300">Horário *</Label>
                     <Select 
                       value={formData.time || '09:00'} 
                       onValueChange={(value) => setFormData(prev => ({ ...prev, time: value }))}
@@ -152,25 +152,25 @@ export const WeeklyNotificationDialog = ({
                     </Select>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground dark:text-gray-400 mt-2">
                   A notificação será enviada no dia e horário especificados
                 </p>
               </CardContent>
             </Card>
           </div>
           
-          <Card className="border-2 border-dashed border-blue-200 bg-blue-50/50">
+          <Card className="border-2 border-dashed border-blue-200 bg-blue-50/50 dark:border-blue-700 dark:bg-blue-900/20">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Clock className="h-5 w-5 text-blue-600" />
+              <CardTitle className="flex items-center gap-2 text-lg dark:text-gray-200">
+                <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 Status da Notificação
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <Label className="text-sm font-medium">Notificação ativa</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <Label className="text-sm font-medium dark:text-gray-300">Notificação ativa</Label>
+                  <p className="text-xs text-muted-foreground dark:text-gray-400">
                     Quando ativa, esta notificação será incluída nos lembretes semanais
                   </p>
                 </div>

@@ -20,6 +20,7 @@ import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
 import { useWorkCalendar, WorkStatus } from '@/hooks/useWorkCalendar';
 import { format, addDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
 import { useUpcomingEventsModal } from '@/hooks/useUpcomingEventsModal';
@@ -73,7 +74,7 @@ const Dashboard = () => {
     queryFn: async () => {
       const { data: chamados, error } = await supabase
         .from('chamados')
-        .select('*')
+        .select('*, titulo')
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -195,9 +196,14 @@ const Dashboard = () => {
           {status !== 'none' && (
             <div className="rounded-lg shadow p-4 flex items-center gap-3" style={{ background: statusLabel[status].color }}>
               {statusLabel[status].icon}
-              <span className="font-semibold text-[#7c6a3c] text-base">
-                Amanhã: {statusLabel[status].label} {tomorrowDateStr}
-              </span>
+              <div className="flex flex-col">
+                <span className="font-bold text-[#7c6a3c] text-lg tracking-wide font-mono">
+                  Amanhã: {statusLabel[status].label}
+                </span>
+                <span className="text-[#8b7355] text-sm font-medium tracking-wider uppercase">
+                  {format(tomorrow, 'EEEE, dd/MM/yyyy', { locale: ptBR })}
+                </span>
+              </div>
             </div>
           )}
           {/* Avisos de eventos personalizados do próximo dia */}
