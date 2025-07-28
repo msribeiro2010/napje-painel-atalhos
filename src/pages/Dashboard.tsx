@@ -14,7 +14,6 @@ import { RecentChamados } from '@/components/dashboard/RecentChamados';
 import { DashboardFooter } from '@/components/dashboard/DashboardFooter';
 import { EventsPanels } from '@/components/EventsPanels';
 import { ChatAssistant } from '@/components/ChatAssistant';
-import { SmartEventNotifications } from '@/components/SmartEventNotifications';
 import { EventNotificationModal } from '@/components/EventNotificationModal';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
@@ -225,8 +224,6 @@ const Dashboard = () => {
       )}
       <div className="max-w-6xl mx-auto">
         <DashboardHeader isAdmin={isAdmin} />
-        
-        <SmartEventNotifications />
         
         <EventsPanels />
         
