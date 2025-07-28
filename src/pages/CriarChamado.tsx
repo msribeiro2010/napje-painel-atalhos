@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { FormData, DescriptionSection } from '@/types/form';
 import { FormSection } from '@/components/FormSection';
 import { GeneratedDescriptionSection } from '@/components/GeneratedDescriptionSection';
-import { UpcomingEventsAlert } from '@/components/UpcomingEventsAlert';
 import { EnhancedAIDialog } from '@/components/EnhancedAIDialog';
 import { TemplateSelector } from '@/components/TemplateSelector';
 import { SimilarityAnalysis } from '@/components/SimilarityAnalysis';
@@ -17,7 +16,6 @@ import { generateDescription, formatDescriptionSections, limparDescricaoProblema
 import { useUsuarios } from '@/hooks/useUsuarios';
 import { useChamados } from '@/hooks/useChamados';
 import { PageHeader } from '@/components/PageHeader';
-import { Badge } from '@/components/ui/badge';
 
 const CriarChamado = () => {
   const navigate = useNavigate();
@@ -53,7 +51,6 @@ const CriarChamado = () => {
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isDirty, setIsDirty] = useState(false);
-  const [formProgress, setFormProgress] = useState(0);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [showAIHistory, setShowAIHistory] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
@@ -136,33 +133,7 @@ const CriarChamado = () => {
     return Object.keys(errors).length === 0;
   }, [formData.resumo]);
 
-  // Calcular progresso do formulário
-  const calculateProgress = useCallback((data: FormData) => {
-    const requiredFields = ['resumo', 'grau', 'orgaoJulgador', 'notas'];
-    const optionalFields = ['processos', 'chamadoOrigem', 'nomeUsuario', 'cpfUsuario', 'perfilUsuario'];
-    
-    let filledRequired = 0;
-    let filledOptional = 0;
-    
-    requiredFields.forEach(field => {
-      if (field === 'resumo' && data.resumo === 'Outro (personalizado)') {
-        if (data.resumoCustom && data.resumoCustom.trim()) filledRequired++;
-      } else if (data[field as keyof FormData] && String(data[field as keyof FormData]).trim()) {
-        filledRequired++;
-      }
-    });
-    
-    optionalFields.forEach(field => {
-      if (data[field as keyof FormData] && String(data[field as keyof FormData]).trim()) {
-        filledOptional++;
-      }
-    });
-    
-    const requiredProgress = (filledRequired / requiredFields.length) * 70;
-    const optionalProgress = (filledOptional / optionalFields.length) * 30;
-    
-    return Math.round(requiredProgress + optionalProgress);
-  }, []);
+
 
   // Salvamento automático
   const autoSave = useCallback(async (data: FormData) => {
@@ -238,10 +209,6 @@ const CriarChamado = () => {
      
      // Validação em tempo real
      validateField(field, value);
-     
-     // Atualizar progresso
-     const progress = calculateProgress(newFormData);
-     setFormProgress(progress);
      
      // Configurar salvamento automático
      if (autoSaveTimeoutRef.current) {
@@ -450,63 +417,6 @@ const CriarChamado = () => {
           title={isEditing ? 'Editar Chamado' : 'Criar Chamado'}
           subtitle="Gerador de Issues JIRA"
         />
-
-        {/* Barra de Progresso e Status */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm border p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">Progresso do Formulário</span>
-              <Badge variant={formProgress === 100 ? "default" : "secondary"}>
-                {formProgress}%
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              {isAutoSaving && (
-                <div className="flex items-center gap-1">
-                  <Save className="h-4 w-4 animate-spin" />
-                  <span>Salvando...</span>
-                </div>
-              )}
-              {lastSaved && !isAutoSaving && (
-                <div className="flex items-center gap-1">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Salvo às {lastSaved.toLocaleTimeString()}</span>
-                </div>
-              )}
-              {isDirty && !isAutoSaving && (
-                <div className="flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4 text-orange-500" />
-                  <span>Alterações não salvas</span>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all duration-300 ${
-                formProgress === 100 ? 'bg-green-500' : 
-                formProgress >= 70 ? 'bg-blue-500' : 
-                formProgress >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}
-              style={{ width: `${formProgress}%` }}
-            />
-          </div>
-          {Object.keys(validationErrors).length > 0 && (
-            <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm">
-              <div className="flex items-center gap-1 text-red-700 font-medium mb-1">
-                <AlertCircle className="h-4 w-4" />
-                Campos com erro:
-              </div>
-              <ul className="text-red-600 space-y-1">
-                {Object.entries(validationErrors).map(([field, error]) => (
-                  <li key={field}>• {error}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <UpcomingEventsAlert />
 
         <div className="relative max-w-4xl mx-auto">
           {/* Formulário */}
