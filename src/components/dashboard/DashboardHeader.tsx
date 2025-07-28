@@ -6,6 +6,8 @@ import { Clock } from '@/components/ui/clock';
 import { DateDisplay } from '@/components/ui/date-display';
 import { EventNotificationBadge } from '@/components/EventNotificationBadge';
 import { WeeklyNotificationsManager } from '@/components/weekly-notifications/WeeklyNotificationsManager';
+import { PastEventsDialog } from '@/components/PastEventsDialog';
+import { EventNotificationSettings } from '@/components/EventNotificationSettings';
 
 interface DashboardHeaderProps {
   isAdmin?: boolean;
@@ -41,6 +43,8 @@ export const DashboardHeader = ({ isAdmin }: DashboardHeaderProps) => {
         {/* Grupo de notificações e eventos */}
         <div className="flex items-center gap-2">
           <EventNotificationBadge />
+          <PastEventsDialog />
+          <EventNotificationSettings />
           <WeeklyNotificationsManager />
         </div>
         
