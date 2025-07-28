@@ -445,24 +445,30 @@ export type Database = {
         Row: {
           ativo: boolean | null
           created_at: string
+          dayofweek: number
           id: string
           mensagem: string
+          time: string
           titulo: string
           updated_at: string
         }
         Insert: {
           ativo?: boolean | null
           created_at?: string
+          dayofweek?: number
           id?: string
           mensagem: string
+          time?: string
           titulo: string
           updated_at?: string
         }
         Update: {
           ativo?: boolean | null
           created_at?: string
+          dayofweek?: number
           id?: string
           mensagem?: string
+          time?: string
           titulo?: string
           updated_at?: string
         }
