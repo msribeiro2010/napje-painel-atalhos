@@ -36,12 +36,13 @@ export const useCustomEvents = (month: Date) => {
         .order('date', { ascending: true });
       if (error) throw error;
       setCustomEvents(data || []);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao buscar eventos personalizados');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar eventos personalizados';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [user, month, loading]);
+  }, [user, month.getFullYear(), month.getMonth(), loading]);
 
   const addCustomEvent = useCallback(async (event: Omit<CustomEvent, 'id' | 'user_id'>) => {
     if (!user || loading) return;
@@ -57,8 +58,9 @@ export const useCustomEvents = (month: Date) => {
       
       // Atualizar lista local ao invés de fazer nova requisição
       setCustomEvents(prev => [...prev, data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-    } catch (err: any) {
-      setError(err.message || 'Erro ao adicionar evento');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao adicionar evento';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -80,8 +82,9 @@ export const useCustomEvents = (month: Date) => {
       
       // Atualizar lista local ao invés de fazer nova requisição
       setCustomEvents(prev => prev.map(e => e.id === id ? data : e));
-    } catch (err: any) {
-      setError(err.message || 'Erro ao atualizar evento');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar evento';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -100,19 +103,23 @@ export const useCustomEvents = (month: Date) => {
       
       // Atualizar lista local ao invés de fazer nova requisição
       setCustomEvents(prev => prev.filter(e => e.id !== id));
-    } catch (err: any) {
-      setError(err.message || 'Erro ao remover evento');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao remover evento';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   }, [loading]);
 
   // Buscar eventos apenas quando user ou month mudarem
+  const currentYear = month.getFullYear();
+  const currentMonth = month.getMonth();
+  
   useEffect(() => {
     if (user) {
       fetchCustomEvents();
     }
-  }, [user, month.getFullYear(), month.getMonth()]);
+  }, [user, currentYear, currentMonth, fetchCustomEvents]);
 
   return { customEvents, fetchCustomEvents, addCustomEvent, updateCustomEvent, removeCustomEvent, loading, error };
 };

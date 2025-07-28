@@ -32,16 +32,17 @@ export const useWorkCalendar = (month: Date) => {
         .lte('date', monthEnd.toISOString().slice(0, 10));
       if (error) throw error;
       const marksObj: { [date: string]: WorkStatus } = {};
-      (data || []).forEach((item: any) => {
+      (data || []).forEach((item: WorkCalendarMark) => {
         marksObj[item.date] = item.status;
       });
       setMarks(marksObj);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao buscar marcações');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar marcações';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [user, month, loading]);
+  }, [user, month.getFullYear(), month.getMonth(), loading]);
 
   const saveMark = useCallback(async (date: string, status: WorkStatus) => {
     if (!user || loading) return;
@@ -54,8 +55,9 @@ export const useWorkCalendar = (month: Date) => {
         .upsert({ user_id: user.id, date, status }, { onConflict: ['user_id', 'date'] });
       if (error) throw error;
       setMarks((prev) => ({ ...prev, [date]: status }));
-    } catch (err: any) {
-      setError(err.message || 'Erro ao salvar marcação');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao salvar marcação';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -77,19 +79,23 @@ export const useWorkCalendar = (month: Date) => {
         delete newMarks[date];
         return newMarks;
       });
-    } catch (err: any) {
-      setError(err.message || 'Erro ao remover marcação');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao remover marcação';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   }, [user, loading]);
 
   // Buscar marcações apenas quando user ou month mudarem
+  const currentYear = month.getFullYear();
+  const currentMonth = month.getMonth();
+  
   useEffect(() => {
     if (user) {
       fetchMarks();
     }
-  }, [user, month.getFullYear(), month.getMonth()]);
+  }, [user, currentYear, currentMonth, fetchMarks]);
 
   return { marks, loading, error, fetchMarks, saveMark, removeMark };
 }; 

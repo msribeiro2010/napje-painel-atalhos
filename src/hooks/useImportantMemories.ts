@@ -60,8 +60,9 @@ export const useImportantMemories = () => {
       });
 
       setMemories(result);
-    } catch (error: any) {
-      console.error('Erro ao buscar memórias:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao buscar memórias';
+      console.error('Erro ao buscar memórias:', errorMessage);
       toast.error('Erro ao carregar memórias importantes. Verifique sua conexão.');
     } finally {
       setLoading(false);
@@ -92,8 +93,9 @@ export const useImportantMemories = () => {
       setMemories(prev => [result, ...prev]);
       toast.success('Memória importante salva com sucesso!');
       return true;
-    } catch (error: any) {
-      console.error('Erro ao criar memória:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao criar memória';
+      console.error('Erro ao criar memória:', errorMessage);
       toast.error('Erro ao salvar memória importante. Tente novamente.');
       return false;
     }
@@ -124,8 +126,9 @@ export const useImportantMemories = () => {
       ));
       toast.success('Memória importante atualizada com sucesso!');
       return true;
-    } catch (error: any) {
-      console.error('Erro ao atualizar memória:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao atualizar memória';
+      console.error('Erro ao atualizar memória:', errorMessage);
       toast.error('Erro ao atualizar memória importante. Tente novamente.');
       return false;
     }
@@ -151,8 +154,9 @@ export const useImportantMemories = () => {
       setMemories(prev => prev.filter(memory => memory.id !== id));
       toast.success('Memória importante deletada com sucesso!');
       return true;
-    } catch (error: any) {
-      console.error('Erro ao deletar memória:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao deletar memória';
+      console.error('Erro ao deletar memória:', errorMessage);
       toast.error('Erro ao deletar memória importante. Tente novamente.');
       return false;
     }
