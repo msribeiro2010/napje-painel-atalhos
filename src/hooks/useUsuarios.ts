@@ -83,5 +83,23 @@ export const useUsuarios = () => {
     }
   };
 
-  return { salvarUsuario, buscarUsuarios, loading };
+  const buscarUsuarioPorCPF = async (cpf: string): Promise<Usuario | null> => {
+    if (!cpf) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('id, cpf, nome_completo, perfil')
+        .eq('cpf', cpf)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.error('Erro ao buscar usuário por CPF:', err);
+      return null;
+    }
+  };
+
+  return { salvarUsuario, buscarUsuarios, buscarUsuarioPorCPF, loading };
 };

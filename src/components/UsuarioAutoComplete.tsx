@@ -21,7 +21,7 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [sugestoesPerfil, setSugestoesPerfil] = useState([]);
   const [dadosEncontrados, setDadosEncontrados] = useState(false);
-  const { buscarUsuarios } = useUsuarios();
+  const { buscarUsuarios, buscarUsuarioPorCPF } = useUsuarios();
   const { buscarSugestoesPerfil, loading: sugestoesLoading } = useSugestoes();
   const { buscarDadosUsuarioPorCPF } = useChamados();
 
@@ -65,8 +65,22 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
     const cpfFormatado = formatarCPF(valor);
     onInputChange('cpfUsuario', cpfFormatado);
     
-    // Se o CPF for válido, buscar dados de chamados anteriores
+    // Se o CPF for válido, buscar dados primeiro na tabela usuarios
     if (validarCPF(cpfFormatado)) {
+      // Primeiro: buscar na tabela usuarios
+      const usuario = await buscarUsuarioPorCPF(cpfFormatado);
+      if (usuario) {
+        onInputChange('nomeUsuario', usuario.nome_completo || '');
+        onInputChange('perfilUsuario', usuario.perfil || '');
+        setDadosEncontrados(true);
+        
+        // Limpar sugestões de usuários já que encontramos dados
+        setUsuarios([]);
+        setShowSuggestions(false);
+        return;
+      }
+      
+      // Se não encontrou na tabela usuarios, buscar dados de chamados anteriores
       const dadosUsuario = await buscarDadosUsuarioPorCPF(cpfFormatado);
       if (dadosUsuario) {
         onInputChange('nomeUsuario', dadosUsuario.nome_usuario_afetado || '');
@@ -124,7 +138,7 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
               <p className="text-xs text-red-500 mt-1">CPF inválido</p>
             )}
             {dadosEncontrados && (
-              <p className="text-xs text-green-600 mt-1">Dados encontrados em chamados anteriores</p>
+              <p className="text-xs text-green-600 mt-1">Dados encontrados no banco de dados</p>
             )}
           </div>
         </div>
