@@ -43,13 +43,29 @@ export const useTextEnhancement = () => {
 
       if (error) {
         console.error('Error calling enhance-text-with-ai function:', error);
-        toast.error('Erro ao conectar com o serviço de IA');
+        
+        // Verificar se é erro de autenticação
+        if (error.message?.includes('Invalid API key') || error.message?.includes('Missing Supabase')) {
+          toast.error('❌ Erro de configuração do Supabase. Verifique as variáveis de ambiente.');
+        } else if (error.message?.includes('fetch')) {
+          toast.error('❌ Erro de conexão. Verifique sua internet e tente novamente.');
+        } else {
+          toast.error('❌ Erro ao conectar com o serviço de IA');
+        }
         return null;
       }
 
-      if (data.error) {
+      if (data?.error) {
         console.error('Error from enhance-text-with-ai function:', data.error);
-        toast.error(data.error);
+        
+        // Verificar se é erro da OpenAI
+        if (data.error.includes('OPENAI_API_KEY')) {
+          toast.error('🔑 Chave da OpenAI não configurada no Supabase. Configure nas Edge Functions.');
+        } else if (data.error.includes('OpenAI API')) {
+          toast.error('🤖 Erro da API da OpenAI. Verifique os créditos da conta.');
+        } else {
+          toast.error(`❌ ${data.error}`);
+        }
         return null;
       }
 
