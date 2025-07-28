@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, CheckCircle, AlertCircle, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormData, DescriptionSection } from '@/types/form';
 import { FormSection } from '@/components/FormSection';
 import { GeneratedDescriptionSection } from '@/components/GeneratedDescriptionSection';
-import { UpcomingEventsAlert } from '@/components/UpcomingEventsAlert';
+
 import { EnhancedAIDialog } from '@/components/EnhancedAIDialog';
 import { TemplateSelector } from '@/components/TemplateSelector';
 import { SimilarityAnalysis } from '@/components/SimilarityAnalysis';
@@ -17,7 +17,6 @@ import { generateDescription, formatDescriptionSections, limparDescricaoProblema
 import { useUsuarios } from '@/hooks/useUsuarios';
 import { useChamados } from '@/hooks/useChamados';
 import { PageHeader } from '@/components/PageHeader';
-import { Badge } from '@/components/ui/badge';
 
 const CriarChamado = () => {
   const navigate = useNavigate();
@@ -50,14 +49,9 @@ const CriarChamado = () => {
   
   // Estados para melhorias
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [isAutoSaving, setIsAutoSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [isDirty, setIsDirty] = useState(false);
-  const [formProgress, setFormProgress] = useState(0);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [showAIHistory, setShowAIHistory] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Carregar dados dos parâmetros da URL (para funcionalidade de template)
   useEffect(() => {
@@ -136,57 +130,7 @@ const CriarChamado = () => {
     return Object.keys(errors).length === 0;
   }, [formData.resumo]);
 
-  // Calcular progresso do formulário
-  const calculateProgress = useCallback((data: FormData) => {
-    const requiredFields = ['resumo', 'grau', 'orgaoJulgador', 'notas'];
-    const optionalFields = ['processos', 'chamadoOrigem', 'nomeUsuario', 'cpfUsuario', 'perfilUsuario'];
-    
-    let filledRequired = 0;
-    let filledOptional = 0;
-    
-    requiredFields.forEach(field => {
-      if (field === 'resumo' && data.resumo === 'Outro (personalizado)') {
-        if (data.resumoCustom && data.resumoCustom.trim()) filledRequired++;
-      } else if (data[field as keyof FormData] && String(data[field as keyof FormData]).trim()) {
-        filledRequired++;
-      }
-    });
-    
-    optionalFields.forEach(field => {
-      if (data[field as keyof FormData] && String(data[field as keyof FormData]).trim()) {
-        filledOptional++;
-      }
-    });
-    
-    const requiredProgress = (filledRequired / requiredFields.length) * 70;
-    const optionalProgress = (filledOptional / optionalFields.length) * 30;
-    
-    return Math.round(requiredProgress + optionalProgress);
-  }, []);
 
-  // Salvamento automático
-  const autoSave = useCallback(async (data: FormData) => {
-    if (!isDirty) return;
-    
-    setIsAutoSaving(true);
-    try {
-      // Salvar usuário se os dados estiverem preenchidos
-      if (data.cpfUsuario && data.nomeUsuario) {
-        await salvarUsuario(data.cpfUsuario, data.nomeUsuario, data.perfilUsuario);
-      }
-      
-      // Salvar rascunho do chamado
-      await salvarChamado({ ...data, isDraft: true });
-      
-      setLastSaved(new Date());
-      setIsDirty(false);
-      toast.success('Rascunho salvo automaticamente', { duration: 2000 });
-    } catch (error) {
-      console.error('Erro no salvamento automático:', error);
-    } finally {
-      setIsAutoSaving(false);
-    }
-  }, [isDirty, salvarUsuario, salvarChamado]);
 
   const handleSelectTemplate = useCallback((template: any) => {
     // Aplicar dados do template ao formulário
@@ -197,7 +141,6 @@ const CriarChamado = () => {
     
     setFormData(newFormData);
     setShowTemplateSelector(false);
-    setIsDirty(true);
     
     toast.success(`Template "${template.nome}" aplicado com sucesso!`);
   }, [formData]);
@@ -221,7 +164,6 @@ const CriarChamado = () => {
     setAiEnhancedDescription(item.description);
     setAiSuggestedSolution(item.solution);
     setShowAIHistory(false);
-    setIsDirty(true);
     
     toast.success('Dados do histórico aplicados ao formulário!');
   }, [formData]);
@@ -234,83 +176,93 @@ const CriarChamado = () => {
      
      setFormData(newFormData);
      setIsGenerated(false);
-     setIsDirty(true);
      
      // Validação em tempo real
      validateField(field, value);
-     
-     // Atualizar progresso
-     const progress = calculateProgress(newFormData);
-     setFormProgress(progress);
-     
-     // Configurar salvamento automático
-     if (autoSaveTimeoutRef.current) {
-       clearTimeout(autoSaveTimeoutRef.current);
-     }
-     
-     autoSaveTimeoutRef.current = setTimeout(() => {
-       autoSave(newFormData);
-     }, 3000); // Salvar após 3 segundos de inatividade
    };
 
-   // Cleanup do timeout
-   useEffect(() => {
-     return () => {
-       if (autoSaveTimeoutRef.current) {
-         clearTimeout(autoSaveTimeoutRef.current);
-       }
-     };
-   }, []);
-
   const handleGenerateDescription = async () => {
-    if (!validateForm(formData)) return;
-
-    // Salvar usuário se os dados estiverem preenchidos
-    if (formData.cpfUsuario && formData.nomeUsuario) {
-      await salvarUsuario(formData.cpfUsuario, formData.nomeUsuario, formData.perfilUsuario);
+    if (!validateForm(formData)) {
+      toast.error('⚠️ Complete os campos obrigatórios antes de gerar a descrição inteligente');
+      return;
     }
 
-    // Salvar chamado na base de dados
-    await salvarChamado(formData);
+    // Toast de início do processo
+    const loadingToast = toast.loading('🔄 Preparando geração inteligente...');
 
-    // Abrir dialog da IA
-    setShowAIDialog(true);
+    try {
+      // Salvar usuário se os dados estiverem preenchidos
+      if (formData.cpfUsuario && formData.nomeUsuario) {
+        await salvarUsuario(formData.cpfUsuario, formData.nomeUsuario, formData.perfilUsuario);
+      }
+
+      // Salvar chamado na base de dados
+      await salvarChamado(formData);
+
+      // Fechar loading toast
+      toast.dismiss(loadingToast);
+      
+      // Toast de sucesso e abrir dialog
+      toast.success('✅ Dados salvos! Iniciando geração inteligente...', {
+        description: 'Escolha o modelo de IA mais adequado para seu problema'
+      });
+
+      // Abrir dialog da IA
+      setShowAIDialog(true);
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error('❌ Erro ao salvar dados. Tente novamente.');
+      console.error('Erro ao preparar geração:', error);
+    }
   };
 
-  const handleProceedToGenerate = (enhancedDescription: string, suggestedSolution: string) => {
-    setAiEnhancedDescription(enhancedDescription);
-    setAiSuggestedSolution(suggestedSolution);
+  const handleProceedToGenerate = (enhancedDescription?: string, suggestedSolution?: string) => {
+    let finalDescription = '';
+    let finalSolution = '';
     
-    // Adicionar ao histórico de IA
-    addToHistory({
-      model: 'analytical', // Pode ser dinâmico baseado na configuração
-      prompt: `Resumo: ${formData.resumo}\nProblema: ${formData.notas}`,
-      description: enhancedDescription,
-      solution: suggestedSolution,
-      isFavorite: false,
-      formData: {
-        resumo: formData.resumo,
-        grau: formData.grau,
-        orgaoJulgador: formData.orgaoJulgador,
-        notas: formData.notas
-      },
-      settings: {
-        tone: 'profissional',
-        priority: 'alta',
-        customInstructions: ''
-      }
-    });
+    if (enhancedDescription && suggestedSolution) {
+      // Usar as descrições melhoradas pela IA
+      setAiEnhancedDescription(enhancedDescription);
+      setAiSuggestedSolution(suggestedSolution);
+      finalDescription = enhancedDescription;
+      finalSolution = suggestedSolution;
+      
+      // Adicionar ao histórico de IA
+      addToHistory({
+        model: 'analytical',
+        prompt: `Resumo: ${formData.resumo}\nProblema: ${formData.notas}`,
+        description: enhancedDescription,
+        solution: suggestedSolution,
+        isFavorite: false,
+        formData: {
+          resumo: formData.resumo,
+          grau: formData.grau,
+          orgaoJulgador: formData.orgaoJulgador,
+          notas: formData.notas
+        },
+        settings: {
+          tone: 'profissional',
+          priority: 'alta',
+          customInstructions: ''
+        }
+      });
+      
+      toast.success('🎉 Descrição inteligente ASSYST gerada com sucesso!', {
+        description: 'Sua descrição foi melhorada pela IA com linguagem técnica otimizada'
+      });
+    } else {
+      // Usar descrição padrão
+      finalDescription = formData.notas;
+      toast.success('📝 Descrição padrão gerada com sucesso!');
+    }
     
-    // Usar apenas a descrição melhorada pela IA, sem adicionar informações redundantes
-    const descricaoMelhorada = enhancedDescription;
-    
-    // Atualizar o formData com a descrição melhorada para que apareça nas seções
+    // Atualizar o formData com a descrição final
     setFormData(prev => ({
       ...prev,
-      notas: descricaoMelhorada
+      notas: finalDescription
     }));
     
-    // Gerar descrição customizada sem usar a função limparDescricaoProblema
+    // Gerar descrição final para ASSYST
     const resumoFinal = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
     
     let description = `*Resumo\n\n${resumoFinal}`;
@@ -319,10 +271,15 @@ const CriarChamado = () => {
     }
     description += `\n\n`;
     
-    // Usar a descrição melhorada diretamente sem limpeza
-    description += `Descrição do Problema\n\n${descricaoMelhorada}\n\n`;
+    // Usar a descrição final (melhorada ou padrão)
+    description += `Descrição do Problema\n\n${finalDescription}\n\n`;
     
-    // Adicionar outras seções conforme necessário
+    // Adicionar seção de solução se houver sugestão da IA
+    if (finalSolution) {
+      description += `Sugestão de Solução\n\n${finalSolution}\n\n`;
+    }
+    
+    // Adicionar outras seções
     if (formData.processos) {
       description += `Número dos processos\n\n${formData.processos}\n\n`;
     }
@@ -346,11 +303,8 @@ const CriarChamado = () => {
       description += `${dadosUsuario.join(' / ')}\n\n`;
     }
     
-
-    
     setGeneratedDescription(description);
     setIsGenerated(true);
-    toast.success('Descrição gerada com sucesso!');
   };
 
   const resetForm = () => {
@@ -448,65 +402,10 @@ const CriarChamado = () => {
       <div className="max-w-6xl mx-auto">
         <PageHeader 
           title={isEditing ? 'Editar Chamado' : 'Criar Chamado'}
-          subtitle="Gerador de Issues JIRA"
+          subtitle="Gerador Inteligente de Descrições ASSYST"
         />
 
-        {/* Barra de Progresso e Status */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm border p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">Progresso do Formulário</span>
-              <Badge variant={formProgress === 100 ? "default" : "secondary"}>
-                {formProgress}%
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              {isAutoSaving && (
-                <div className="flex items-center gap-1">
-                  <Save className="h-4 w-4 animate-spin" />
-                  <span>Salvando...</span>
-                </div>
-              )}
-              {lastSaved && !isAutoSaving && (
-                <div className="flex items-center gap-1">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Salvo às {lastSaved.toLocaleTimeString()}</span>
-                </div>
-              )}
-              {isDirty && !isAutoSaving && (
-                <div className="flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4 text-orange-500" />
-                  <span>Alterações não salvas</span>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all duration-300 ${
-                formProgress === 100 ? 'bg-green-500' : 
-                formProgress >= 70 ? 'bg-blue-500' : 
-                formProgress >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}
-              style={{ width: `${formProgress}%` }}
-            />
-          </div>
-          {Object.keys(validationErrors).length > 0 && (
-            <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm">
-              <div className="flex items-center gap-1 text-red-700 font-medium mb-1">
-                <AlertCircle className="h-4 w-4" />
-                Campos com erro:
-              </div>
-              <ul className="text-red-600 space-y-1">
-                {Object.entries(validationErrors).map(([field, error]) => (
-                  <li key={field}>• {error}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
 
-        <UpcomingEventsAlert />
 
         <div className="relative max-w-4xl mx-auto">
           {/* Formulário */}
@@ -567,14 +466,7 @@ const CriarChamado = () => {
           open={showAIDialog}
           onOpenChange={setShowAIDialog}
           formData={formData}
-          onProceedToGenerate={() => {
-             setShowAIDialog(false);
-             // Gerar descrição usando os dados atuais do formulário
-             const description = generateDescription(formData);
-             setGeneratedDescription(description);
-             setIsGenerated(true);
-             toast.success('Descrição gerada com sucesso!');
-           }}
+          onProceedToGenerate={handleProceedToGenerate}
         />
 
         {/* Template Selector */}

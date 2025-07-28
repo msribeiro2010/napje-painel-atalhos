@@ -16,7 +16,7 @@ interface EnhancedAIDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   formData: FormData;
-  onProceedToGenerate: () => void;
+  onProceedToGenerate: (enhancedDescription?: string, suggestedSolution?: string) => void;
 }
 
 interface AIModel {
@@ -96,52 +96,95 @@ export const EnhancedAIDialog: React.FC<EnhancedAIDialogProps> = ({
 
   const generateWithModel = async (modelId: string) => {
     if (!formData.notas) {
-      toast.error('Preencha a descrição do problema primeiro');
+      toast.error('⚠️ Preencha a descrição do problema primeiro para gerar conteúdo inteligente');
       return;
     }
 
     setIsGenerating(prev => ({ ...prev, [modelId]: true }));
     
+    // Toast de início da geração
+    const loadingToast = toast.loading(`🤖 Gerando descrição inteligente com ${aiModels.find(m => m.id === modelId)?.name}...`);
+    
     try {
       const model = aiModels.find(m => m.id === modelId);
+      
+      // Prompt melhorado e mais específico
       const contextualPrompt = `
-        Gere APENAS a descrição do problema para um chamado de suporte técnico do NAPJe.
+        Você é um especialista em suporte técnico do sistema NAPJe (Núcleo de Apoio ao PJe).
         
-        Modelo: ${model?.name}
-        Tom: ${selectedTone}
-        Prioridade: ${selectedPriority}
-        Instruções adicionais: ${customInstructions}
+        CONTEXTO DO SISTEMA:
+        - Resumo: ${formData.resumo}
+        - Grau: ${formData.grau}
+        - Órgão Julgador: ${formData.orgaoJulgador}
         
-        Problema relatado pelo usuário: ${formData.notas}
+        CONFIGURAÇÕES DE GERAÇÃO:
+        - Modelo: ${model?.name}
+        - Tom: ${selectedTone}
+        - Prioridade: ${selectedPriority}
+        - Instruções específicas: ${customInstructions}
         
-        IMPORTANTE: 
-        - Gere SOMENTE a descrição do problema
-        - NÃO inclua dados do usuário (nome, CPF, perfil)
-        - NÃO inclua dados do processo (grau, órgão julgador, número do processo)
-        - NÃO inclua possíveis causas ou soluções
-        - NÃO inclua chamado de origem
-        - Foque apenas em descrever o problema de forma clara e técnica
+        PROBLEMA RELATADO:
+        ${formData.notas}
+        
+        TAREFA:
+        Gere uma descrição técnica, clara e profissional do problema para um chamado ASSYST.
+        
+        DIRETRIZES OBRIGATÓRIAS:
+        ✅ Use linguagem técnica apropriada para TI
+        ✅ Seja específico sobre sintomas e comportamentos
+        ✅ Inclua passos para reproduzir o problema se possível
+        ✅ Mantenha foco no problema técnico
+        ✅ Use formatação clara e organizada
+        
+        ❌ NÃO inclua dados pessoais (nomes, CPFs)
+        ❌ NÃO inclua números de processo
+        ❌ NÃO misture problema com solução
+        ❌ NÃO use linguagem informal
+      `;
+
+      const solutionPrompt = `
+        Com base no problema: "${formData.notas}"
+        
+        Gere uma sugestão de solução técnica concisa e prática para o suporte ASSYST.
+        
+        Incluir:
+        - Passos de verificação
+        - Possíveis causas
+        - Ações recomendadas
+        - Escalações se necessário
       `;
 
       const [enhancedDescription, suggestedSolution] = await Promise.all([
         enhanceText(contextualPrompt, 'descricao'),
-        enhanceText(contextualPrompt, 'sugestao_solucao')
+        enhanceText(solutionPrompt, 'sugestao_solucao')
       ]);
 
-      setResults(prev => ({
-        ...prev,
-        [modelId]: {
-          description: enhancedDescription,
-          solution: suggestedSolution
-        }
-      }));
-      
-      // Mudar para a aba de resultados após gerar
-      setActiveTab('results');
+      if (enhancedDescription && suggestedSolution) {
+        setResults(prev => ({
+          ...prev,
+          [modelId]: {
+            description: enhancedDescription,
+            solution: suggestedSolution
+          }
+        }));
+        
+        // Mudar para a aba de resultados após gerar
+        setActiveTab('results');
+        
+        // Toast de sucesso
+        toast.dismiss(loadingToast);
+        toast.success(`✅ Descrição gerada com sucesso usando ${model?.name}!`, {
+          description: "Verifique o resultado na aba 'Resultados'"
+        });
+      } else {
+        toast.dismiss(loadingToast);
+        toast.error('❌ Falha na geração. Verifique sua conexão e tente novamente.');
+      }
       
     } catch (error) {
       console.error('Erro ao gerar com IA:', error);
-      toast.error('Erro ao gerar conteúdo com IA');
+      toast.dismiss(loadingToast);
+      toast.error('🔥 Erro na geração inteligente. Tente novamente ou use outro modelo.');
     } finally {
       setIsGenerating(prev => ({ ...prev, [modelId]: false }));
     }
@@ -182,7 +225,7 @@ export const EnhancedAIDialog: React.FC<EnhancedAIDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
-            IA Avançada - Múltiplas Opções
+            Gerar Descrição Inteligente - ASSYST
           </DialogTitle>
         </DialogHeader>
         
@@ -195,7 +238,8 @@ export const EnhancedAIDialog: React.FC<EnhancedAIDialogProps> = ({
           <TabsContent value="config" className="space-y-6">
             {/* Seleção de Modelo */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Escolha o Modelo de IA</h3>
+              <h3 className="text-lg font-semibold">Escolha o Modelo de IA para Gerar sua Descrição</h3>
+              <p className="text-sm text-gray-600">Selecione o modelo de IA mais adequado para o seu tipo de problema. Cada modelo possui características específicas para gerar descrições otimizadas.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {aiModels.map((model) => (
                   <Card 
@@ -286,14 +330,19 @@ export const EnhancedAIDialog: React.FC<EnhancedAIDialogProps> = ({
               <Button 
                 onClick={() => generateWithModel(selectedModel)}
                 disabled={isGenerating[selectedModel]}
-                className="flex-1"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               >
                 {isGenerating[selectedModel] ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Gerando descrição inteligente...
+                  </>
                 ) : (
-                  <Sparkles className="h-4 w-4 mr-2" />
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    🚀 Gerar Descrição ASSYST com {aiModels.find(m => m.id === selectedModel)?.name}
+                  </>
                 )}
-                Gerar com {aiModels.find(m => m.id === selectedModel)?.name}
               </Button>
               
               <Button 
@@ -302,8 +351,16 @@ export const EnhancedAIDialog: React.FC<EnhancedAIDialogProps> = ({
                   aiModels.forEach(model => generateWithModel(model.id));
                 }}
                 disabled={Object.values(isGenerating).some(Boolean)}
+                className="border-blue-200 hover:bg-blue-50"
               >
-                Gerar com Todos
+                {Object.values(isGenerating).some(Boolean) ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  "🔥 Gerar com Todos os Modelos"
+                )}
               </Button>
             </div>
           </TabsContent>
@@ -364,6 +421,19 @@ export const EnhancedAIDialog: React.FC<EnhancedAIDialogProps> = ({
                             {result.solution}
                           </div>
                         </div>
+                        
+                        {/* Botão para usar este resultado */}
+                        <div className="pt-3 border-t">
+                          <Button
+                            onClick={() => {
+                              onProceedToGenerate(result.description, result.solution);
+                              onOpenChange(false);
+                            }}
+                            className="w-full bg-blue-600 hover:bg-blue-700"
+                          >
+                            🎯 Usar Este Resultado para Gerar ASSYST
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   );
@@ -377,8 +447,24 @@ export const EnhancedAIDialog: React.FC<EnhancedAIDialogProps> = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Fechar
           </Button>
-          <Button onClick={onProceedToGenerate}>
-            Prosseguir para Geração
+          <Button 
+            onClick={() => {
+              // Pegar o primeiro resultado disponível ou permitir prosseguir sem IA
+              const firstResult = Object.values(results)[0];
+              if (firstResult) {
+                onProceedToGenerate(firstResult.description, firstResult.solution);
+              } else {
+                onProceedToGenerate();
+              }
+              onOpenChange(false);
+            }}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {Object.keys(results).length > 0 ? (
+              <>✅ Usar Resultado Selecionado</>
+            ) : (
+              <>📝 Prosseguir sem IA</>
+            )}
           </Button>
         </div>
       </DialogContent>
