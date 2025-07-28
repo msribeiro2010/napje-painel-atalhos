@@ -402,7 +402,7 @@ const CriarChamado = () => {
       <div className="max-w-6xl mx-auto">
         <PageHeader 
           title={isEditing ? 'Editar Chamado' : 'Criar Chamado'}
-          subtitle="Gerador de Issues JIRA"
+          subtitle="Gerador Inteligente de Descrições ASSYST"
         />
 
 
