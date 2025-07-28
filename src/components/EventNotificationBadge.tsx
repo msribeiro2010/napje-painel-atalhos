@@ -7,39 +7,29 @@ import {
   Clock, 
   Gift, 
   Heart,
-  ExternalLink
+  ExternalLink,
+  CheckCircle,
+  SkipForward
 } from 'lucide-react';
-import { useUpcomingEvents } from '@/hooks/useUpcomingEvents';
+import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { useNavigate } from 'react-router-dom';
 
 export const EventNotificationBadge = () => {
-  const { events, loading, hasUpcomingEvents } = useUpcomingEvents();
+  const { 
+    allEvents, 
+    urgentEvents, 
+    loading, 
+    hasUpcomingEvents,
+    markEventAsFinished,
+    dismissEvent 
+  } = useEventNotifications();
   const navigate = useNavigate();
 
   if (loading || !hasUpcomingEvents) {
     return null;
   }
 
-  // Combinar e ordenar todos os eventos por proximidade
-  const allEvents = [
-    ...events.feriados.map(f => ({
-      type: 'feriado' as const,
-      title: f.descricao,
-      subtitle: f.tipo,
-      daysUntil: f.daysUntil,
-      id: `feriado-${f.id}`
-    })),
-    ...events.aniversariantes.map(a => ({
-      type: 'aniversario' as const,
-      title: a.nome,
-      subtitle: `${a.idade} anos`,
-      daysUntil: a.daysUntil,
-      id: `aniversario-${a.id}`
-    }))
-  ].sort((a, b) => a.daysUntil - b.daysUntil);
-
-  const urgentCount = allEvents.filter(e => e.daysUntil <= 1).length;
-  const hasUrgent = urgentCount > 0;
+  const hasUrgent = urgentEvents.length > 0;
 
   const getBadgeColor = () => {
     if (hasUrgent) return 'bg-gradient-to-r from-red-500 to-orange-500 text-white animate-pulse';
@@ -57,6 +47,16 @@ export const EventNotificationBadge = () => {
     if (days === 0) return 'hoje';
     if (days === 1) return 'amanhã';
     return `${days}d`;
+  };
+
+  const handleMarkAsFinished = (event: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    markEventAsFinished(event.id);
+  };
+
+  const handleDismiss = (event: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    dismissEvent(event.id);
   };
 
   return (
@@ -89,7 +89,7 @@ export const EventNotificationBadge = () => {
           </div>
           {hasUrgent && (
             <p className="text-xs text-orange-700 mt-1">
-              🚨 {urgentCount} evento{urgentCount !== 1 ? 's' : ''} urgente{urgentCount !== 1 ? 's' : ''}!
+              🚨 {urgentEvents.length} evento{urgentEvents.length !== 1 ? 's' : ''} urgente{urgentEvents.length !== 1 ? 's' : ''}!
             </p>
           )}
         </div>
@@ -111,13 +111,39 @@ export const EventNotificationBadge = () => {
                   <p className="text-xs text-muted-foreground">{event.subtitle}</p>
                 </div>
                 
-                <Badge 
-                  variant={event.daysUntil <= 1 ? 'destructive' : 'secondary'}
-                  className="text-xs"
-                >
-                  <Clock className="h-3 w-3 mr-1" />
-                  {getDaysText(event.daysUntil)}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <Badge 
+                    variant={event.daysUntil <= 1 ? 'destructive' : 'secondary'}
+                    className="text-xs"
+                  >
+                    <Clock className="h-3 w-3 mr-1" />
+                    {getDaysText(event.daysUntil)}
+                  </Badge>
+                  
+                  {/* Botões de ação para eventos de hoje */}
+                  {event.daysUntil === 0 && (
+                    <div className="flex gap-1 ml-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => handleMarkAsFinished(event, e)}
+                        className="h-6 px-1"
+                        title="Marcar como finalizado"
+                      >
+                        <CheckCircle className="h-3 w-3 text-green-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => handleDismiss(event, e)}
+                        className="h-6 px-1"
+                        title="Dispensar"
+                      >
+                        <SkipForward className="h-3 w-3 text-gray-500" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
