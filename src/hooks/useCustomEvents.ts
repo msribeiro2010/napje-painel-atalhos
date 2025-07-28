@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -20,8 +20,8 @@ export const useCustomEvents = (month: Date) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCustomEvents = async () => {
-    if (!user) return;
+  const fetchCustomEvents = useCallback(async () => {
+    if (!user || loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -41,45 +41,54 @@ export const useCustomEvents = (month: Date) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, month, loading]);
 
-  const addCustomEvent = async (event: Omit<CustomEvent, 'id' | 'user_id'>) => {
-    if (!user) return;
+  const addCustomEvent = useCallback(async (event: Omit<CustomEvent, 'id' | 'user_id'>) => {
+    if (!user || loading) return;
     setLoading(true);
     setError(null);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_custom_events')
-        .insert({ ...event, user_id: user.id });
+        .insert({ ...event, user_id: user.id })
+        .select()
+        .single();
       if (error) throw error;
-      await fetchCustomEvents();
+      
+      // Atualizar lista local ao invés de fazer nova requisição
+      setCustomEvents(prev => [...prev, data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
     } catch (err: any) {
       setError(err.message || 'Erro ao adicionar evento');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, loading]);
 
-  const updateCustomEvent = async (id: string, event: Omit<CustomEvent, 'id' | 'user_id'>) => {
-    if (!user) return;
+  const updateCustomEvent = useCallback(async (id: string, event: Omit<CustomEvent, 'id' | 'user_id'>) => {
+    if (!user || loading) return;
     setLoading(true);
     setError(null);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_custom_events')
         .update(event)
         .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .select()
+        .single();
       if (error) throw error;
-      await fetchCustomEvents();
+      
+      // Atualizar lista local ao invés de fazer nova requisição
+      setCustomEvents(prev => prev.map(e => e.id === id ? data : e));
     } catch (err: any) {
       setError(err.message || 'Erro ao atualizar evento');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, loading]);
 
-  const removeCustomEvent = async (id: string) => {
+  const removeCustomEvent = useCallback(async (id: string) => {
+    if (loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -88,13 +97,22 @@ export const useCustomEvents = (month: Date) => {
         .delete()
         .eq('id', id);
       if (error) throw error;
-      await fetchCustomEvents();
+      
+      // Atualizar lista local ao invés de fazer nova requisição
+      setCustomEvents(prev => prev.filter(e => e.id !== id));
     } catch (err: any) {
       setError(err.message || 'Erro ao remover evento');
     } finally {
       setLoading(false);
     }
-  };
+  }, [loading]);
+
+  // Buscar eventos apenas quando user ou month mudarem
+  useEffect(() => {
+    if (user) {
+      fetchCustomEvents();
+    }
+  }, [user, month.getFullYear(), month.getMonth()]);
 
   return { customEvents, fetchCustomEvents, addCustomEvent, updateCustomEvent, removeCustomEvent, loading, error };
 };

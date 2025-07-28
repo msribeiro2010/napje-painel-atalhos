@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { addDays, format, isAfter, isBefore, startOfDay, differenceInDays } from 'date-fns';
 import { useCustomEvents } from './useCustomEvents';
 import { useFeriados } from './useFeriados';
@@ -26,7 +26,7 @@ export const useUpcomingEventsModal = () => {
   const today = useMemo(() => new Date(), []);
   
   // Buscar eventos do mês atual para cobrir todos os próximos dias
-  const { customEvents, fetchCustomEvents } = useCustomEvents(today);
+  const { customEvents } = useCustomEvents(today);
   const { data: feriados = [] } = useFeriados();
   // Usar apenas um hook useWorkCalendar para o mês atual
   const { marks: workMarks } = useWorkCalendar(today);
@@ -102,11 +102,6 @@ export const useUpcomingEventsModal = () => {
     return events;
   }, [customEvents, feriados, workMarks, today]);
 
-  // Buscar eventos personalizados automaticamente
-  useEffect(() => {
-    fetchCustomEvents();
-  }, [fetchCustomEvents]);
-
   // Auto-abrir modal se houver eventos e ainda não foi mostrado hoje
   useEffect(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -119,8 +114,8 @@ export const useUpcomingEventsModal = () => {
     }
   }, [upcomingEvents.length, hasShownToday]);
 
-  const openModal = () => setIsOpen(true);
-  const closeModal = () => setIsOpen(false);
+  const openModal = useCallback(() => setIsOpen(true), []);
+  const closeModal = useCallback(() => setIsOpen(false), []);
 
   return {
     isOpen,

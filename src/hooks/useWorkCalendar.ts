@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -17,15 +17,8 @@ export const useWorkCalendar = (month: Date) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user && month) {
-      fetchMarks();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, month]);
-
-  const fetchMarks = async () => {
-    if (!user) return;
+  const fetchMarks = useCallback(async () => {
+    if (!user || loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -48,10 +41,10 @@ export const useWorkCalendar = (month: Date) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, month, loading]);
 
-  const saveMark = async (date: string, status: WorkStatus) => {
-    if (!user) return;
+  const saveMark = useCallback(async (date: string, status: WorkStatus) => {
+    if (!user || loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -66,10 +59,10 @@ export const useWorkCalendar = (month: Date) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, loading]);
 
-  const removeMark = async (date: string) => {
-    if (!user) return;
+  const removeMark = useCallback(async (date: string) => {
+    if (!user || loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -89,7 +82,14 @@ export const useWorkCalendar = (month: Date) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, loading]);
+
+  // Buscar marcações apenas quando user ou month mudarem
+  useEffect(() => {
+    if (user) {
+      fetchMarks();
+    }
+  }, [user, month.getFullYear(), month.getMonth()]);
 
   return { marks, loading, error, fetchMarks, saveMark, removeMark };
 }; 

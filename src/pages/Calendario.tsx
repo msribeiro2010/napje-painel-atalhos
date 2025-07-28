@@ -31,11 +31,7 @@ function CalendarComponent() {
   
   // Usar o hook para buscar/salvar marcações do Supabase
   const { marks, loading: marksLoading, saveMark, removeMark, fetchMarks } = useWorkCalendar(month);
-  const { customEvents, fetchCustomEvents, addCustomEvent } = useCustomEvents(month);
-
-  useEffect(() => {
-    fetchCustomEvents();
-  }, [month]);
+  const { customEvents, addCustomEvent } = useCustomEvents(month);
 
   const { data: events = [], isLoading: eventsLoading } = useCalendarEvents(month);
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
@@ -117,7 +113,7 @@ function CalendarComponent() {
           <span className="text-[#bfae7c] text-base">{format(month, 'MMMM yyyy', { locale: ptBR })}</span>
         </div>
         <div className="flex gap-2">
-          <CustomEventDialog onAdd={async (event) => { await addCustomEvent(event); await fetchCustomEvents(); }} />
+          <CustomEventDialog onAdd={async (event) => { await addCustomEvent(event); }} />
           <Button 
             size="sm" 
             variant="outline" 

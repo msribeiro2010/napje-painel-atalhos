@@ -45,21 +45,21 @@ export const useWeeklyNotifications = () => {
   }, [settings]);
 
   // Buscar itens com notificação ativada
-    const fetchNotificationItems = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('base_conhecimento')
-          .select('id, titulo, categoria, mensagem_notificacao, notificacao_semanal')
-          .eq('notificacao_semanal', true)
-          .order('created_at', { ascending: false });
+  const fetchNotificationItems = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('base_conhecimento')
+        .select('id, titulo, categoria, mensagem_notificacao, notificacao_semanal')
+        .eq('notificacao_semanal', true)
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        
-        setNotificationItems(data || []);
-      } catch (error) {
-        console.error('Erro ao buscar itens:', error);
-      }
-    };
+      if (error) throw error;
+      
+      setNotificationItems(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar itens:', error);
+    }
+  }, []);
 
   // Verificar se deve notificar
   const shouldShowNotifications = useCallback((): boolean => {
@@ -136,18 +136,19 @@ export const useWeeklyNotifications = () => {
   // Verificação automática
   useEffect(() => {
     fetchNotificationItems();
-  }, []);
+  }, [fetchNotificationItems]);
 
-  // Configurar intervalo de verificação apenas quando habilitado
+  // Configurar intervalo de verificação apenas quando habilitado (reduzido para 2 horas)
   useEffect(() => {
     if (!settings.enabled) return;
     
+    // Reduzir polling de 30 minutos para 2 horas para diminuir requisições
     const interval = setInterval(() => {
       showWeeklyNotifications();
-    }, 30 * 60 * 1000);
+    }, 2 * 60 * 60 * 1000); // 2 horas
 
-    // Verificação inicial após 5 segundos
-    const timeout = setTimeout(showWeeklyNotifications, 5000);
+    // Verificação inicial após 10 segundos (aumentado de 5 segundos)
+    const timeout = setTimeout(showWeeklyNotifications, 10000);
 
     return () => {
       clearInterval(interval);
