@@ -34,16 +34,6 @@ export const WeeklyNotificationsManager = () => {
     time: '09:00'
   });
 
-  const timeOptions = [
-    { value: '08:00', label: '08:00' },
-    { value: '09:00', label: '09:00' },
-    { value: '10:00', label: '10:00' },
-    { value: '11:00', label: '11:00' },
-    { value: '14:00', label: '14:00' },
-    { value: '15:00', label: '15:00' },
-    { value: '16:00', label: '16:00' },
-  ];
-
   const dayOptions = [
     { value: 1, label: 'Segunda-feira' },
     { value: 2, label: 'Terça-feira' },
@@ -199,70 +189,12 @@ export const WeeklyNotificationsManager = () => {
                 </div>
                 
                 {settings.enabled && (
-                  <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3 dark:text-gray-300">
-                      <Sparkles className="h-4 w-4 text-purple-500" />
-                      Configurações de Agendamento
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <Label className="flex items-center gap-2 text-sm font-medium dark:text-gray-200">
-                          <Calendar className="h-4 w-4 text-blue-500" />
-                          Dia da Semana
-                        </Label>
-                        <Select 
-                          value={settings.dayofweek?.toString() || '1'}
-                onValueChange={(value) => saveSettings({ ...settings, dayofweek: parseInt(value) })}
-                        >
-                          <SelectTrigger className="h-11 border-2 hover:border-blue-300 transition-colors dark:border-gray-600 dark:hover:border-blue-500 dark:bg-gray-800">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dayOptions.map((day) => (
-                              <SelectItem key={day.value} value={day.value.toString()} className="py-3">
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4 text-blue-500" />
-                                  {day.label}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <Label className="flex items-center gap-2 text-sm font-medium dark:text-gray-200">
-                          <Clock className="h-4 w-4 text-green-500" />
-                          Horário
-                        </Label>
-                        <Select 
-                          value={settings.time} 
-                          onValueChange={(value) => saveSettings({ ...settings, time: value })}
-                        >
-                          <SelectTrigger className="h-11 border-2 hover:border-green-300 transition-colors dark:border-gray-600 dark:hover:border-green-500 dark:bg-gray-800">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {timeOptions.map((time) => (
-                              <SelectItem key={time.value} value={time.value} className="py-3">
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 text-green-500" />
-                                  {time.label}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
-                      <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
-                        <Bell className="h-4 w-4" />
-                        <span className="font-medium">
-                          Próxima notificação: {dayOptions.find(d => d.value === (settings.dayofweek || 1))?.label || 'Dia não definido'} às {settings.time || '09:00'}
-                        </span>
-                      </div>
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
+                    <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+                      <Bell className="h-4 w-4" />
+                      <span className="font-medium">
+                        Sistema de notificações ativo. Configure os horários individuais ao criar cada notificação.
+                      </span>
                     </div>
                   </div>
                 )}
@@ -368,6 +300,16 @@ export const WeeklyNotificationsManager = () => {
                           </p>
                         </div>
                         
+                        {/* Mostrar agendamento da notificação */}
+                        <div className="mb-3 p-2 bg-blue-50 rounded-md border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
+                          <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300">
+                            <Calendar className="h-3 w-3" />
+                            <span>{dayOptions.find(d => d.value === notification.dayofweek)?.label || 'Dia não definido'}</span>
+                            <Clock className="h-3 w-3 ml-2" />
+                            <span>{notification.time || '09:00'}</span>
+                          </div>
+                        </div>
+                        
                         <div className="flex items-center justify-between pt-3 border-t border-gray-200">
                           <div className="text-xs text-muted-foreground">
                             Criado em {new Date(notification.created_at).toLocaleDateString('pt-BR')}
@@ -423,7 +365,10 @@ export const WeeklyNotificationsManager = () => {
               <div className="text-sm text-muted-foreground">
                 {settings.enabled ? (
                   <span>
-                    Próxima notificação: {dayOptions.find(d => d.value === settings.dayofweek)?.label || 'Dia não definido'} às {settings.time}
+                    {activeNotifications.length > 0 
+                      ? `${activeNotifications.length} notificação${activeNotifications.length > 1 ? 'ões' : ''} ativa${activeNotifications.length > 1 ? 's' : ''}`
+                      : 'Nenhuma notificação ativa'
+                    }
                   </span>
                 ) : (
                   <span>Notificações desabilitadas</span>
