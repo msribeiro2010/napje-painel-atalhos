@@ -66,15 +66,11 @@ export const useUpcomingEvents = () => {
           const currentYear = today.getFullYear();
           
           // Criar data do aniversário no ano atual
-          let aniversarioEsteAno = new Date(currentYear, nascimento.getMonth(), nascimento.getDate());
+          const aniversarioEsteAno = new Date(currentYear, nascimento.getMonth(), nascimento.getDate());
           
-          // Se o aniversário já passou este ano, considerar o próximo ano
-          if (isBefore(aniversarioEsteAno, today)) {
-            aniversarioEsteAno = new Date(currentYear + 1, nascimento.getMonth(), nascimento.getDate());
-          }
-          
-          const daysUntil = differenceInDays(aniversarioEsteAno, today);
-          const idade = aniversarioEsteAno.getFullYear() - nascimento.getFullYear();
+          // Calcular dias até o aniversário deste ano (pode ser negativo se já passou)
+          const daysUntil = differenceInDays(startOfDay(aniversarioEsteAno), today);
+          const idade = currentYear - nascimento.getFullYear();
           
           return {
             ...aniversariante,
@@ -82,8 +78,8 @@ export const useUpcomingEvents = () => {
             idade
           };
         }).filter(aniversariante => {
-          // Filtrar aniversários nos próximos 30 dias
-          return aniversariante.daysUntil >= 0 && aniversariante.daysUntil <= 30;
+          // Incluir aniversários dos últimos 7 dias e próximos 30 dias
+          return aniversariante.daysUntil >= -7 && aniversariante.daysUntil <= 30;
         }) || [];
 
         // Processar feriados com dias restantes
@@ -93,9 +89,12 @@ export const useUpcomingEvents = () => {
           
           return {
             ...feriado,
-            daysUntil: Math.max(0, daysUntil) // Garantir que não seja negativo
+            daysUntil // Permitir valores negativos para eventos passados
           };
-        }).filter(feriado => feriado.daysUntil <= 30) || []; // Próximos 30 dias
+        }).filter(feriado => {
+          // Incluir feriados dos últimos 7 dias e próximos 30 dias
+          return feriado.daysUntil >= -7 && feriado.daysUntil <= 30;
+        }) || [];
 
         setEvents({
           feriados: feriadosProcessados,

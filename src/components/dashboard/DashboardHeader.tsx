@@ -39,29 +39,35 @@ export const DashboardHeader = ({ isAdmin }: DashboardHeaderProps) => {
       </div>
       
       {/* Seção direita - Ferramentas e configurações */}
-      <div className="flex items-center gap-3">
-        {/* Grupo de notificações e eventos */}
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
+        {/* Grupo de notificações e eventos - com destaque */}
+        <div className="flex items-center gap-1 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-lg p-1 border border-white/20">
           <EventNotificationBadge />
           <PastEventsDialog />
           <EventNotificationSettings />
+        </div>
+        
+        {/* Notificações semanais - separado */}
+        <div className="flex items-center">
           <WeeklyNotificationsManager />
         </div>
         
-        {/* Grupo de ferramentas */}
-        <div className="flex items-center gap-2 border-l border-border/20 pl-3">
+        {/* Grupo de ferramentas externas */}
+        <div className="flex items-center gap-1 border-l border-border/30 pl-2 ml-2">
           <Button
             variant="outline"
+            size="sm"
             onClick={() => window.open('https://msribeiro2010.github.io/PROJETO-CENTRAL-NUCLEO/', '_blank')}
-            className="flex items-center gap-2 hover:scale-105 transition-transform"
+            className="flex items-center gap-2 hover:scale-105 transition-all duration-200 bg-white/80 hover:bg-white shadow-sm"
           >
             <ExternalLink className="h-4 w-4" />
-            <span className="hidden sm:inline">Central do Núcleo</span>
+            <span className="hidden lg:inline">Central do Núcleo</span>
+            <span className="lg:hidden">Central</span>
           </Button>
         </div>
         
-        {/* Grupo de configurações e usuário */}
-        <div className="flex items-center gap-2 border-l border-border/20 pl-3">
+        {/* Grupo de configurações pessoais */}
+        <div className="flex items-center gap-1 border-l border-border/30 pl-2 ml-2">
           <ThemeToggle />
           <UserMenu />
         </div>
