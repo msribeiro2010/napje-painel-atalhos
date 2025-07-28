@@ -14,9 +14,11 @@ import {
   PartyPopper,
   Cake,
   Coffee,
-  CalendarDays
+  CalendarDays,
+  CheckCircle,
+  SkipForward
 } from 'lucide-react';
-import { useUpcomingEvents } from '@/hooks/useUpcomingEvents';
+import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { format, addMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -58,44 +60,41 @@ const getEventMessage = (type: 'feriado' | 'aniversario', daysUntil: number, tit
 };
 
 export const EventNotificationModal = ({ isOpen, onOpenChange }: EventNotificationModalProps) => {
-  const { events, loading, hasUpcomingEvents } = useUpcomingEvents();
-  const [snoozeUntil, setSnoozeUntil] = useState<Date | null>(null);
+  const { 
+    urgentEvents, 
+    loading, 
+    snoozeNotifications, 
+    markEventAsFinished,
+    dismissEvent 
+  } = useEventNotifications();
+  
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
 
-  // Combinar e ordenar todos os eventos por proximidade
-  const allEvents = [
-    ...events.feriados.map(f => ({
-      type: 'feriado' as const,
-      title: f.descricao,
-      subtitle: f.tipo,
-      daysUntil: f.daysUntil,
-      id: `feriado-${f.id}`
-    })),
-    ...events.aniversariantes.map(a => ({
-      type: 'aniversario' as const,
-      title: a.nome,
-      subtitle: `${a.idade} anos`,
-      daysUntil: a.daysUntil,
-      id: `aniversario-${a.id}`
-    }))
-  ].sort((a, b) => a.daysUntil - b.daysUntil);
-
-  const urgentEvents = allEvents.filter(e => e.daysUntil <= 1);
   const currentEvent = urgentEvents[currentEventIndex];
 
-  // Auto-abrir modal para eventos urgentes
+  // Reset index when events change
   useEffect(() => {
-    if (!loading && urgentEvents.length > 0 && !snoozeUntil) {
-      const shouldShow = !snoozeUntil || new Date() > snoozeUntil;
-      if (shouldShow) {
-        onOpenChange(true);
-      }
+    if (currentEventIndex >= urgentEvents.length) {
+      setCurrentEventIndex(0);
     }
-  }, [urgentEvents, loading, snoozeUntil, onOpenChange]);
+  }, [urgentEvents.length, currentEventIndex]);
 
   const handleSnooze = (minutes: number) => {
-    setSnoozeUntil(addMinutes(new Date(), minutes));
-    onOpenChange(false);
+    snoozeNotifications(minutes);
+  };
+
+  const handleFinishEvent = () => {
+    if (currentEvent) {
+      markEventAsFinished(currentEvent.id);
+      handleNext();
+    }
+  };
+
+  const handleDismissEvent = () => {
+    if (currentEvent) {
+      dismissEvent(currentEvent.id);
+      handleNext();
+    }
   };
 
   const handleNext = () => {
@@ -113,7 +112,7 @@ export const EventNotificationModal = ({ isOpen, onOpenChange }: EventNotificati
     }
   };
 
-  if (loading || !hasUpcomingEvents || urgentEvents.length === 0 || !currentEvent) {
+  if (loading || urgentEvents.length === 0 || !currentEvent) {
     return null;
   }
 
@@ -156,7 +155,7 @@ export const EventNotificationModal = ({ isOpen, onOpenChange }: EventNotificati
               <div className="text-center space-y-2">
                 <div className="text-4xl mb-2">
                   {currentEvent.type === 'aniversario' ? 
-                    (currentEvent.daysUntil === 0 ? '🎉' : currentEvent.daysUntil === 1 ? '��' : '🎈') :
+                    (currentEvent.daysUntil === 0 ? '🎉' : currentEvent.daysUntil === 1 ? '🎂' : '🎈') :
                     (currentEvent.daysUntil === 0 ? '🏖️' : currentEvent.daysUntil === 1 ? '📅' : '⭐')
                   }
                 </div>
@@ -173,7 +172,31 @@ export const EventNotificationModal = ({ isOpen, onOpenChange }: EventNotificati
                 </p>
               </div>
 
-              {/* Botões de Ação */}
+              {/* Botões de Ação Principal */}
+              {currentEvent.daysUntil === 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleFinishEvent}
+                    className="bg-green-600/80 text-white border-green-500 hover:bg-green-700/80"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Finalizado
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleDismissEvent}
+                    className="bg-gray-600/80 text-white border-gray-500 hover:bg-gray-700/80"
+                  >
+                    <SkipForward className="h-4 w-4 mr-2" />
+                    Dispensar
+                  </Button>
+                </div>
+              )}
+
+              {/* Botões de Snooze */}
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="secondary"
@@ -182,7 +205,7 @@ export const EventNotificationModal = ({ isOpen, onOpenChange }: EventNotificati
                   className="bg-white/20 text-white border-white/30 hover:bg-white/30"
                 >
                   <Clock className="h-4 w-4 mr-2" />
-                  Lembrar em 30min
+                  30min
                 </Button>
                 <Button
                   variant="secondary"
@@ -191,7 +214,7 @@ export const EventNotificationModal = ({ isOpen, onOpenChange }: EventNotificati
                   className="bg-white/20 text-white border-white/30 hover:bg-white/30"
                 >
                   <Coffee className="h-4 w-4 mr-2" />
-                  Lembrar em 2h
+                  2h
                 </Button>
               </div>
 
