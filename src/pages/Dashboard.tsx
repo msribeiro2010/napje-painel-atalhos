@@ -187,48 +187,72 @@ const Dashboard = () => {
   const hasWorkInfo = status !== 'none' || customEventsTomorrow.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-bg p-4">
-      {/* Aviso do status do próximo dia - só aparece quando há marcação */}
-      {hasWorkInfo && (
-        <div className="max-w-6xl mx-auto mb-4 space-y-2">
-          {/* Status de trabalho - só mostra se não for 'none' */}
-          {status !== 'none' && (
-            <div className="rounded-lg shadow p-4 flex items-center gap-3" style={{ background: statusLabel[status].color }}>
-              {statusLabel[status].icon}
-              <div className="flex flex-col">
-                <span className="font-bold text-[#7c6a3c] text-lg tracking-wide font-mono">
-                  Amanhã: {statusLabel[status].label}
-                </span>
-                <span className="text-[#8b7355] text-sm font-medium tracking-wider uppercase">
-                  {format(tomorrow, 'EEEE, dd/MM/yyyy', { locale: ptBR })}
-                </span>
+    <div className="min-h-screen bg-gradient-bg">
+      {/* Container principal com padding responsivo */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Aviso do status do próximo dia - só aparece quando há marcação */}
+        {hasWorkInfo && (
+          <div className="mb-6 space-y-3">
+            {/* Status de trabalho - só mostra se não for 'none' */}
+            {status !== 'none' && (
+              <div 
+                className="rounded-2xl shadow-soft p-4 flex items-center gap-4 backdrop-blur-sm border border-white/20 transition-all duration-300 hover:shadow-medium" 
+                style={{ background: statusLabel[status].color }}
+              >
+                <div className="p-2 bg-white/20 rounded-xl">
+                  {statusLabel[status].icon}
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-[#7c6a3c] text-lg tracking-wide">
+                    Amanhã: {statusLabel[status].label}
+                  </span>
+                  <span className="text-[#8b7355] text-sm font-medium tracking-wider uppercase">
+                    {format(tomorrow, 'EEEE, dd/MM/yyyy', { locale: ptBR })}
+                  </span>
+                </div>
               </div>
-            </div>
-          )}
-          {/* Avisos de eventos personalizados do próximo dia */}
-          {customEventsTomorrow.map(ev => (
-            <div
-              key={ev.id}
-              className="rounded-lg shadow flex items-center gap-3 px-4 py-3 border-l-4 animate-fade-in"
-              style={{ background: customEventStyles[ev.type]?.color, borderColor: customEventStyles[ev.type]?.border }}
-            >
-              {customEventStyles[ev.type]?.icon}
-              <div>
-                <span className="font-semibold text-base mr-2">Amanhã: {ev.title}</span>
-                <span className="inline-block text-xs px-2 py-0.5 rounded bg-white/60 text-gray-700 ml-2">{ev.type.charAt(0).toUpperCase() + ev.type.slice(1)}</span>
-                {ev.description && <div className="text-xs text-gray-600 mt-1">{ev.description}</div>}
+            )}
+            {/* Avisos de eventos personalizados do próximo dia */}
+            {customEventsTomorrow.map(ev => (
+              <div
+                key={ev.id}
+                className="rounded-2xl shadow-soft flex items-center gap-4 px-4 py-3 border-l-4 animate-fade-in backdrop-blur-sm border border-white/20 transition-all duration-300 hover:shadow-medium"
+                style={{ 
+                  background: customEventStyles[ev.type]?.color, 
+                  borderLeftColor: customEventStyles[ev.type]?.border 
+                }}
+              >
+                <div className="p-2 bg-white/20 rounded-xl">
+                  {customEventStyles[ev.type]?.icon}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="font-semibold text-base">Amanhã: {ev.title}</span>
+                    <span className="inline-block text-xs px-3 py-1 rounded-full bg-white/60 text-gray-700 font-medium">
+                      {ev.type.charAt(0).toUpperCase() + ev.type.slice(1)}
+                    </span>
+                  </div>
+                  {ev.description && (
+                    <p className="text-sm text-gray-600 leading-relaxed">{ev.description}</p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="max-w-6xl mx-auto">
+            ))}
+          </div>
+        )}
+
+        {/* Header do Dashboard */}
         <DashboardHeader isAdmin={isAdmin} />
         
-        <EventsPanels />
+        {/* Seção de Eventos - Layout aprimorado */}
+        <div className="mb-8">
+          <EventsPanels />
+        </div>
         
+        {/* Seção de Ações Rápidas */}
         <DashboardActions actions={dashboardActions} />
 
+        {/* Seção de Chamados Recentes */}
         <RecentChamados 
           chamados={chamadosRecentes}
           onEdit={editarChamado}
@@ -236,24 +260,32 @@ const Dashboard = () => {
           onDelete={handleExcluir}
         />
 
-        <DashboardFooter />
+        {/* Footer modernizado */}
+        <div className="mt-12 pt-8 border-t border-border/30">
+          <DashboardFooter />
+        </div>
       </div>
       
+      {/* Componentes flutuantes */}
       <ChatAssistant isOpen={isOpen} onToggle={toggleChat} />
       
       <EventNotificationModal isOpen={modalOpen} onOpenChange={setModalOpen} />
       
+      {/* Modal Post-it modernizado */}
       <Dialog open={postItOpen} onOpenChange={setPostItOpen}>
-        <DialogContent className="max-w-6xl h-[85vh] p-0 overflow-hidden">
-          <DialogHeader className="p-4 pb-0 border-b">
+        <DialogContent className="max-w-6xl h-[85vh] p-0 overflow-hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-white/20">
+          <DialogHeader className="p-6 pb-0 border-b border-border/30">
             <DialogTitle className="flex items-center gap-3 text-xl">
-              <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg shadow-lg">
-                <StickyNote className="h-5 w-5 text-white" />
+              <div className="p-3 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-glow">
+                <StickyNote className="h-6 w-6 text-white" />
               </div>
-              Post-it
+              <div>
+                <span className="font-semibold">Post-it</span>
+                <p className="text-sm text-muted-foreground font-normal mt-1">Suas anotações e lembretes</p>
+              </div>
             </DialogTitle>
           </DialogHeader>
-          <div className="p-4 h-full overflow-auto">
+          <div className="p-6 h-full overflow-auto custom-scrollbar">
             <PostitNotes />
           </div>
         </DialogContent>
