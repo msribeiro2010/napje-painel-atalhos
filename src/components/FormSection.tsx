@@ -158,13 +158,6 @@ export const FormSection = ({ formData, onInputChange, onGenerateDescription, on
               id="processos"
               value={formData.processos}
               onChange={(e) => handleProcessoChange(e.target.value)}
-              onPaste={(e) => {
-                setTimeout(() => {
-                  const inputElement = e.currentTarget;
-                  const newValue = inputElement.value;
-                  handleProcessoChange(newValue);
-                }, 10);
-              }}
               placeholder="Ex: 0000000-00.0000.0.00.0000"
             />
           </div>
