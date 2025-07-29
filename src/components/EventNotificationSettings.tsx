@@ -65,35 +65,11 @@ export const EventNotificationSettings = () => {
     }
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="relative bg-white/80 hover:bg-white transition-all duration-200"
-        >
-          <Settings className="h-4 w-4 mr-2" />
-          Configurar Notificações
-          {stats.urgent > 0 && (
-            <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full p-0 flex items-center justify-center animate-pulse">
-              {stats.urgent}
-            </Badge>
-          )}
-        </Button>
-      </DialogTrigger>
+  // Se for usado dentro de uma página dedicada, não mostra o dialog
+  const isInPage = window.location.pathname === '/admin/notificacoes';
 
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-              <Settings className="h-5 w-5 text-white" />
-            </div>
-            Configurações de Notificação
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
+  const content = (
+    <div className="space-y-6">
           {/* Estatísticas */}
           <Card>
             <CardHeader className="pb-3">
@@ -353,6 +329,42 @@ export const EventNotificationSettings = () => {
             </CardContent>
           </Card>
         </div>
+      );
+
+  if (isInPage) {
+    // Renderizar diretamente o conteúdo quando estiver na página dedicada
+    return content;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="relative bg-white/80 hover:bg-white transition-all duration-200"
+        >
+          <Settings className="h-4 w-4 mr-2" />
+          Configurar Notificações
+          {stats.urgent > 0 && (
+            <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full p-0 flex items-center justify-center animate-pulse">
+              {stats.urgent}
+            </Badge>
+          )}
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+              <Settings className="h-5 w-5 text-white" />
+            </div>
+            Configurações de Notificação
+          </DialogTitle>
+        </DialogHeader>
+
+        {content}
       </DialogContent>
     </Dialog>
   );

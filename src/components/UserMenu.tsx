@@ -16,7 +16,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Shield, Lock, Bot, ExternalLink } from 'lucide-react';
+import { User, Settings, LogOut, Shield, Lock, Bot, ExternalLink, Bell } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -189,6 +189,15 @@ const UserMenu = () => {
           >
             <ExternalLink className="mr-2 h-4 w-4" />
             <span>Gerenciar Atalhos</span>
+          </DropdownMenuItem>
+        )}
+        {profile.is_admin && (
+          <DropdownMenuItem 
+            onClick={() => navigate('/admin/notificacoes')}
+            className="cursor-pointer hover:bg-gradient-accent"
+          >
+            <Bell className="mr-2 h-4 w-4" />
+            <span>Configurar Notificações</span>
           </DropdownMenuItem>
         )}
         {profile.is_admin && (
