@@ -113,52 +113,153 @@ serve(async (req) => {
       .lte('date', monthEnd.toISOString().split('T')[0])
       .order('date', { ascending: true });
 
-    console.log('Searching for additional context from external sources...');
+    console.log('Preparing to search for additional context from external sources...');
     
-    // Function to search web for TRT15 and judicial content
+    // Enhanced web search function with multiple sources
     async function searchWebContent(query: string): Promise<string> {
       try {
-        // Search TRT15 and judicial sites
-        const searchQueries = [
-          `site:trt15.jus.br ${query}`,
-          `site:cnj.jus.br ${query}`,
-          `site:tst.jus.br ${query}`
-        ];
-        
+        console.log(`Starting enhanced web search for: ${query}`);
         let webContext = '';
         
-        for (const searchQuery of searchQueries) {
+        // 1. Search official judicial sites
+        const officialSites = [
+          'site:trt15.jus.br',
+          'site:cnj.jus.br', 
+          'site:tst.jus.br',
+          'site:stf.jus.br',
+          'site:stj.jus.br'
+        ];
+        
+        // 2. Search general legal and tech topics
+        const generalQueries = [
+          `${query} direito trabalhista`,
+          `${query} PJe processo judicial eletrônico`,
+          `${query} tribunal regional trabalho`,
+          `${query} sistema judiciário`
+        ];
+        
+        // 3. Combine official sites with query
+        const searchQueries = [
+          ...officialSites.map(site => `${site} ${query}`),
+          ...generalQueries
+        ];
+        
+        // Search using multiple methods
+        for (const searchQuery of searchQueries.slice(0, 8)) { // Limit to 8 searches
           try {
             console.log(`Searching: ${searchQuery}`);
-            // Use a simple DuckDuckGo search API or similar
-            const searchResponse = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&no_html=1&skip_disambig=1`);
             
-            if (searchResponse.ok) {
-              const searchData = await searchResponse.json();
-              if (searchData.AbstractText) {
-                webContext += `${searchData.AbstractText}\n\n`;
+            // Method 1: DuckDuckGo Instant Answer API
+            const ddgResponse = await fetch(
+              `https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&no_html=1&skip_disambig=1`,
+              { 
+                headers: { 'User-Agent': 'TRT15-Assistant/1.0' },
+                signal: AbortSignal.timeout(3000) // 3 second timeout
               }
-              if (searchData.RelatedTopics) {
-                const topics = searchData.RelatedTopics.slice(0, 2).map((topic: any) => topic.Text).join('\n');
-                webContext += `${topics}\n\n`;
+            );
+            
+            if (ddgResponse.ok) {
+              const ddgData = await ddgResponse.json();
+              
+              if (ddgData.AbstractText && ddgData.AbstractText.length > 50) {
+                webContext += `📄 ${ddgData.AbstractText}\n\n`;
+              }
+              
+              if (ddgData.RelatedTopics && ddgData.RelatedTopics.length > 0) {
+                const topics = ddgData.RelatedTopics
+                  .slice(0, 3)
+                  .filter((topic: any) => topic.Text && topic.Text.length > 30)
+                  .map((topic: any) => `• ${topic.Text}`)
+                  .join('\n');
+                if (topics) {
+                  webContext += `🔗 Tópicos relacionados:\n${topics}\n\n`;
+                }
+              }
+              
+              if (ddgData.Answer && ddgData.Answer.length > 20) {
+                webContext += `💡 Resposta direta: ${ddgData.Answer}\n\n`;
               }
             }
+            
+            // Small delay between requests
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
           } catch (searchError) {
-            console.log(`Search error for ${searchQuery}:`, searchError);
+            console.log(`Search error for "${searchQuery}":`, searchError.message);
           }
         }
         
-        return webContext.trim();
+        // 4. Try to get current news/updates if query seems time-sensitive
+        const timeSensitiveKeywords = ['novo', 'atualização', 'mudança', 'alteração', '2025', 'recente'];
+        const isTimeSensitive = timeSensitiveKeywords.some(keyword => 
+          query.toLowerCase().includes(keyword)
+        );
+        
+        if (isTimeSensitive) {
+          try {
+            console.log('Searching for recent updates...');
+            const newsQuery = `${query} 2025 site:cnj.jus.br OR site:tst.jus.br OR site:trt15.jus.br`;
+            const newsResponse = await fetch(
+              `https://api.duckduckgo.com/?q=${encodeURIComponent(newsQuery)}&format=json&no_html=1`,
+              { 
+                headers: { 'User-Agent': 'TRT15-Assistant/1.0' },
+                signal: AbortSignal.timeout(3000)
+              }
+            );
+            
+            if (newsResponse.ok) {
+              const newsData = await newsResponse.json();
+              if (newsData.AbstractText) {
+                webContext += `📰 Informações recentes: ${newsData.AbstractText}\n\n`;
+              }
+            }
+          } catch (newsError) {
+            console.log('News search error:', newsError.message);
+          }
+        }
+        
+        // 5. Clean and format the context
+        webContext = webContext
+          .replace(/\n{3,}/g, '\n\n') // Remove excessive line breaks
+          .replace(/\s+/g, ' ') // Normalize spaces
+          .trim();
+        
+        console.log(`Web search completed. Context length: ${webContext.length} characters`);
+        return webContext;
+        
       } catch (error) {
-        console.log('Web search error:', error);
+        console.log('Web search error:', error.message);
         return '';
       }
     }
 
-    // Perform web search if relevant
+    // Intelligent web search decision
     let webContext = '';
-    if (message && message.length > 10) {
+    const shouldSearchWeb = (query: string): boolean => {
+      const webSearchKeywords = [
+        // Informações atuais/recentes
+        'novo', 'nova', 'atualização', 'mudança', 'alteração', 'recente', '2025', 'atual',
+        // Informações específicas que podem não estar na base
+        'como fazer', 'passo a passo', 'tutorial', 'guia', 'procedimento',
+        // Informações técnicas específicas
+        'erro', 'problema', 'falha', 'bug', 'não funciona', 'não consegue',
+        // Legislação e normas
+        'lei', 'decreto', 'portaria', 'resolução', 'normativa', 'regulamento',
+        // Informações do TRT15 específicas
+        'trt15', 'tribunal', 'cnj', 'tst', 'pje', 'processo eletrônico',
+        // Dúvidas gerais que podem precisar de contexto externo
+        'o que é', 'qual é', 'quando', 'onde', 'por que', 'como'
+      ];
+      
+      const queryLower = query.toLowerCase();
+      return webSearchKeywords.some(keyword => queryLower.includes(keyword)) && query.length > 15;
+    };
+    
+    if (message && shouldSearchWeb(message)) {
+      console.log('Performing web search for enhanced context...');
       webContext = await searchWebContent(message);
+    } else {
+      console.log('Skipping web search - using internal knowledge base only');
     }
 
     // Create context for the AI
@@ -194,12 +295,12 @@ serve(async (req) => {
 
     const systemPrompt = `Você é um assistente de TI especializado no sistema do TRT15 (Tribunal Regional do Trabalho da 15ª Região). 
 
-Sua função é ajudar os usuários com base na base de conhecimento existente, nos chamados recentes do sistema, informações de calendário, memórias importantes e em informações atualizadas de fontes oficiais.
+Sua função é ajudar os usuários com base na base de conhecimento existente, nos chamados recentes do sistema, informações de calendário, memórias importantes e informações atualizadas da internet de fontes oficiais.
 
-CONTEXTO DA BASE DE CONHECIMENTO (PRIORIDADE ALTA):
+CONTEXTO DA BASE DE CONHECIMENTO INTERNA (PRIORIDADE MÁXIMA):
 ${knowledgeContext}
 
-CONTEXTO DOS CHAMADOS RECENTES (PRIORIDADE ALTA):
+CONTEXTO DOS CHAMADOS RECENTES (PRIORIDADE MÁXIMA):
 ${chamadosContext}
 
 ${feriadosContext ? `CONTEXTO DE FERIADOS E DATAS IMPORTANTES:
@@ -222,36 +323,48 @@ ${customEventsContext}
 
 ` : ''}
 
-${webContext ? `CONTEXTO ADICIONAL DA WEB (sites oficiais do TRT15, CNJ, TST):
-${webContext}` : ''}
+${webContext ? `INFORMAÇÕES ATUALIZADAS DA INTERNET (sites oficiais e fontes confiáveis):
+${webContext}
+
+` : ''}
 
 INSTRUÇÕES PRIORITÁRIAS:
-1. **SEMPRE CONSULTE PRIMEIRO** a base de conhecimento interna e chamados recentes antes de dar qualquer resposta
-2. Use PRIORITARIAMENTE as informações da base de conhecimento e chamados recentes do TRT15
-3. Para perguntas sobre calendário, feriados, aniversários ou eventos, consulte as informações de calendário disponíveis
-4. Para perguntas sobre informações importantes, senhas, URLs ou notas pessoais, consulte as memórias importantes
-5. Complemente com informações dos sites oficiais (TRT15, CNJ, TST) quando disponíveis
-6. Se a informação não estiver disponível em nenhuma fonte consultada, informe claramente
-7. Responda sempre em português brasileiro de forma educada e profissional
-8. Para problemas já solucionados na base de conhecimento, referencie a solução existente
-9. Para problemas similares aos chamados recentes, mencione isso no contexto
-10. Para problemas técnicos, sugira passos claros baseados nas soluções conhecidas
-11. Se necessário, recomende a criação de um novo chamado
-12. **IMPORTANTE**: Nunca invente informações - use apenas o que está disponível nas fontes consultadas
-13. Para informações de calendário, sempre mencione datas próximas relevantes
-14. Para memórias importantes, mantenha a confidencialidade e só forneça informações quando solicitado diretamente
+1. **SEMPRE CONSULTE PRIMEIRO** a base de conhecimento interna e chamados recentes - estas são suas fontes PRIMÁRIAS
+2. Use as informações da internet apenas para COMPLEMENTAR ou ATUALIZAR o conhecimento interno
+3. Se houver conflito entre informações internas e da internet, PRIORIZE as informações internas e mencione a discrepância
+4. Para informações recentes (2025, atualizações, mudanças), dê mais peso às informações da internet
+5. Para procedimentos internos do TRT15, SEMPRE priorize a base de conhecimento interna
+6. Quando usar informações da internet, SEMPRE mencione que são "informações complementares de fontes oficiais"
+7. Para perguntas sobre calendário, feriados, aniversários ou eventos, consulte as informações de calendário disponíveis
+8. Para perguntas sobre informações importantes, senhas, URLs ou notas pessoais, consulte as memórias importantes
+9. Se a informação não estiver disponível em nenhuma fonte consultada, informe claramente
+10. Responda sempre em português brasileiro de forma educada e profissional
+11. Para problemas já solucionados na base de conhecimento, referencie a solução existente PRIMEIRO
+12. Para problemas similares aos chamados recentes, mencione isso no contexto
+13. Para problemas técnicos, sugira passos claros baseados nas soluções conhecidas
+14. Se necessário, recomende a criação de um novo chamado
+15. **IMPORTANTE**: Nunca invente informações - use apenas o que está disponível nas fontes consultadas
+16. Para informações de calendário, sempre mencione datas próximas relevantes
+17. Para memórias importantes, mantenha a confidencialidade e só forneça informações quando solicitado diretamente
+18. Quando mencionar informações da internet, seja específico sobre a fonte (ex: "Segundo informações do CNJ...")
 
 ORDEM DE PRIORIDADE DAS FONTES:
-1. Base de conhecimento interna do TRT15
-2. Chamados recentes similares
-3. Informações de calendário (feriados, aniversários, eventos)
-4. Memórias importantes (quando relevante)
-5. Sites oficiais (TRT15, CNJ, TST)
-6. Conhecimento geral sobre tecnologia e direito trabalhista
+1. 🥇 Base de conhecimento interna do TRT15 (SEMPRE PRIMEIRO)
+2. 🥈 Chamados recentes similares (SEMPRE SEGUNDO)
+3. 🥉 Informações de calendário (feriados, aniversários, eventos)
+4. 🏅 Memórias importantes (quando relevante)
+5. 🌐 Informações atualizadas da internet (sites oficiais: TRT15, CNJ, TST, STF, STJ)
+6. 📚 Conhecimento geral sobre tecnologia e direito trabalhista
+
+FORMATO DE RESPOSTA:
+- Comece sempre com informações da base interna (se disponível)
+- Complemente com informações da internet quando relevante
+- Seja claro sobre a origem das informações
+- Mantenha tom profissional e útil
 
 Responda de forma útil e contextualizada baseando-se OBRIGATORIAMENTE nas informações fornecidas.`;
 
-    console.log('Sending request to OpenAI with context from:', {
+    console.log('Sending request to OpenAI with enhanced context from:', {
       knowledgeBaseItems: knowledgeBase?.length || 0,
       chamadosItems: chamados?.length || 0,
       assuntosItems: assuntos?.length || 0,
@@ -259,8 +372,9 @@ Responda de forma útil e contextualizada baseando-se OBRIGATORIAMENTE nas infor
       aniversariantesItems: aniversariantes?.length || 0,
       importantMemoriesItems: importantMemories?.length || 0,
       customEventsItems: customEvents?.length || 0,
-      webContextAvailable: webContext.length > 0,
-      webContextLength: webContext.length
+      webSearchPerformed: webContext.length > 0,
+      webContextLength: webContext.length,
+      webContextPreview: webContext.length > 0 ? webContext.substring(0, 100) + '...' : 'No web search performed'
     });
 
     // Prepare messages for OpenAI
