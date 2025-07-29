@@ -90,31 +90,54 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
     setIsLoading(true);
 
     try {
+      // Debug logs para identificar o problema
+      console.log('[ChatBot] Iniciando envio de mensagem...');
+      console.log('[ChatBot] Configuração Supabase:', {
+        url: import.meta.env.VITE_SUPABASE_URL ? 'configurada' : 'não configurada',
+        key: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'configurada' : 'não configurada'
+      });
+
       // Prepare conversation history for context
       const conversationHistory = messages.map(msg => ({
         role: msg.role,
         content: msg.content
       }));
 
+      const requestBody = {
+        message: userMessage.content,
+        conversationHistory: conversationHistory,
+        enableWebSearch: searchMode === 'auto' ? enableWebSearch : searchMode === 'web',
+        searchMode: searchMode
+      };
+
+      console.log('[ChatBot] Enviando requisição:', requestBody);
+
       const { data, error } = await supabase.functions.invoke('chat-assistant', {
-        body: {
-          message: userMessage.content,
-          conversationHistory: conversationHistory,
-          enableWebSearch: searchMode === 'auto' ? enableWebSearch : searchMode === 'web',
-          searchMode: searchMode
-        }
+        body: requestBody
       });
 
+      console.log('[ChatBot] Resposta recebida:', { data, error });
+
       if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(`Erro na chamada da função: ${error.message}`);
+        console.error('[ChatBot] Erro do Supabase:', error);
+        console.error('[ChatBot] Tipo do erro:', typeof error);
+        console.error('[ChatBot] Propriedades do erro:', Object.keys(error));
+        throw new Error(`Erro na chamada da função: ${error.message || JSON.stringify(error)}`);
       }
 
       if (!data) {
+        console.error('[ChatBot] Data é null/undefined');
         throw new Error('Nenhuma resposta recebida da função');
       }
 
+      console.log('[ChatBot] Data recebida:', {
+        success: data.success,
+        response: data.response ? `${data.response.substring(0, 50)}...` : 'sem resposta',
+        error: data.error || 'sem erro'
+      });
+
       if (!data.success) {
+        console.error('[ChatBot] Function retornou success=false:', data.error);
         throw new Error(data?.error || 'Erro desconhecido na resposta');
       }
 
@@ -126,9 +149,12 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+      console.log('[ChatBot] Mensagem adicionada com sucesso');
 
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('[ChatBot] Exception capturada:', error);
+      console.error('[ChatBot] Tipo da exception:', typeof error);
+      console.error('[ChatBot] Stack trace:', error.stack);
       
       // Fallback local para quando há problemas de conectividade
       const fallbackResponse = getFallbackResponse(userMessage.content);
@@ -144,7 +170,7 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
       
       toast({
         title: "Modo Offline",
-        description: "Conectividade limitada. Usando respostas locais.",
+        description: `Conectividade limitada. Usando respostas locais. Erro: ${error.message}`,
         variant: "default",
       });
     } finally {
