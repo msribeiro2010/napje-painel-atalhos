@@ -32,8 +32,7 @@ serve(async (req) => {
 
   try {
     console.log('Processing chat request...');
-    const { message, conversationHistory = [] } = await req.json();
-    console.log('Message received:', message);
+    const requestBody = await req.json();
 
     // Verify all required environment variables
     if (!openAIApiKey) {
@@ -113,34 +112,114 @@ serve(async (req) => {
       .lte('date', monthEnd.toISOString().split('T')[0])
       .order('date', { ascending: true });
 
-    console.log('Searching for additional context from external sources...');
-    
-    // Function to search web for TRT15 and judicial content
-    async function searchWebContent(query: string): Promise<string> {
+    // Function to search relevant content in knowledge base with better relevance
+    function searchRelevantKnowledge(query: string, knowledgeBase: any[]): any[] {
+      if (!knowledgeBase || knowledgeBase.length === 0) return [];
+      
+      const queryLower = query.toLowerCase();
+      const keywords = queryLower.split(' ').filter(word => word.length > 2);
+      
+      return knowledgeBase
+        .map(kb => {
+          let relevanceScore = 0;
+          const searchText = `${kb.titulo} ${kb.problema_descricao} ${kb.solucao} ${kb.categoria} ${kb.tags?.join(' ') || ''}`.toLowerCase();
+          
+          // Exact phrase match (highest priority)
+          if (searchText.includes(queryLower)) {
+            relevanceScore += 10;
+          }
+          
+          // Keyword matches
+          keywords.forEach(keyword => {
+            if (searchText.includes(keyword)) {
+              relevanceScore += 1;
+            }
+          });
+          
+          return { ...kb, relevanceScore };
+        })
+        .filter(kb => kb.relevanceScore > 0)
+        .sort((a, b) => b.relevanceScore - a.relevanceScore)
+        .slice(0, 5); // Top 5 most relevant
+    }
+
+    // Function to search relevant tickets with better filtering
+    function searchRelevantTickets(query: string, chamados: any[], assuntos: any[]): any[] {
+      if (!chamados || chamados.length === 0) return [];
+      
+      const queryLower = query.toLowerCase();
+      const keywords = queryLower.split(' ').filter(word => word.length > 2);
+      
+      return chamados
+        .map(chamado => {
+          let relevanceScore = 0;
+          const assunto = assuntos?.find(a => a.id === chamado.assunto_id);
+          const searchText = `${chamado.titulo} ${chamado.descricao} ${chamado.tipo} ${assunto?.nome || ''}`.toLowerCase();
+          
+          // Exact phrase match
+          if (searchText.includes(queryLower)) {
+            relevanceScore += 10;
+          }
+          
+          // Keyword matches
+          keywords.forEach(keyword => {
+            if (searchText.includes(keyword)) {
+              relevanceScore += 1;
+            }
+          });
+          
+          // Priority for recent tickets
+          const daysSinceCreated = (Date.now() - new Date(chamado.created_at).getTime()) / (1000 * 60 * 60 * 24);
+          if (daysSinceCreated < 7) relevanceScore += 2; // Recent tickets get bonus
+          
+          return { ...chamado, relevanceScore, assunto };
+        })
+        .filter(chamado => chamado.relevanceScore > 0)
+        .sort((a, b) => b.relevanceScore - a.relevanceScore)
+        .slice(0, 3); // Top 3 most relevant
+    }
+
+    // Enhanced web search function with better targeting
+    async function searchWebContent(query: string, enableWebSearch: boolean = true): Promise<string> {
+      if (!enableWebSearch) {
+        console.log('Web search disabled by user preference');
+        return '';
+      }
+      
       try {
-        // Search TRT15 and judicial sites
+        console.log('Searching for additional context from external sources...');
+        
+        // Search TRT15 and judicial sites with better queries
         const searchQueries = [
           `site:trt15.jus.br ${query}`,
           `site:cnj.jus.br ${query}`,
-          `site:tst.jus.br ${query}`
+          `site:tst.jus.br ${query}`,
+          `"${query}" tribunal regional trabalho`,
+          `${query} processo judicial eletrônico`
         ];
         
         let webContext = '';
+        let searchCount = 0;
+        const maxSearches = 3; // Limit web searches
         
         for (const searchQuery of searchQueries) {
+          if (searchCount >= maxSearches) break;
+          
           try {
             console.log(`Searching: ${searchQuery}`);
-            // Use a simple DuckDuckGo search API or similar
             const searchResponse = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&no_html=1&skip_disambig=1`);
             
             if (searchResponse.ok) {
               const searchData = await searchResponse.json();
-              if (searchData.AbstractText) {
+              if (searchData.AbstractText && searchData.AbstractText.length > 50) {
                 webContext += `${searchData.AbstractText}\n\n`;
+                searchCount++;
               }
-              if (searchData.RelatedTopics) {
-                const topics = searchData.RelatedTopics.slice(0, 2).map((topic: any) => topic.Text).join('\n');
-                webContext += `${topics}\n\n`;
+              if (searchData.RelatedTopics && searchData.RelatedTopics.length > 0) {
+                const topics = searchData.RelatedTopics.slice(0, 1).map((topic: any) => topic.Text).join('\n');
+                if (topics.length > 30) {
+                  webContext += `${topics}\n\n`;
+                }
               }
             }
           } catch (searchError) {
@@ -155,21 +234,47 @@ serve(async (req) => {
       }
     }
 
-    // Perform web search if relevant
+    // Extract search parameters from request body
+    const { message: userMessage, conversationHistory = [], enableWebSearch = true, searchMode = 'auto' } = requestBody;
+    console.log('Message received:', userMessage);
+    console.log('Search configuration:', { enableWebSearch, searchMode });
+    
+    // Smart search: First check internal sources, then web if needed
+    const relevantKnowledge = searchRelevantKnowledge(userMessage, knowledgeBase || []);
+    const relevantTickets = searchRelevantTickets(userMessage, chamados || [], assuntos || []);
+    
+    console.log('Internal search results:', {
+      relevantKnowledge: relevantKnowledge.length,
+      relevantTickets: relevantTickets.length,
+      enableWebSearch
+    });
+    
+    // Only search web if internal sources don't provide enough context
     let webContext = '';
-    if (message && message.length > 10) {
-      webContext = await searchWebContent(message);
+    const hasInternalContext = relevantKnowledge.length > 0 || relevantTickets.length > 0;
+    
+    // Apply search mode logic
+    if (searchMode === 'web' || (searchMode === 'auto' && (!hasInternalContext || enableWebSearch) && userMessage && userMessage.length > 10)) {
+      webContext = await searchWebContent(userMessage, enableWebSearch || searchMode === 'web');
     }
 
-    // Create context for the AI
-    const knowledgeContext = knowledgeBase?.map(kb => 
-      `Título: ${kb.titulo}\nProblema: ${kb.problema_descricao}\nSolução: ${kb.solucao}\nCategoria: ${kb.categoria || 'N/A'}\nTags: ${kb.tags?.join(', ') || 'N/A'}`
-    ).join('\n\n---\n\n') || '';
+    // Create context for the AI using filtered and relevant results
+    const knowledgeContext = relevantKnowledge.length > 0 ? 
+      relevantKnowledge.map(kb => 
+        `Título: ${kb.titulo}\nProblema: ${kb.problema_descricao}\nSolução: ${kb.solucao}\nCategoria: ${kb.categoria || 'N/A'}\nTags: ${kb.tags?.join(', ') || 'N/A'}\nRelevância: ${kb.relevanceScore}`
+      ).join('\n\n---\n\n') : 
+      knowledgeBase?.slice(0, 3).map(kb => 
+        `Título: ${kb.titulo}\nProblema: ${kb.problema_descricao}\nSolução: ${kb.solucao}\nCategoria: ${kb.categoria || 'N/A'}\nTags: ${kb.tags?.join(', ') || 'N/A'}`
+      ).join('\n\n---\n\n') || '';
 
-    const chamadosContext = chamados?.map(chamado => {
-      const assunto = assuntos?.find(a => a.id === chamado.assunto_id);
-      return `Título: ${chamado.titulo}\nDescrição: ${chamado.descricao}\nTipo: ${chamado.tipo || 'N/A'}\nStatus: ${chamado.status}\nAssunto: ${assunto?.nome || 'N/A'}\nData: ${new Date(chamado.created_at).toLocaleDateString('pt-BR')}`;
-    }).join('\n\n---\n\n') || '';
+    const chamadosContext = relevantTickets.length > 0 ?
+      relevantTickets.map(chamado => {
+        return `Título: ${chamado.titulo}\nDescrição: ${chamado.descricao}\nTipo: ${chamado.tipo || 'N/A'}\nStatus: ${chamado.status}\nAssunto: ${chamado.assunto?.nome || 'N/A'}\nData: ${new Date(chamado.created_at).toLocaleDateString('pt-BR')}\nRelevância: ${chamado.relevanceScore}`;
+      }).join('\n\n---\n\n') :
+      chamados?.slice(0, 3).map(chamado => {
+        const assunto = assuntos?.find(a => a.id === chamado.assunto_id);
+        return `Título: ${chamado.titulo}\nDescrição: ${chamado.descricao}\nTipo: ${chamado.tipo || 'N/A'}\nStatus: ${chamado.status}\nAssunto: ${assunto?.nome || 'N/A'}\nData: ${new Date(chamado.created_at).toLocaleDateString('pt-BR')}`;
+      }).join('\n\n---\n\n') || '';
 
     // Create calendar context
     const feriadosContext = feriados?.map(feriado => 
@@ -225,29 +330,34 @@ ${customEventsContext}
 ${webContext ? `CONTEXTO ADICIONAL DA WEB (sites oficiais do TRT15, CNJ, TST):
 ${webContext}` : ''}
 
-INSTRUÇÕES PRIORITÁRIAS:
-1. **SEMPRE CONSULTE PRIMEIRO** a base de conhecimento interna e chamados recentes antes de dar qualquer resposta
-2. Use PRIORITARIAMENTE as informações da base de conhecimento e chamados recentes do TRT15
-3. Para perguntas sobre calendário, feriados, aniversários ou eventos, consulte as informações de calendário disponíveis
-4. Para perguntas sobre informações importantes, senhas, URLs ou notas pessoais, consulte as memórias importantes
-5. Complemente com informações dos sites oficiais (TRT15, CNJ, TST) quando disponíveis
-6. Se a informação não estiver disponível em nenhuma fonte consultada, informe claramente
-7. Responda sempre em português brasileiro de forma educada e profissional
-8. Para problemas já solucionados na base de conhecimento, referencie a solução existente
-9. Para problemas similares aos chamados recentes, mencione isso no contexto
-10. Para problemas técnicos, sugira passos claros baseados nas soluções conhecidas
-11. Se necessário, recomende a criação de um novo chamado
-12. **IMPORTANTE**: Nunca invente informações - use apenas o que está disponível nas fontes consultadas
-13. Para informações de calendário, sempre mencione datas próximas relevantes
-14. Para memórias importantes, mantenha a confidencialidade e só forneça informações quando solicitado diretamente
+INSTRUÇÕES PRIORITÁRIAS PARA BUSCA INTELIGENTE:
+1. **PRIORIDADE MÁXIMA**: Base de conhecimento interna do TRT15 (ordenada por relevância)
+2. **ALTA PRIORIDADE**: Chamados recentes similares (especialmente últimos 7 dias)
+3. **MÉDIA PRIORIDADE**: Informações de calendário, memórias importantes
+4. **BAIXA PRIORIDADE**: Busca web (sites oficiais TRT15, CNJ, TST) - APENAS quando necessário
+5. **CONTEXTO RELEVANTE**: As informações foram filtradas por relevância - use-as prioritariamente
 
-ORDEM DE PRIORIDADE DAS FONTES:
-1. Base de conhecimento interna do TRT15
-2. Chamados recentes similares
-3. Informações de calendário (feriados, aniversários, eventos)
-4. Memórias importantes (quando relevante)
-5. Sites oficiais (TRT15, CNJ, TST)
-6. Conhecimento geral sobre tecnologia e direito trabalhista
+REGRAS DE RESPOSTA:
+- **SEMPRE mencione** se a resposta vem da base de conhecimento interna
+- **SEMPRE indique** se há soluções similares em chamados recentes
+- **Se usar busca web**, informe claramente que são informações complementares
+- **Para problemas já resolvidos**: Referencie diretamente a solução da base
+- **Para problemas similares**: Mencione chamados recentes relacionados
+- **Nunca invente**: Use apenas informações das fontes consultadas
+- **Seja específico**: Mencione números de relevância quando disponíveis
+
+ESTRATÉGIA DE BUSCA APLICADA:
+- ✅ Busca inteligente por palavras-chave na base interna
+- ✅ Filtro de chamados por relevância e data
+- ✅ Busca web SOMENTE quando contexto interno é insuficiente
+- ✅ Priorização automática por relevância (scores incluídos)
+
+ORDEM DE PRIORIDADE DAS FONTES (OTIMIZADA):
+1. 🥇 Base de conhecimento (filtrada por relevância)
+2. 🥈 Chamados recentes (últimos 7 dias têm prioridade)
+3. 🥉 Informações de calendário e memórias
+4. 🔍 Sites oficiais (TRT15, CNJ, TST) - busca complementar
+5. 💡 Conhecimento geral (último recurso)
 
 Responda de forma útil e contextualizada baseando-se OBRIGATORIAMENTE nas informações fornecidas.`;
 
@@ -267,7 +377,7 @@ Responda de forma útil e contextualizada baseando-se OBRIGATORIAMENTE nas infor
     const messages = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory,
-      { role: 'user', content: message }
+      { role: 'user', content: userMessage }
     ];
 
     // Call OpenAI API

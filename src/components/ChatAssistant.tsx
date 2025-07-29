@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { Bot, Send, User, Loader2, MessageSquare, X, Sparkles, Zap, Trash2 } from "lucide-react";
+import { Bot, Send, User, Loader2, MessageSquare, X, Sparkles, Zap, Trash2, Globe, Database, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
@@ -39,6 +42,8 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [enableWebSearch, setEnableWebSearch] = useState(true);
+  const [searchMode, setSearchMode] = useState<'auto' | 'internal' | 'web'>('auto');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -94,7 +99,9 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
       const { data, error } = await supabase.functions.invoke('chat-assistant', {
         body: {
           message: userMessage.content,
-          conversationHistory: conversationHistory
+          conversationHistory: conversationHistory,
+          enableWebSearch: searchMode === 'auto' ? enableWebSearch : searchMode === 'web',
+          searchMode: searchMode
         }
       });
 
@@ -296,12 +303,59 @@ Como posso ajudá-lo com base nas informações disponíveis?`;
             <span className="font-bold text-blue-800 text-lg dark:text-blue-100">Assistente TRT15</span>
             <span className="text-sm text-blue-600 font-normal dark:text-blue-300">Powered by IA</span>
           </div>
-          <Badge className="bg-gradient-pastel-green/60 text-green-700 border-green-200/60 text-sm font-medium font-roboto dark:bg-green-600/80 dark:text-green-100 dark:border-green-500/50">
-            <Zap className="h-4 w-4 mr-1" />
-            Online
+          <Badge className={`text-sm font-medium font-roboto border ${
+            searchMode === 'auto' ? 'bg-gradient-pastel-green/60 text-green-700 border-green-200/60 dark:bg-green-600/80 dark:text-green-100 dark:border-green-500/50' :
+            searchMode === 'internal' ? 'bg-gradient-pastel-blue/60 text-blue-700 border-blue-200/60 dark:bg-blue-600/80 dark:text-blue-100 dark:border-blue-500/50' :
+            'bg-gradient-pastel-purple/60 text-purple-700 border-purple-200/60 dark:bg-purple-600/80 dark:text-purple-100 dark:border-purple-500/50'
+          }`}>
+            {searchMode === 'auto' && <Zap className="h-4 w-4 mr-1" />}
+            {searchMode === 'internal' && <Database className="h-4 w-4 mr-1" />}
+            {searchMode === 'web' && <Globe className="h-4 w-4 mr-1" />}
+            {searchMode === 'auto' ? 'Inteligente' : searchMode === 'internal' ? 'Base Interna' : 'Busca Web'}
           </Badge>
         </CardTitle>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const modes: Array<'auto' | 'internal' | 'web'> = ['auto', 'internal', 'web'];
+                    const currentIndex = modes.indexOf(searchMode);
+                    const nextMode = modes[(currentIndex + 1) % modes.length];
+                    setSearchMode(nextMode);
+                    toast({
+                      title: "Modo de busca alterado",
+                      description: `Agora usando: ${
+                        nextMode === 'auto' ? 'Busca Inteligente (recomendado)' :
+                        nextMode === 'internal' ? 'Apenas Base Interna' :
+                        'Busca Web Prioritária'
+                      }`,
+                      duration: 2000,
+                    });
+                  }}
+                  className="h-8 px-3 hover:bg-blue-100/60 transition-colors dark:hover:bg-blue-900/50 text-xs"
+                >
+                  <Search className="h-3 w-3 mr-1" />
+                  {searchMode === 'auto' ? 'Auto' : searchMode === 'internal' ? 'Base' : 'Web'}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-sm">
+                  <strong>Modo atual:</strong> {
+                    searchMode === 'auto' ? 'Busca Inteligente' :
+                    searchMode === 'internal' ? 'Apenas Base Interna' :
+                    'Busca Web Prioritária'
+                  }
+                  <br />
+                  <em>Clique para alternar</em>
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
           <Button
             variant="ghost"
             size="icon"
@@ -419,18 +473,42 @@ Como posso ajudá-lo com base nas informações disponíveis?`;
             </Button>
           </div>
           
-          {/* Dicas rápidas */}
+          {/* Dicas rápidas e indicador de modo de busca */}
           {messages.length === 1 && !isLoading && (
-            <div className="mt-3 flex gap-2 flex-wrap">
-              {['Como criar um chamado?', 'Problemas de acesso', 'Status do sistema'].map((suggestion) => (
-                <button
-                  key={suggestion}
-                  onClick={() => setInputValue(suggestion)}
-                  className="text-sm px-4 py-2 bg-gradient-pastel-green/40 text-green-700 rounded-full border border-green-200/40 hover:bg-gradient-pastel-green/60 transition-all duration-200 hover:scale-105 font-medium font-roboto dark:bg-green-600/60 dark:text-green-100 dark:border-green-500/50 dark:hover:bg-green-600/80"
-                >
-                  {suggestion}
-                </button>
-              ))}
+            <div className="mt-3">
+              <div className="flex gap-2 flex-wrap mb-3">
+                {['Como criar um chamado?', 'Problemas de acesso', 'Status do sistema'].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    onClick={() => setInputValue(suggestion)}
+                    className="text-sm px-4 py-2 bg-gradient-pastel-green/40 text-green-700 rounded-full border border-green-200/40 hover:bg-gradient-pastel-green/60 transition-all duration-200 hover:scale-105 font-medium font-roboto dark:bg-green-600/60 dark:text-green-100 dark:border-green-500/50 dark:hover:bg-green-600/80"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Indicador do modo de busca */}
+              <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 bg-gray-50/50 dark:bg-gray-800/30 rounded-lg p-2">
+                {searchMode === 'auto' && (
+                  <>
+                    <Zap className="h-3 w-3 text-green-600" />
+                    <span><strong>Busca Inteligente:</strong> Prioriza base interna, complementa com web quando necessário</span>
+                  </>
+                )}
+                {searchMode === 'internal' && (
+                  <>
+                    <Database className="h-3 w-3 text-blue-600" />
+                    <span><strong>Base Interna:</strong> Busca apenas na base de conhecimento e chamados do TRT15</span>
+                  </>
+                )}
+                {searchMode === 'web' && (
+                  <>
+                    <Globe className="h-3 w-3 text-purple-600" />
+                    <span><strong>Busca Web:</strong> Inclui sites oficiais (TRT15, CNJ, TST) além da base interna</span>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
