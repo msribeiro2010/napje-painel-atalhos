@@ -7,15 +7,19 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
-    "build:prod": "vite build --mode production",
+    "build:prod": "vite build --mode production --config vite.config.production.ts",
+    "build:analyze": "vite build --config vite.config.production.ts && npx vite-bundle-analyzer dist",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "deploy": "./scripts/deploy.sh",
+    "deploy:production": "./scripts/deploy-production.sh",
     "deploy:check": "npm run type-check && npm run build",
     "clean": "rm -rf dist",
-    "analyze": "npm run build && npx vite-bundle-analyzer dist"
+    "analyze": "npm run build && npx vite-bundle-analyzer dist",
+    "pre-deploy": "npm run clean && npm run lint && npm run type-check && npm run build:prod",
+    "post-deploy": "echo 'Deploy concluído! Verifique: https://msribeiro2010.github.io/napje-painel-atalhos/'"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
