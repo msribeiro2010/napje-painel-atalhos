@@ -7,7 +7,7 @@ import { DateDisplay } from '@/components/ui/date-display';
 import { EventNotificationBadge } from '@/components/EventNotificationBadge';
 import { WeeklyNotificationsManager } from '@/components/weekly-notifications/WeeklyNotificationsManager';
 import { PastEventsDialog } from '@/components/PastEventsDialog';
-import { EventNotificationSettings } from '@/components/EventNotificationSettings';
+
 
 interface DashboardHeaderProps {
   isAdmin?: boolean;
@@ -81,7 +81,6 @@ export const DashboardHeader = ({ isAdmin }: DashboardHeaderProps) => {
           <div className="flex items-center gap-1 bg-primary/5 border border-primary/20 rounded-lg p-1">
             <EventNotificationBadge />
             <PastEventsDialog />
-            <EventNotificationSettings />
           </div>
           
           {/* Notificações semanais */}
