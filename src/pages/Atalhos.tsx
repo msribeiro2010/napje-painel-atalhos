@@ -45,13 +45,13 @@ interface GroupButton {
   id: string;
   title: string;
   url: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 interface Group {
   id: string;
   title: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   buttons: GroupButton[];
 }
 
@@ -78,8 +78,8 @@ interface Shortcut {
 }
 
 // Mapeamento de ícones - converte string de emoji para componente React
-const getIconComponent = (iconString: string) => {
-  const iconMap: Record<string, any> = {
+const getIconComponent = (iconString: string): React.ComponentType<{ className?: string }> => {
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     '📅': Calendar,
     '✅': CalendarCheck,
     '🔍': Search,
@@ -124,7 +124,7 @@ const ShortcutButton = ({
   onToggleFavorite,
   onOpenUrl
 }: { 
-  icon: any, 
+  icon: React.ComponentType<{ className?: string }>, 
   title: string, 
   url: string, 
   id: string,
@@ -543,7 +543,7 @@ const Atalhos = () => {
     const remainingGroups = groups.filter(group => !orderedIds.includes(group.id));
     
     return [...orderedGroupsArray, ...remainingGroups];
-  }, [preferences.groupOrder]);
+  }, [groups, preferences.groupOrder]);
 
   // Filtrar grupos baseado na busca
   const filteredGroups = useMemo(() => {
@@ -570,7 +570,7 @@ const Atalhos = () => {
       });
     });
     return results;
-  }, [searchTerm]);
+  }, [groups, searchTerm]);
 
   // Criar array de botões favoritos
   const favoriteButtons = useMemo(() => {
@@ -583,7 +583,7 @@ const Atalhos = () => {
       });
     });
     return allButtons;
-  }, [favorites]);
+  }, [groups, favorites]);
 
   // Estado para feedback visual de drop
   const [isOverFavorites, setIsOverFavorites] = useState(false);
@@ -639,7 +639,7 @@ const Atalhos = () => {
   };
 
   // Função para lidar com drag over na área de favoritos
-  const handleDragOver = (event: any) => {
+  const handleDragOver = (event: { over?: { id?: string } }) => {
     const { over } = event;
     if (over && over.id === 'favorites-dropzone') {
       setIsOverFavorites(true);

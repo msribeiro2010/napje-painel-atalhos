@@ -115,14 +115,14 @@ const ImportantMemories: React.FC = () => {
     return filtered;
   }, [memories, searchTerm, selectedCategory, showFavoritesOnly, sortBy]);
 
-  const handleCreateMemory = async (data: any) => {
+  const handleCreateMemory = async (data: Record<string, unknown>) => {
     setIsFormLoading(true);
     const success = await createMemory(data);
     setIsFormLoading(false);
     return success;
   };
 
-  const handleUpdateMemory = async (data: any) => {
+  const handleUpdateMemory = async (data: Record<string, unknown>) => {
     if (!editingMemory) return false;
     setIsFormLoading(true);
     const success = await updateMemory(editingMemory.id, data);

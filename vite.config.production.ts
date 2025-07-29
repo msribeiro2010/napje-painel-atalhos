@@ -47,50 +47,37 @@ export default defineConfig({
     // Configuração de chunks para otimizar carregamento
     rollupOptions: {
       output: {
-        // Estratégia de chunking otimizada para IA
-        manualChunks: {
-          // Vendor chunks principais
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-ui': ['@radix-ui/react-accordion', '@radix-ui/react-alert-dialog', '@radix-ui/react-avatar', '@radix-ui/react-button'],
-          'vendor-query': ['@tanstack/react-query'],
-          'vendor-router': ['react-router-dom'],
-          'vendor-supabase': ['@supabase/supabase-js'],
+        // Estratégia de chunking automática
+        manualChunks(id) {
+          // Vendors principais
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query';
+            }
+            if (id.includes('react-router')) {
+              return 'vendor-router';
+            }
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            return 'vendor';
+          }
           
-          // Chunks específicos de IA
-          'ai-search': [
-            './src/hooks/useSmartSearch.ts',
-            './src/components/SmartSearchDialog.tsx',
-            './src/hooks/useDebounce.ts'
-          ],
-          'ai-insights': [
-            './src/hooks/useAIInsights.ts',
-            './src/components/AIInsightsPanel.tsx'
-          ],
-          'ai-forms': [
-            './src/hooks/useSmartFormFill.ts'
-          ],
-          'ai-notifications': [
-            './src/hooks/useSmartNotifications.ts'
-          ],
-          
-          // Chunks de funcionalidades
-          'features-dashboard': [
-            './src/pages/Dashboard.tsx',
-            './src/components/dashboard/DashboardHeader.tsx',
-            './src/components/dashboard/DashboardActions.tsx'
-          ],
-          'features-chat': [
-            './src/components/ChatAssistant.tsx'
-          ],
-          'features-calendar': [
-            './src/pages/Calendario.tsx'
-          ],
-          
-          // Utilities
-          'utils': [
-            './src/lib/utils.ts',
-            './src/utils/',
-          ],
+          // Funcionalidades IA
+          if (id.includes('useSmartSearch') || 
+              id.includes('useAIInsights') || 
+              id.includes('useSmartFormFill') || 
+              id.includes('useSmartNotifications') ||
+              id.includes('SmartSearchDialog') ||
+              id.includes('AIInsightsPanel')) {
+            return 'ai-features';
+          }
         },
         
         // Nomenclatura dos arquivos

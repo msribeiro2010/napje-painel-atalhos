@@ -24,7 +24,7 @@ interface SearchResult {
   description: string;
   type: string;
   score: number;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   url?: string;
 }
 
@@ -143,7 +143,7 @@ serve(async (req) => {
           results.push({
             id: usuario.id,
             title: usuario.nome_completo || usuario.email || 'Usuário',
-            description: `${usuario.cargo} - ${usuario.setor}` || 'Usuário do sistema',
+            description: usuario.cargo && usuario.setor ? `${usuario.cargo} - ${usuario.setor}` : 'Usuário do sistema',
             type: 'usuario',
             score,
             metadata: includeMetadata ? {
@@ -226,7 +226,7 @@ serve(async (req) => {
 })
 
 // Função para calcular relevância baseada em múltiplos fatores
-function calculateRelevanceScore(searchTerms: string, content: any): number {
+function calculateRelevanceScore(searchTerms: string, content: Record<string, string>): number {
   let score = 0
   const searchWords = searchTerms.split(' ').filter(word => word.length > 2)
 
@@ -325,7 +325,7 @@ function truncateText(text: string, maxLength: number): string {
 
 // Função para registrar consultas para análise futura
 async function logSearchQuery(
-  supabaseClient: any, 
+  supabaseClient: { from: (table: string) => { insert: (data: Record<string, unknown>) => Promise<unknown> } }, 
   query: string, 
   resultsCount: number, 
   processedTerms: string

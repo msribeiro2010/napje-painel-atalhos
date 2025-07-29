@@ -18,7 +18,8 @@ import { ChatAssistant } from '@/components/ChatAssistant';
 import { EventNotificationModal } from '@/components/EventNotificationModal';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
-import { useWorkCalendar, WorkStatus } from '@/hooks/useWorkCalendar';
+import { useWorkCalendar } from '@/hooks/useWorkCalendar';
+import type { WorkStatus } from '@/hooks/useWorkCalendar';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
@@ -225,8 +226,6 @@ const Dashboard = () => {
       color: "bg-gradient-to-r from-indigo-500 to-indigo-600"
     }
   ];
-
-  const isAdmin = user?.user_metadata?.role === 'admin';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">

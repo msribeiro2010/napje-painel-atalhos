@@ -159,7 +159,7 @@ const CriarChamado = () => {
     }
   }, [isDirty, salvarUsuario, salvarChamado]);
 
-  const handleSelectTemplate = useCallback((template: any) => {
+  const handleSelectTemplate = useCallback((template: { nome: string; dados: Record<string, unknown> }) => {
     // Aplicar dados do template ao formulário
     const newFormData = {
       ...formData,
@@ -173,12 +173,12 @@ const CriarChamado = () => {
     toast.success(`Template "${template.nome}" aplicado com sucesso!`);
   }, [formData]);
 
-  const handleSelectHistoryItem = useCallback((item: any) => {
+  const handleSelectHistoryItem = useCallback((item: Record<string, unknown>) => {
     setShowAIHistory(false);
     toast.info('Item do histórico selecionado');
   }, []);
 
-  const handleApplyHistoryToForm = useCallback((item: any) => {
+  const handleApplyHistoryToForm = useCallback((item: { formData: Record<string, string> }) => {
     // Aplicar dados do histórico ao formulário
     const newFormData = {
       ...formData,

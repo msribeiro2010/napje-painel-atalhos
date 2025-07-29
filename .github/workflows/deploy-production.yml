@@ -51,8 +51,8 @@ jobs:
           
       - name: 🧹 Lint
         run: |
-          echo "🔍 Executando ESLint..."
-          npm run lint
+          echo "🔍 Executando ESLint para produção..."
+                     npm run lint
           
       - name: 🔎 Type Check
         run: |

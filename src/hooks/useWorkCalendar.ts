@@ -42,7 +42,7 @@ export const useWorkCalendar = (month: Date) => {
     } finally {
       setLoading(false);
     }
-  }, [user, month.getFullYear(), month.getMonth(), loading]);
+  }, [user, month, loading]);
 
   const saveMark = useCallback(async (date: string, status: WorkStatus) => {
     if (!user || loading) return;
