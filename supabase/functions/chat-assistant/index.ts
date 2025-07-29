@@ -283,7 +283,20 @@ serve(async (req) => {
     ).join('\n\n---\n\n') || '';
 
     const aniversariantesContext = aniversariantes?.slice(0, 10).map(aniversariante => {
+      // Validate that data_nascimento exists
+      if (!aniversariante.data_nascimento) {
+        console.warn('Aniversariante sem data de nascimento:', aniversariante);
+        return `Nome: ${aniversariante.nome}\nData de Nascimento: Não informada\nIdade: Não calculável\nPróximo Aniversário: Não calculável`;
+      }
+
       const nascimento = new Date(aniversariante.data_nascimento);
+      
+      // Validate that the date is valid
+      if (isNaN(nascimento.getTime())) {
+        console.warn('Data de nascimento inválida:', aniversariante.data_nascimento);
+        return `Nome: ${aniversariante.nome}\nData de Nascimento: Inválida\nIdade: Não calculável\nPróximo Aniversário: Não calculável`;
+      }
+
       const hoje = new Date();
       const aniversarioEsteAno = new Date(hoje.getFullYear(), nascimento.getMonth(), nascimento.getDate());
       const idade = hoje.getFullYear() - nascimento.getFullYear();

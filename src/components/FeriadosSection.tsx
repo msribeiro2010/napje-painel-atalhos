@@ -39,7 +39,20 @@ export const FeriadosSection = () => {
 
   // Filtrar feriados do mês atual
   const feriadosDoMes = feriados?.filter(f => {
+    // Validate that f.data exists
+    if (!f.data) {
+      console.warn('Feriado sem data:', f);
+      return false;
+    }
+
     const dataFeriado = new Date(f.data + 'T12:00:00');
+    
+    // Validate that the date is valid
+    if (isNaN(dataFeriado.getTime())) {
+      console.warn('Data de feriado inválida:', f.data);
+      return false;
+    }
+
     return dataFeriado.getMonth() + 1 === mesAtual && dataFeriado.getFullYear() === anoAtual;
   });
 
