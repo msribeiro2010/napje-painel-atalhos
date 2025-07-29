@@ -21,6 +21,7 @@ import { useState, useEffect } from 'react';
 interface FormSectionProps {
   formData: FormData;
   onInputChange: (field: keyof FormData, value: string | boolean) => void;
+  onMultipleInputChange?: (updates: Partial<FormData>) => void;
   onGenerateDescription: () => void;
   onResetForm: () => void;
   onShowAIHistory?: () => void;
@@ -28,7 +29,7 @@ interface FormSectionProps {
   validationErrors?: Record<string, string>;
 }
 
-export const FormSection = ({ formData, onInputChange, onGenerateDescription, onResetForm, onShowAIHistory, onShowAISettings, validationErrors = {} }: FormSectionProps) => {
+export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onResetForm, onShowAIHistory, onShowAISettings, validationErrors = {} }: FormSectionProps) => {
   const { 
     buscarSugestoesOrgaoJulgador, 
     buscarSugestoesPerfil, 
@@ -72,15 +73,23 @@ export const FormSection = ({ formData, onInputChange, onGenerateDescription, on
   }, [formData.grau]);
 
   const handleProcessoChange = (value: string) => {
-    onInputChange('processos', value);
-    
     // Auto-preenchimento do órgão julgador para 1º grau
     if (formData.grau === '1º Grau' && value.trim()) {
       const orgaoJulgador = obterOrgaoJulgadorDoProcesso(value.trim());
-      if (orgaoJulgador) {
-        onInputChange('orgaoJulgador', orgaoJulgador);
+      
+      if (orgaoJulgador && onMultipleInputChange) {
+        // Use multiple input change to update both fields at once
+        // This prevents the race condition where processos field gets cleared
+        onMultipleInputChange({
+          processos: value,
+          orgaoJulgador: orgaoJulgador
+        });
+        return;
       }
     }
+    
+    // Fallback to single field update
+    onInputChange('processos', value);
   };
 
 

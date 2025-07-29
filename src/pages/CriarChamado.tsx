@@ -220,6 +220,33 @@ const CriarChamado = () => {
      }, 3000); // Salvar após 3 segundos de inatividade
    };
 
+   const handleMultipleInputChange = (updates: Partial<FormData>) => {
+     const newFormData = {
+       ...formData,
+       ...updates
+     };
+     
+     setFormData(newFormData);
+     setIsGenerated(false);
+     setIsDirty(true);
+     
+     // Validação em tempo real para cada campo atualizado
+     Object.entries(updates).forEach(([field, value]) => {
+       if (typeof value === 'string' || typeof value === 'boolean') {
+         validateField(field as keyof FormData, value);
+       }
+     });
+     
+     // Configurar salvamento automático
+     if (autoSaveTimeoutRef.current) {
+       clearTimeout(autoSaveTimeoutRef.current);
+     }
+     
+     autoSaveTimeoutRef.current = setTimeout(() => {
+       autoSave(newFormData);
+     }, 3000); // Salvar após 3 segundos de inatividade
+   };
+
    // Cleanup do timeout
    useEffect(() => {
      return () => {
@@ -428,6 +455,7 @@ const CriarChamado = () => {
             <FormSection
           formData={formData}
           onInputChange={handleInputChange}
+          onMultipleInputChange={handleMultipleInputChange}
           onGenerateDescription={handleGenerateDescription}
           onResetForm={resetForm}
           onShowAIHistory={() => setShowAIHistory(true)}
