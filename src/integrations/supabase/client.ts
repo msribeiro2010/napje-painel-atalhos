@@ -21,7 +21,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   },
   global: {
     headers: {
-      'Cache-Control': 'no-cache',
+      // Removed Cache-Control header to fix CORS issue with Edge Functions
     },
   },
   db: {
