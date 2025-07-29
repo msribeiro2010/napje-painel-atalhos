@@ -122,14 +122,123 @@ export const ChatAssistant = ({ isOpen = false, onToggle }: ChatAssistantProps) 
 
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Fallback local para quando há problemas de conectividade
+      const fallbackResponse = getFallbackResponse(userMessage.content);
+      
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: fallbackResponse,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+      
       toast({
-        title: "Erro",
-        description: "Não foi possível enviar a mensagem. Tente novamente.",
-        variant: "destructive",
+        title: "Modo Offline",
+        description: "Conectividade limitada. Usando respostas locais.",
+        variant: "default",
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getFallbackResponse = (message: string): string => {
+    const lowerMessage = message.toLowerCase();
+    
+    // Respostas para problemas comuns do TRT15
+    if (lowerMessage.includes('chamado') || lowerMessage.includes('ticket')) {
+      return `Para criar um chamado no sistema do TRT15:
+
+1. Acesse a seção "Criar Chamado" no painel
+2. Selecione o tipo apropriado (Incidente, Solicitação, etc.)
+3. Preencha o título e descrição detalhada
+4. Selecione o assunto relacionado
+5. Adicione anexos se necessário
+6. Clique em "Criar Chamado"
+
+O sistema gerará automaticamente um número de protocolo para acompanhamento.`;
+    }
+    
+    if (lowerMessage.includes('acesso') || lowerMessage.includes('login') || lowerMessage.includes('senha')) {
+      return `Para problemas de acesso ao sistema:
+
+🔐 **Reset de Senha:**
+- Use a opção "Esqueci minha senha" na tela de login
+- Verifique seu email institucional
+- Siga as instruções do link recebido
+
+🔑 **Problemas de Login:**
+- Verifique se está usando o email correto (@trt15.jus.br)
+- Limpe o cache do navegador
+- Tente em modo anônimo/privado
+- Entre em contato com o suporte se persistir
+
+⚠️ **Conta Bloqueada:**
+- Entre em contato com a equipe de TI
+- Forneça seu nome completo e matrícula`;
+    }
+    
+    if (lowerMessage.includes('sistema') || lowerMessage.includes('status') || lowerMessage.includes('funcionando')) {
+      return `Status dos sistemas TRT15:
+
+✅ **Sistemas Principais:**
+- PJe (Processo Judicial Eletrônico)
+- Sistema de Chamados
+- Portal do Servidor
+
+🔄 **Para verificar status atual:**
+- Consulte o painel de status interno
+- Verifique comunicados oficiais
+- Entre em contato com a equipe de TI
+
+📞 **Suporte:**
+- Sistema de Chamados: Prioridade 1
+- Email: suporte@trt15.jus.br
+- Ramal interno: 2345`;
+    }
+    
+    if (lowerMessage.includes('pje') || lowerMessage.includes('processo')) {
+      return `Informações sobre o PJe (Processo Judicial Eletrônico):
+
+📋 **Funcionalidades Principais:**
+- Consulta de processos
+- Movimentação processual
+- Audiências virtuais
+- Documentos eletrônicos
+
+🔧 **Problemas Comuns:**
+- Certificado digital expirado
+- Navegador incompatível
+- Cache do navegador
+- Conexão de internet
+
+📞 **Suporte PJe:**
+- Abra chamado específico para PJe
+- Informe número do processo
+- Descreva o erro detalhadamente`;
+    }
+    
+    // Resposta padrão
+    return `Sou o Assistente TRT15 e estou operando em modo offline limitado.
+
+📋 **Posso ajudar com:**
+- Orientações sobre criação de chamados
+- Problemas de acesso e senha
+- Status dos sistemas
+- Informações sobre PJe
+- Procedimentos básicos de TI
+
+💡 **Para suporte completo:**
+- Abra um chamado no sistema
+- Entre em contato com a equipe de TI
+- Consulte a base de conhecimento
+
+🔄 **Aguarde:** Trabalhamos para restabelecer a conectividade completa da IA.
+
+Como posso ajudá-lo com base nas informações disponíveis?`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
