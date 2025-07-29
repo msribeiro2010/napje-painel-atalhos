@@ -177,10 +177,8 @@ const Dashboard = () => {
     // O React Query irá automaticamente revalidar a query
   };
 
-  const workCalendar = useWorkCalendar();
+  // Remove the problematic workCalendar code that doesn't match the hook's interface
   const today = new Date();
-  const isBusinessDay = workCalendar?.getWorkStatus(today) === WorkStatus.WORKING;
-  const nextBusinessDay = workCalendar?.getNextBusinessDay(today);
 
   const actions: DashboardAction[] = [
     {
@@ -234,8 +232,6 @@ const Dashboard = () => {
         {/* Header Modernizado */}
         <DashboardHeader 
           user={user} 
-          isBusinessDay={isBusinessDay}
-          nextBusinessDay={nextBusinessDay}
           onSearch={() => setSmartSearchOpen(true)}
         />
 
