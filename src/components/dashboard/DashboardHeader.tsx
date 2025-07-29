@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Settings, Bell } from 'lucide-react';
+import { ExternalLink, Settings, Bell, Search, Brain } from 'lucide-react';
 import UserMenu from '@/components/UserMenu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Clock } from '@/components/ui/clock';
@@ -10,10 +10,15 @@ import { PastEventsDialog } from '@/components/PastEventsDialog';
 
 
 interface DashboardHeaderProps {
-  isAdmin?: boolean;
+  user?: any;
+  isBusinessDay?: boolean;
+  nextBusinessDay?: Date;
+  onSearch?: () => void;
 }
 
-export const DashboardHeader = ({ isAdmin }: DashboardHeaderProps) => {
+export const DashboardHeader = ({ user, isBusinessDay, nextBusinessDay, onSearch }: DashboardHeaderProps) => {
+  const isAdmin = user?.user_metadata?.role === 'admin';
+  
   return (
     <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/20 shadow-soft">
       {/* Header Principal */}
@@ -42,6 +47,19 @@ export const DashboardHeader = ({ isAdmin }: DashboardHeaderProps) => {
         
         {/* Seção direita - Ferramentas principais */}
         <div className="flex items-center gap-3">
+          {/* Busca Inteligente */}
+          {onSearch && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onSearch}
+              className="flex items-center gap-2 hover:bg-purple-50 hover:border-purple-200 transition-all duration-300"
+            >
+              <Brain className="h-4 w-4 text-purple-500" />
+              <Search className="h-4 w-4" />
+              <span className="hidden sm:inline">Busca IA</span>
+            </Button>
+          )}
           {/* Central do Núcleo - Destaque */}
           <Button
             variant="default"
