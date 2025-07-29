@@ -33,6 +33,11 @@ serve(async (req) => {
   try {
     console.log('Processing chat request...');
     const requestBody = await req.json();
+    
+    // Extract search parameters from request body
+    const { message: userMessage, conversationHistory = [], enableWebSearch = true, searchMode = 'auto' } = requestBody;
+    console.log('Message received:', userMessage);
+    console.log('Search configuration:', { enableWebSearch, searchMode });
 
     // Verify all required environment variables
     if (!openAIApiKey) {
@@ -234,11 +239,6 @@ serve(async (req) => {
       }
     }
 
-    // Extract search parameters from request body
-    const { message: userMessage, conversationHistory = [], enableWebSearch = true, searchMode = 'auto' } = requestBody;
-    console.log('Message received:', userMessage);
-    console.log('Search configuration:', { enableWebSearch, searchMode });
-    
     // Smart search: First check internal sources, then web if needed
     const relevantKnowledge = searchRelevantKnowledge(userMessage, knowledgeBase || []);
     const relevantTickets = searchRelevantTickets(userMessage, chamados || [], assuntos || []);
