@@ -62,7 +62,20 @@ export const useUpcomingEvents = () => {
 
         // Processar aniversariantes com lógica melhorada
         const aniversariantesFiltrados = aniversariantes?.map(aniversariante => {
+          // Validate data_nascimento exists
+          if (!aniversariante.data_nascimento) {
+            console.warn('Aniversariante sem data de nascimento:', aniversariante);
+            return null;
+          }
+
           const nascimento = parseISO(aniversariante.data_nascimento);
+          
+          // Validate that parseISO returned a valid date
+          if (isNaN(nascimento.getTime())) {
+            console.warn('Data de nascimento inválida:', aniversariante.data_nascimento);
+            return null;
+          }
+
           const currentYear = today.getFullYear();
           
           // Criar data do aniversário no ano atual
@@ -78,13 +91,28 @@ export const useUpcomingEvents = () => {
             idade
           };
         }).filter(aniversariante => {
+          // Filter out null values and apply date range filter
+          if (!aniversariante) return false;
           // Incluir aniversários dos últimos 7 dias e próximos 30 dias
           return aniversariante.daysUntil >= -7 && aniversariante.daysUntil <= 30;
         }) || [];
 
         // Processar feriados com dias restantes
         const feriadosProcessados = feriados?.map(feriado => {
+          // Validate feriado.data exists
+          if (!feriado.data) {
+            console.warn('Feriado sem data:', feriado);
+            return null;
+          }
+
           const dataFeriado = parseISO(feriado.data);
+          
+          // Validate that parseISO returned a valid date
+          if (isNaN(dataFeriado.getTime())) {
+            console.warn('Data de feriado inválida:', feriado.data);
+            return null;
+          }
+
           const daysUntil = differenceInDays(startOfDay(dataFeriado), today);
           
           return {
@@ -92,6 +120,8 @@ export const useUpcomingEvents = () => {
             daysUntil // Permitir valores negativos para eventos passados
           };
         }).filter(feriado => {
+          // Filter out null values and apply date range filter
+          if (!feriado) return false;
           // Incluir feriados dos últimos 7 dias e próximos 30 dias
           return feriado.daysUntil >= -7 && feriado.daysUntil <= 30;
         }) || [];

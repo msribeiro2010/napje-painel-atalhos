@@ -54,7 +54,20 @@ export const useCalendarEvents = (currentMonth: Date) => {
         const currentMonthNum = currentMonth.getMonth() + 1;
         
         aniversariantes?.forEach(aniversariante => {
+          // Validate that data_nascimento exists
+          if (!aniversariante.data_nascimento) {
+            console.warn('Aniversariante sem data de nascimento:', aniversariante);
+            return;
+          }
+
           const birthDate = new Date(aniversariante.data_nascimento);
+          
+          // Validate that the date is valid
+          if (isNaN(birthDate.getTime())) {
+            console.warn('Data de nascimento inválida:', aniversariante.data_nascimento);
+            return;
+          }
+
           const birthMonth = birthDate.getMonth() + 1;
           const birthDay = birthDate.getDate();
           

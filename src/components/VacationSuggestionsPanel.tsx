@@ -143,8 +143,14 @@ export const VacationSuggestionsPanel = ({
                           <div className="flex items-center gap-2 mb-2">
                             {getPeriodIcon(suggestion.period)}
                             <span className="font-semibold text-gray-900">
-                              {format(new Date(suggestion.startDate), 'dd MMM', { locale: ptBR })} - {' '}
-                              {format(new Date(suggestion.endDate), 'dd MMM', { locale: ptBR })}
+                              {suggestion.startDate && suggestion.endDate ? (
+                                <>
+                                  {format(new Date(suggestion.startDate), 'dd MMM', { locale: ptBR })} - {' '}
+                                  {format(new Date(suggestion.endDate), 'dd MMM', { locale: ptBR })}
+                                </>
+                              ) : (
+                                'Datas inválidas'
+                              )}
                             </span>
                             <Badge className={getScoreColor(suggestion.score)}>
                               <Star className="h-3 w-3 mr-1" />

@@ -84,8 +84,23 @@ function CalendarComponent() {
   // Atualizar handleSelectVacationSuggestion para usar saveMark
   const handleSelectVacationSuggestion = (suggestion: VacationSuggestion) => {
     try {
+      // Validate that suggestion and dates exist
+      if (!suggestion || !suggestion.startDate || !suggestion.endDate) {
+        console.error('Sugestão de férias inválida:', suggestion);
+        toast.error('Erro: dados da sugestão de férias são inválidos');
+        return;
+      }
+
       const startDate = new Date(suggestion.startDate);
       const endDate = new Date(suggestion.endDate);
+      
+      // Validate that dates are valid
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        console.error('Datas inválidas na sugestão:', { startDate: suggestion.startDate, endDate: suggestion.endDate });
+        toast.error('Erro: datas da sugestão são inválidas');
+        return;
+      }
+
       let currentDate = new Date(startDate);
       while (currentDate <= endDate) {
         const key = format(currentDate, 'yyyy-MM-dd');
@@ -98,6 +113,7 @@ function CalendarComponent() {
       setShowAISuggestions(false);
     } catch (error) {
       console.error('Erro ao aplicar sugestão de férias:', error);
+      toast.error('Erro ao aplicar sugestão de férias');
     }
   };
 
