@@ -72,10 +72,70 @@ if (supabaseUrl && supabaseKey && supabaseKey !== 'SUBSTITUIR_PELA_CHAVE_REAL_DO
   }
 }
 
-console.log('\n📋 Próximos passos:');
-console.log('1. Configure as variáveis corretas no arquivo .env');
-console.log('2. Configure OPENAI_API_KEY no Supabase Edge Functions');
-console.log('3. Reinicie o servidor de desenvolvimento');
-console.log('4. Teste a funcionalidade "Gerar Assyst com IA"');
+// Teste da Edge Function chat-assistant
+if (supabaseUrl && supabaseKey && supabaseKey !== 'SUBSTITUIR_PELA_CHAVE_REAL_DO_SUPABASE') {
+  console.log('\n🤖 Testando Edge Function chat-assistant...');
+  
+  try {
+    const testResponse = await fetch(`${supabaseUrl}/functions/v1/chat-assistant`, {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: 'teste de conectividade',
+        conversationHistory: []
+      })
+    });
+    
+    console.log(`   Status da Edge Function: ${testResponse.status}`);
+    
+    if (testResponse.ok) {
+      const data = await testResponse.json();
+      if (data.success) {
+        console.log('✅ ChatBot Edge Function: FUNCIONANDO');
+        console.log('✅ OpenAI: Configurada corretamente');
+        console.log('✅ ChatBot: MODO ONLINE');
+      } else {
+        console.log('❌ ChatBot Edge Function: ERRO');
+        console.log(`   Erro: ${data.error || 'Erro desconhecido'}`);
+        if (data.error && data.error.includes('OpenAI')) {
+          console.log('🔑 Solução: Configure OPENAI_API_KEY no Supabase Edge Functions');
+        }
+      }
+    } else {
+      console.log('❌ Edge Function: Não acessível');
+      if (testResponse.status === 404) {
+        console.log('   Causa: Edge Function não existe ou não foi deployed');
+      } else if (testResponse.status === 401) {
+        console.log('   Causa: Problema de autenticação');
+      }
+    }
+  } catch (error) {
+    console.log('❌ Erro ao testar Edge Function:');
+    console.log(`   ${error.message}`);
+  }
+}
 
-console.log('\n📖 Guia completo: SOLUCAO_COMUNICACAO_IA.md');
+console.log('\n📋 Status do ChatBot:');
+if (supabaseUrl && supabaseKey && supabaseKey !== 'SUBSTITUIR_PELA_CHAVE_REAL_DO_SUPABASE') {
+  console.log('✅ Configuração Supabase: OK');
+  console.log('⏳ OpenAI: Testando...');
+  console.log('🌐 URL Produção: https://msribeiro2010.github.io/napje-painel-atalhos/');
+} else {
+  console.log('❌ Configuração Supabase: INCOMPLETA');
+}
+
+console.log('\n📋 Próximos passos para ativar MODO ONLINE:');
+console.log('1. ✅ Variáveis Supabase configuradas');
+console.log('2. 🔑 Configure OPENAI_API_KEY no Supabase Edge Functions:');
+console.log('   → https://supabase.com/dashboard/project/zpufcvesenbhtmizmjiz');
+console.log('   → Edge Functions > Settings > Environment Variables');
+console.log('   → Nome: OPENAI_API_KEY');
+console.log('   → Valor: sk-... (sua chave OpenAI)');
+console.log('3. 🔄 Reinicie a Edge Function chat-assistant');
+console.log('4. 🧪 Teste o ChatBot na produção');
+
+console.log('\n📖 Guia completo: CONFIGURAR_OPENAI_CHATBOT_ONLINE.md');
