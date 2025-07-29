@@ -2,9 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, BookOpen, Shield, Plus, ExternalLink, StickyNote, Scale, Calendar, Home, Umbrella, Laptop, Video, Users, Sparkles } from 'lucide-react';
+import { FileText, BookOpen, Shield, Plus, ExternalLink, StickyNote, Scale, Calendar, Home, Umbrella, Laptop, Video, Users, Sparkles, Search, Brain } from 'lucide-react';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 import PostitNotes from '@/components/PostitNotes';
 import { useChamadosRecentes } from '@/hooks/useChamadosRecentes';
@@ -17,7 +18,8 @@ import { ChatAssistant } from '@/components/ChatAssistant';
 import { EventNotificationModal } from '@/components/EventNotificationModal';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
-import { useWorkCalendar, WorkStatus } from '@/hooks/useWorkCalendar';
+import { useWorkCalendar } from '@/hooks/useWorkCalendar';
+import type { WorkStatus } from '@/hooks/useWorkCalendar';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
@@ -25,6 +27,9 @@ import { useCustomEvents } from '@/hooks/useCustomEvents';
 import { useUpcomingEventsModal } from '@/hooks/useUpcomingEventsModal';
 import UpcomingEventsModal from '@/components/UpcomingEventsModal';
 import UpcomingEventsButton from '@/components/UpcomingEventsButton';
+import { SmartSearchDialog } from '@/components/SmartSearchDialog';
+import { AIInsightsPanel } from '@/components/AIInsightsPanel';
+import { SearchResult } from '@/hooks/useSmartSearch';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -32,6 +37,7 @@ const Dashboard = () => {
   const { isOpen, toggleChat } = useChatAssistant();
   const { modalOpen, setModalOpen } = useEventNotifications();
   const [postItOpen, setPostItOpen] = useState(false);
+  const [smartSearchOpen, setSmartSearchOpen] = useState(false);
   
 
   
@@ -68,36 +74,41 @@ const Dashboard = () => {
   });
 
   // Buscar chamados recentes
-  const { data: chamadosRecentes = [], refetch } = useQuery<ChamadoComPerfil[]>({
-    queryKey: ['chamados-recentes-dashboard'],
+  const { data: chamados = [], isLoading: chamadosLoading } = useQuery({
+    queryKey: ['dashboard-chamados'],
     queryFn: async () => {
-      const { data: chamados, error } = await supabase
+      const { data, error } = await supabase
         .from('chamados')
-        .select('*, titulo')
+        .select(`
+          id, assunto, descricao, status, prioridade, created_at, usuario_criador, 
+          categoria, subcategoria, tags, tempo_estimado, data_vencimento,
+          anexos, observacoes_internas, historico_status, feedback_usuario,
+          numero_protocolo, orgao_julgador, vara_origem, tipo_processo
+        `)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(6);
 
       if (error) throw error;
 
-      // Buscar os perfis dos criadores
+      // Obter perfis dos usuários
       const chamadosComPerfis: ChamadoComPerfil[] = await Promise.all(
-        chamados.map(async (chamado): Promise<ChamadoComPerfil> => {
-          if (chamado.created_by) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('nome_completo, email')
-              .eq('id', chamado.created_by)
-              .single();
-            
-            return { ...chamado, created_by_profile: profile };
-          }
-          return chamado as ChamadoComPerfil;
+        (data || []).map(async (chamado) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('nome_completo, email')
+            .eq('id', chamado.usuario_criador)
+            .single();
+
+          return {
+            ...chamado,
+            usuario_criador_nome: profile?.nome_completo || profile?.email || 'Usuário não encontrado'
+          };
         })
       );
 
       return chamadosComPerfis;
     },
-    enabled: !!user?.id
+    enabled: !!user
   });
 
   // Buscar status do próximo dia
@@ -129,181 +140,220 @@ const Dashboard = () => {
     none: { label: 'Sem marcação', color: '#fff', icon: null },
   };
 
-  const handleExcluir = async (id: string) => {
-    await handleExcluirChamado(id);
-    refetch(); // Atualizar a lista
+  const handleSearchResult = (result: SearchResult) => {
+    // Navegar para o resultado selecionado
+    switch (result.type) {
+      case 'chamado':
+        if (result.metadata?.id) {
+          navigate(`/chamados/${result.metadata.id}`);
+        }
+        break;
+      case 'atalho':
+        if (result.url) {
+          window.open(result.url, '_blank');
+        } else {
+          navigate('/atalhos');
+        }
+        break;
+      case 'usuario':
+        navigate('/admin/usuarios');
+        break;
+      case 'orgao':
+        navigate('/orgaos-julgadores');
+        break;
+      case 'evento':
+        navigate('/calendario');
+        break;
+      case 'memoria':
+        navigate('/memorias-importantes');
+        break;
+      default:
+        console.log('Resultado selecionado:', result);
+    }
   };
 
-  const dashboardActions: DashboardAction[] = [
+  const handleExcluir = async (id: string) => {
+    await handleExcluirChamado(id);
+    // O React Query irá automaticamente revalidar a query
+  };
+
+  const workCalendar = useWorkCalendar();
+  const today = new Date();
+  const isBusinessDay = workCalendar?.getWorkStatus(today) === WorkStatus.WORKING;
+  const nextBusinessDay = workCalendar?.getNextBusinessDay(today);
+
+  const actions: DashboardAction[] = [
     {
-      title: 'Criar Chamado',
-      description: 'Gerar nova issue JIRA',
       icon: Plus,
+      label: "Novo Chamado",
+      description: "Criar um novo chamado",
       onClick: () => navigate('/criar-chamado'),
-      variant: 'default' as const
+      color: "bg-gradient-to-r from-blue-500 to-blue-600"
     },
     {
-      title: 'Base de Conhecimento',
-      description: 'Consultar soluções documentadas',
+      icon: FileText,
+      label: "Chamados",
+      description: "Ver chamados recentes",
+      onClick: () => navigate('/chamados-recentes'),
+      color: "bg-gradient-to-r from-green-500 to-green-600"
+    },
+    {
       icon: BookOpen,
+      label: "Base de Conhecimento",
+      description: "Consultar documentos",
       onClick: () => navigate('/base-conhecimento'),
-      variant: 'outline' as const
+      color: "bg-gradient-to-r from-purple-500 to-purple-600"
     },
     {
-      title: 'Calendário de Trabalho',
-      description: 'Organize férias, folgas, presencial e remoto',
-      icon: Calendar,
-      onClick: () => navigate('/calendario'),
-      variant: 'outline' as const
-    },
-    {
-      title: 'Atalhos',
-      description: 'Central de acesso aos sistemas',
-      icon: ExternalLink,
-      onClick: () => navigate('/atalhos'),
-      variant: 'outline' as const
-    },
-    {
-      title: 'Post-it',
-      description: 'Notas e anotações rápidas',
-      icon: StickyNote,
-      onClick: () => setPostItOpen(true),
-      variant: 'outline' as const
-    },
-    {
-      title: 'Órgãos Julgadores',
-      description: 'Consultar códigos de órgãos do TRT15',
       icon: Scale,
+      label: "Órgãos Julgadores",
+      description: "Consultar órgãos",
       onClick: () => navigate('/orgaos-julgadores'),
-      variant: 'outline' as const
+      color: "bg-gradient-to-r from-orange-500 to-orange-600"
+    },
+    {
+      icon: Shield,
+      label: "Memórias Importantes",
+      description: "Documentos críticos",
+      onClick: () => navigate('/memorias-importantes'),
+      color: "bg-gradient-to-r from-red-500 to-red-600"
+    },
+    {
+      icon: Calendar,
+      label: "Calendário",
+      description: "Agendar compromissos",
+      onClick: () => navigate('/calendario'),
+      color: "bg-gradient-to-r from-indigo-500 to-indigo-600"
     }
   ];
 
-
-
-  // Botões administrativos foram movidos para o menu do usuário
-
-  // Verificar se há informações relevantes para mostrar
-  const hasWorkInfo = status !== 'none' || customEventsTomorrow.length > 0;
-
   return (
-    <div className="min-h-screen bg-gradient-bg">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Container principal com padding responsivo */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Aviso do status do próximo dia - só aparece quando há marcação */}
-        {hasWorkInfo && (
-          <div className="mb-6 space-y-3">
-            {/* Status de trabalho - só mostra se não for 'none' */}
-            {status !== 'none' && (
-              <div 
-                className="rounded-2xl shadow-soft p-4 flex items-center gap-4 backdrop-blur-sm border border-white/20 transition-all duration-300 hover:shadow-medium" 
-                style={{ background: statusLabel[status].color }}
-              >
-                <div className="p-2 bg-white/20 rounded-xl">
-                  {statusLabel[status].icon}
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-[#7c6a3c] text-lg tracking-wide">
-                    Amanhã: {statusLabel[status].label}
-                  </span>
-                  <span className="text-[#8b7355] text-sm font-medium tracking-wider uppercase">
-                    {format(tomorrow, 'EEEE, dd/MM/yyyy', { locale: ptBR })}
-                  </span>
-                </div>
-              </div>
-            )}
-            {/* Avisos de eventos personalizados do próximo dia */}
-            {customEventsTomorrow.map(ev => (
-              <div
-                key={ev.id}
-                className="rounded-2xl shadow-soft flex items-center gap-4 px-4 py-3 border-l-4 animate-fade-in backdrop-blur-sm border border-white/20 transition-all duration-300 hover:shadow-medium"
-                style={{ 
-                  background: customEventStyles[ev.type]?.color, 
-                  borderLeftColor: customEventStyles[ev.type]?.border 
-                }}
-              >
-                <div className="p-2 bg-white/20 rounded-xl">
-                  {customEventStyles[ev.type]?.icon}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="font-semibold text-base">Amanhã: {ev.title}</span>
-                    <span className="inline-block text-xs px-3 py-1 rounded-full bg-white/60 text-gray-700 font-medium">
-                      {ev.type.charAt(0).toUpperCase() + ev.type.slice(1)}
-                    </span>
-                  </div>
-                  {ev.description && (
-                    <p className="text-sm text-gray-600 leading-relaxed">{ev.description}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Header do Dashboard */}
-        <DashboardHeader isAdmin={isAdmin} />
-        
-        {/* Seção de Eventos - Layout aprimorado */}
-        <div className="mb-8">
-          <EventsPanels />
-        </div>
-        
-        {/* Seção de Ações Rápidas */}
-        <DashboardActions actions={dashboardActions} />
-
-        {/* Seção de Chamados Recentes */}
-        <RecentChamados 
-          chamados={chamadosRecentes}
-          onEdit={editarChamado}
-          onDuplicate={duplicarChamado}
-          onDelete={handleExcluir}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-6 space-y-8">
+        {/* Header Modernizado */}
+        <DashboardHeader 
+          user={user} 
+          isBusinessDay={isBusinessDay}
+          nextBusinessDay={nextBusinessDay}
+          onSearch={() => setSmartSearchOpen(true)}
         />
 
-        {/* Footer modernizado */}
-        <div className="mt-12 pt-8 border-t border-border/30">
-          <DashboardFooter />
+        {/* Busca Inteligente Global */}
+        <div className="flex justify-center mb-6">
+          <Button
+            onClick={() => setSmartSearchOpen(true)}
+            variant="outline"
+            size="lg"
+            className="w-full max-w-md h-12 justify-start text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Search className="h-4 w-4 mr-3" />
+            <span>Buscar em qualquer lugar...</span>
+            <kbd className="ml-auto pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium text-muted-foreground">
+              <span className="text-xs">⌘</span>K
+            </kbd>
+          </Button>
         </div>
+
+        {/* Grid Principal */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Coluna Principal */}
+          <div className="xl:col-span-2 space-y-8">
+            {/* Ações Rápidas Compactas */}
+            <DashboardActions actions={actions} />
+
+            {/* Chamados Recentes Modernos */}
+            <RecentChamados 
+              chamados={chamados}
+              isLoading={chamadosLoading}
+              onDuplicar={duplicarChamado}
+              onEditar={editarChamado}
+              onExcluir={handleExcluir}
+            />
+
+            {/* Eventos e Notificações */}
+            <EventsPanels />
+          </div>
+
+          {/* Coluna Lateral */}
+          <div className="space-y-6">
+            {/* Painel de Insights de IA */}
+            <AIInsightsPanel className="h-[600px]" />
+
+            {/* Post-it Notes */}
+            <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-2xl p-6 shadow-soft hover:shadow-glow transition-all duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <StickyNote className="h-5 w-5 text-yellow-500" />
+                  Notas Rápidas
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPostItOpen(true)}
+                  className="hover:bg-yellow-100 dark:hover:bg-yellow-900/20"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <PostitNotes />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Elegante */}
+        <DashboardFooter />
       </div>
+
+      {/* Diálogos e Modais */}
       
-      {/* Componentes flutuantes */}
-      <ChatAssistant isOpen={isOpen} onToggle={toggleChat} />
-      
-      <EventNotificationModal isOpen={modalOpen} onOpenChange={setModalOpen} />
-      
-      {/* Modal Post-it modernizado */}
+      {/* Busca Inteligente */}
+      <SmartSearchDialog
+        isOpen={smartSearchOpen}
+        onClose={() => setSmartSearchOpen(false)}
+        onResultSelect={handleSearchResult}
+        placeholder="Buscar chamados, atalhos, usuários, eventos..."
+      />
+
+      {/* Post-it Modal */}
       <Dialog open={postItOpen} onOpenChange={setPostItOpen}>
-        <DialogContent className="max-w-6xl h-[85vh] p-0 overflow-hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-white/20">
-          <DialogHeader className="p-6 pb-0 border-b border-border/30">
-            <DialogTitle className="flex items-center gap-3 text-xl">
-              <div className="p-3 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-glow">
-                <StickyNote className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <span className="font-semibold">Post-it</span>
-                <p className="text-sm text-muted-foreground font-normal mt-1">Suas anotações e lembretes</p>
-              </div>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <StickyNote className="h-5 w-5 text-yellow-500" />
+              Notas Rápidas
             </DialogTitle>
           </DialogHeader>
-          <div className="p-6 h-full overflow-auto custom-scrollbar">
+          <div className="overflow-auto max-h-[60vh]">
             <PostitNotes />
           </div>
         </DialogContent>
       </Dialog>
-      
-      {/* Modal de Eventos Próximos */}
-      <UpcomingEventsModal 
+
+      {/* Chat Assistant */}
+      <ChatAssistant isOpen={isOpen} onToggle={toggleChat} />
+
+      {/* Event Notification Modal */}
+      <EventNotificationModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+
+      {/* Upcoming Events Modal */}
+      <UpcomingEventsModal
         isOpen={upcomingEventsOpen}
         onClose={closeUpcomingEvents}
         events={upcomingEvents}
       />
-      
-      {/* Botão Flutuante de Eventos Próximos */}
-      <UpcomingEventsButton 
-        eventCount={upcomingEvents.length}
-        onClick={openUpcomingEvents}
-        hasNewEvents={hasEvents}
-      />
+
+      {/* Atalho de teclado para busca */}
+      <script>
+        {`
+          document.addEventListener('keydown', function(e) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+              e.preventDefault();
+              ${smartSearchOpen ? 'false' : 'true'};
+            }
+          });
+        `}
+      </script>
     </div>
   );
 };

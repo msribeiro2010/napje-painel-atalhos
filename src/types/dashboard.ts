@@ -7,13 +7,13 @@ export type ChamadoComPerfil = {
     nome_completo: string | null;
     email: string;
   } | null;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export type DashboardAction = {
   title: string;
   description: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   onClick: () => void;
   variant: 'default' | 'outline';
   customComponent?: React.ReactNode;
