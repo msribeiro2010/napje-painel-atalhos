@@ -1,54 +1,226 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDebounce } from '@/hooks/useDebounce';
 
 export interface SearchResult {
   id: string;
+  type: 'chamado' | 'conhecimento' | 'atalho';
   title: string;
   description: string;
-  type: 'chamado' | 'atalho' | 'usuario' | 'orgao' | 'evento' | 'memoria';
+  url?: string;
   score: number;
   metadata?: Record<string, any>;
-  url?: string;
-}
-
-export interface SearchSuggestion {
-  text: string;
-  type: 'completion' | 'correction' | 'related';
-  confidence: number;
 }
 
 export const useSmartSearch = () => {
+  const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const debouncedQuery = useDebounce(query, 300);
 
-  // Busca semântica usando edge function
-  const semanticSearch = useCallback(async (query: string, filters?: { types?: string[], limit?: number }) => {
+  // Carregar histórico do localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('smart_search_history');
+    if (saved) {
+      try {
+        setSearchHistory(JSON.parse(saved));
+      } catch (err) {
+        console.warn('Erro ao carregar histórico de busca:', err);
+      }
+    }
+  }, []);
+
+  // Busca em chamados
+  const searchChamados = useCallback(async (query: string): Promise<SearchResult[]> => {
+    console.log('🔍 Buscando em chamados:', query);
+    
+    try {
+      const { data, error } = await supabase
+        .from('chamados')
+        .select(`
+          id,
+          assunto,
+          descricao,
+          status,
+          categoria,
+          created_at,
+          usuario_criador_nome
+        `)
+        .or(`assunto.ilike.%${query}%,descricao.ilike.%${query}%,categoria.ilike.%${query}%`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('❌ Erro ao buscar chamados:', error);
+        return [];
+      }
+
+      console.log('✅ Chamados encontrados:', data?.length || 0);
+
+      return (data || []).map((chamado, index) => ({
+        id: chamado.id,
+        type: 'chamado' as const,
+        title: chamado.assunto || 'Chamado sem título',
+        description: chamado.descricao || 'Sem descrição',
+        score: 100 - index, // Score baseado na posição (mais recentes primeiro)
+        metadata: {
+          status: chamado.status,
+          categoria: chamado.categoria,
+          criado_por: chamado.usuario_criador_nome,
+          data_criacao: chamado.created_at
+        }
+      }));
+    } catch (err) {
+      console.error('❌ Erro na busca de chamados:', err);
+      return [];
+    }
+  }, []);
+
+  // Busca na base de conhecimento (simulada)
+  const searchBaseConhecimento = useCallback(async (query: string): Promise<SearchResult[]> => {
+    console.log('🔍 Buscando na base de conhecimento:', query);
+    
+    // Dados simulados da base de conhecimento
+    const baseConhecimento = [
+      {
+        id: 'doc-1',
+        titulo: 'Como criar um novo chamado',
+        conteudo: 'Guia completo para criação de chamados no sistema NAPJe',
+        categoria: 'Documentação',
+        tags: ['chamado', 'criação', 'guia']
+      },
+      {
+        id: 'doc-2',
+        titulo: 'Procedimentos de backup',
+        conteudo: 'Instruções para realizar backup dos dados do sistema',
+        categoria: 'Procedimentos',
+        tags: ['backup', 'segurança', 'dados']
+      },
+      {
+        id: 'doc-3',
+        titulo: 'Configuração de usuários',
+        conteudo: 'Como configurar novos usuários no sistema',
+        categoria: 'Administração',
+        tags: ['usuário', 'configuração', 'admin']
+      },
+      {
+        id: 'doc-4',
+        titulo: 'Troubleshooting comum',
+        conteudo: 'Soluções para problemas frequentes no sistema',
+        categoria: 'Suporte',
+        tags: ['problema', 'solução', 'suporte']
+      },
+      {
+        id: 'doc-5',
+        titulo: 'Integração com PJe',
+        conteudo: 'Como integrar o sistema com o PJe',
+        categoria: 'Integração',
+        tags: ['pje', 'integração', 'sistema']
+      }
+    ];
+
+    // Busca simples por texto
+    const resultados = baseConhecimento.filter(doc => 
+      doc.titulo.toLowerCase().includes(query.toLowerCase()) ||
+      doc.conteudo.toLowerCase().includes(query.toLowerCase()) ||
+      doc.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+    );
+
+    console.log('✅ Documentos encontrados:', resultados.length);
+
+    return resultados.map((doc, index) => ({
+      id: doc.id,
+      type: 'conhecimento' as const,
+      title: doc.titulo,
+      description: doc.conteudo,
+      score: 90 - index,
+      metadata: {
+        categoria: doc.categoria,
+        tags: doc.tags
+      }
+    }));
+  }, []);
+
+  // Busca com ChatGPT (simulada)
+  const searchWithChatGPT = useCallback(async (query: string): Promise<SearchResult[]> => {
+    console.log('🤖 Buscando com ChatGPT:', query);
+    
+    // Simulação de resposta do ChatGPT
+    const chatGPTResults = [
+      {
+        id: 'ai-1',
+        type: 'conhecimento' as const,
+        title: `Sugestão IA: ${query}`,
+        description: `Baseado na sua busca por "${query}", aqui estão algumas sugestões relevantes para o sistema NAPJe.`,
+        score: 95,
+        metadata: {
+          fonte: 'ChatGPT',
+          categoria: 'Sugestão IA'
+        }
+      }
+    ];
+
+    console.log('✅ Sugestões IA geradas:', chatGPTResults.length);
+    return chatGPTResults;
+  }, []);
+
+  // Busca híbrida principal
+  const hybridSearch = useCallback(async (
+    query: string, 
+    options?: {
+      types?: string[];
+      limit?: number;
+    }
+  ) => {
     if (!query.trim()) {
+      console.log('🔍 Query vazia, limpando resultados');
       setResults([]);
       return [];
     }
 
+    const { types = ['chamado', 'conhecimento'], limit = 20 } = options || {};
     setIsLoading(true);
     setError(null);
 
+    console.log('🚀 Iniciando busca híbrida:', { query, types, limit });
+
     try {
-      const { data, error } = await supabase.functions.invoke('semantic-search', {
-        body: {
-          query: query.trim(),
-          filters: filters || {},
-          includeMetadata: true
-        }
-      });
+      const searchPromises: Promise<SearchResult[]>[] = [];
 
-      if (error) throw error;
+      // Buscar em chamados
+      if (types.includes('chamado')) {
+        searchPromises.push(searchChamados(query));
+      }
 
-      const searchResults: SearchResult[] = data.results || [];
-      setResults(searchResults);
-      
+      // Buscar na base de conhecimento
+      if (types.includes('conhecimento')) {
+        searchPromises.push(searchBaseConhecimento(query));
+        // Adicionar busca com ChatGPT
+        searchPromises.push(searchWithChatGPT(query));
+      }
+
+      console.log('📊 Executando', searchPromises.length, 'buscas em paralelo');
+      const allResults = await Promise.all(searchPromises);
+      const combinedResults = allResults.flat();
+
+      console.log('📊 Total de resultados combinados:', combinedResults.length);
+
+      // Ordenar por score e limitar resultados
+      const sortedResults = combinedResults
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit);
+
+      console.log('✅ Resultados finais:', sortedResults.length);
+      console.log('📋 Detalhes dos resultados:', sortedResults.map(r => ({ 
+        type: r.type, 
+        title: r.title, 
+        score: r.score 
+      })));
+
+      setResults(sortedResults);
+
       // Adicionar ao histórico
       setSearchHistory(prev => {
         const newHistory = [query, ...prev.filter(item => item !== query)].slice(0, 10);
@@ -56,177 +228,68 @@ export const useSmartSearch = () => {
         return newHistory;
       });
 
-      return searchResults;
+      return sortedResults;
     } catch (err) {
-      console.error('Erro na busca semântica:', err);
-      setError('Erro ao realizar busca inteligente');
+      console.error('❌ Erro na busca híbrida:', err);
+      setError('Erro ao realizar busca');
       return [];
     } finally {
       setIsLoading(false);
     }
+  }, [searchChamados, searchBaseConhecimento, searchWithChatGPT]);
+
+  // Sugestões inteligentes
+  const getSmartSuggestions = useCallback(async (query: string): Promise<string[]> => {
+    if (query.length < 2) return [];
+
+    const suggestions = [
+      'chamado',
+      'problema',
+      'sistema',
+      'usuário',
+      'configuração',
+      'backup',
+      'integração',
+      'pje',
+      'documentação',
+      'suporte'
+    ];
+
+    return suggestions.filter(suggestion => 
+      suggestion.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, 5);
   }, []);
 
-  // Auto-complete inteligente
-  const getSmartSuggestions = useCallback(async (query: string) => {
-    if (!query.trim() || query.length < 2) {
-      setSuggestions([]);
-      return [];
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('smart-autocomplete', {
-        body: {
-          query: query.trim(),
-          context: {
-            searchHistory,
-            currentPage: window.location.pathname
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      const newSuggestions: SearchSuggestion[] = data.suggestions || [];
-      setSuggestions(newSuggestions);
-      return newSuggestions;
-    } catch (err) {
-      console.error('Erro ao obter sugestões:', err);
-      return [];
-    }
-  }, [searchHistory]);
-
-  // Busca por similaridade de texto local
-  const fuzzySearch = useCallback(async (query: string, collection: string) => {
-    const { data, error } = await supabase
-      .from(collection)
-      .select('*')
-      .textSearch('titulo', query, { config: 'portuguese' })
-      .limit(20);
-
-    if (error) {
-      console.error('Erro na busca fuzzy:', error);
-      return [];
-    }
-
-    return data || [];
+  // Funções auxiliares
+  const clearResults = useCallback(() => {
+    setResults([]);
+    setError(null);
   }, []);
 
-  // Busca híbrida (semântica + fuzzy + filtros)
-  const hybridSearch = useCallback(async (
-    query: string, 
-    options?: {
-      types?: string[];
-      fuzzyCollections?: string[];
-      semanticWeight?: number;
-      limit?: number;
-    }
-  ) => {
-    const { types, fuzzyCollections = [], semanticWeight = 0.7, limit = 50 } = options || {};
+  const semanticSearch = useCallback((query: string) => {
+    return hybridSearch(query, { types: ['chamado', 'conhecimento'] });
+  }, [hybridSearch]);
 
-    setIsLoading(true);
-    
-    try {
-      // Busca semântica (peso maior)
-      const semanticResults = await semanticSearch(query, { types, limit: Math.floor(limit * semanticWeight) });
-      
-      // Busca fuzzy para complementar
-      const fuzzyPromises = fuzzyCollections.map(collection => fuzzySearch(query, collection));
-      const fuzzyResults = await Promise.all(fuzzyPromises);
-      
-      // Combinar e deduplicar resultados
-      const allResults = [
-        ...semanticResults,
-        ...fuzzyResults.flat().map((item, index) => ({
-          id: item.id,
-          title: item.titulo || item.nome || item.assunto || 'Sem título',
-          description: item.descricao || item.observacoes || 'Sem descrição',
-          type: 'chamado' as const,
-          score: 0.5 - (index * 0.01), // Score menor para resultados fuzzy
-          metadata: item
-        }))
-      ];
+  const fuzzySearch = useCallback((query: string) => {
+    return hybridSearch(query, { types: ['chamado', 'conhecimento'] });
+  }, [hybridSearch]);
 
-      // Deduplicar por ID e ordenar por score
-      const uniqueResults = allResults
-        .filter((item, index, self) => self.findIndex(t => t.id === item.id) === index)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, limit);
-
-      setResults(uniqueResults);
-      return uniqueResults;
-    } catch (err) {
-      console.error('Erro na busca híbrida:', err);
-      setError('Erro na busca híbrida');
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
-  }, [semanticSearch, fuzzySearch]);
-
-  // Carregar histórico do localStorage
-  const loadSearchHistory = useCallback(() => {
-    try {
-      const history = localStorage.getItem('smart_search_history');
-      if (history) {
-        setSearchHistory(JSON.parse(history));
-      }
-    } catch (err) {
-      console.error('Erro ao carregar histórico:', err);
-    }
-  }, []);
-
-  // Limpar histórico
-  const clearSearchHistory = useCallback(() => {
-    setSearchHistory([]);
-    localStorage.removeItem('smart_search_history');
-  }, []);
-
-  // Busca por entidade específica com contexto
-  const searchEntity = useCallback(async (
-    entityType: string, 
-    query: string, 
-    context?: Record<string, any>
-  ) => {
-    const { data, error } = await supabase.functions.invoke('entity-search', {
-      body: {
-        entityType,
-        query,
-        context
-      }
-    });
-
-    if (error) {
-      console.error('Erro na busca de entidade:', error);
-      return [];
-    }
-
-    return data.results || [];
-  }, []);
+  const searchEntity = useCallback((query: string, entityType: string) => {
+    return hybridSearch(query, { types: [entityType] });
+  }, [hybridSearch]);
 
   return {
-    // Estados
+    query,
+    setQuery,
     results,
-    suggestions,
     isLoading,
     error,
     searchHistory,
-    
-    // Métodos de busca
-    semanticSearch,
     hybridSearch,
+    semanticSearch,
     fuzzySearch,
     searchEntity,
-    
-    // Auto-complete
     getSmartSuggestions,
-    
-    // Histórico
-    loadSearchHistory,
-    clearSearchHistory,
-    
-    // Utilitários
-    clearResults: () => setResults([]),
-    clearSuggestions: () => setSuggestions([]),
-    clearError: () => setError(null)
+    clearResults
   };
 };

@@ -1,12 +1,25 @@
 export type ChamadoComPerfil = {
   id: string;
-  titulo: string;
+  assunto: string;
+  descricao?: string;
+  status?: string;
+  prioridade?: string;
   created_at: string;
-  created_by: string | null;
-  created_by_profile?: {
-    nome_completo: string | null;
-    email: string;
-  } | null;
+  usuario_criador?: string;
+  categoria?: string;
+  subcategoria?: string;
+  tags?: string[];
+  tempo_estimado?: number;
+  data_vencimento?: string;
+  anexos?: string[];
+  observacoes_internas?: string;
+  historico_status?: any[];
+  feedback_usuario?: string;
+  numero_protocolo?: string;
+  orgao_julgador?: string;
+  vara_origem?: string;
+  tipo_processo?: string;
+  usuario_criador_nome?: string;
   [key: string]: unknown;
 };
 
@@ -15,7 +28,7 @@ export type DashboardAction = {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   onClick: () => void;
-  variant: 'default' | 'outline';
+  color?: string;
   customComponent?: React.ReactNode;
 };
 
