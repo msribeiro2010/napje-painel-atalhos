@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +23,8 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
   onClose,
   events
 }) => {
-  const { updateCustomEvent, removeCustomEvent } = useCustomEvents(new Date());
+  const navigate = useNavigate();
+  const { updateCustomEvent, removeCustomEvent, fetchCustomEvents } = useCustomEvents(new Date());
   const { toast } = useToast();
   const [editingEvent, setEditingEvent] = useState<CustomEvent | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -72,8 +74,8 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
           title: "Evento excluído",
           description: "O evento foi removido com sucesso.",
         });
-        // Recarregar a página para atualizar a lista de eventos
-        window.location.reload();
+        // Atualizar a lista de eventos sem recarregar a página
+        await fetchCustomEvents();
       } catch (error) {
         toast({
           title: "Erro ao excluir evento",
@@ -93,8 +95,8 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
         title: "Evento atualizado",
         description: "As alterações foram salvas com sucesso.",
       });
-      // Recarregar a página para atualizar a lista de eventos
-      window.location.reload();
+      // Atualizar a lista de eventos sem recarregar a página
+      await fetchCustomEvents();
     } catch (error) {
       toast({
         title: "Erro ao atualizar evento",
@@ -410,8 +412,8 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
             </Button>
             <Button
               onClick={() => {
-                // Navegar para o calendário
-                window.location.href = '/calendario';
+                // Navegar para o calendário usando navigate
+                navigate('/calendario');
               }}
               className="bg-gradient-to-r from-blue-600/90 via-purple-600/90 to-indigo-600/90 hover:from-blue-700/90 hover:via-purple-700/90 hover:to-indigo-700/90 text-white font-semibold px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 backdrop-blur-sm"
             >

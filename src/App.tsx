@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import AdminUsers from "./pages/AdminUsers";
 import AdminShortcuts from "./pages/AdminShortcuts";
+import AdminMetrics from "./pages/AdminMetrics";
 // import AdminHolidays from "./pages/AdminHolidays";
 import NotificationSettings from "./pages/NotificationSettings";
 import OrgaosJulgadores from "./pages/OrgaosJulgadores";
@@ -32,7 +33,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={
@@ -83,6 +84,11 @@ const App = () => (
           <Route path="/admin/notificacoes" element={
             <ProtectedRoute requireAdmin={true}>
               <NotificationSettings />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/metricas" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminMetrics />
             </ProtectedRoute>
           } />
           {/* <Route path="/admin/feriados" element={

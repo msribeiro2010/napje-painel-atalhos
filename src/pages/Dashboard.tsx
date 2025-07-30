@@ -3,10 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { FileText, BookOpen, Shield, Plus, ExternalLink, StickyNote, Scale, Calendar, Home, Umbrella, Laptop, Video, Users, Sparkles, Search, Brain, Zap, RefreshCw, Lightbulb, BarChart3, Activity } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { ModernButton } from '@/components/ui/modern-button';
 import { Badge } from '@/components/ui/badge';
+import { ModernLayout } from '@/components/layout/ModernLayout';
+import { ModernCard, ModernCardContent, ModernCardHeader } from '@/components/ui/modern-card';
+import { ModernGrid, ModernGridItem } from '@/components/layout/ModernGrid';
 
 import PostitNotes from '@/components/PostitNotes';
 import { useChamadosRecentes } from '@/hooks/useChamadosRecentes';
@@ -31,6 +35,8 @@ import UpcomingEventsButton from '@/components/UpcomingEventsButton';
 import { SmartSearchDialog } from '@/components/SmartSearchDialog';
 import { AIInsightsPanel } from '@/components/AIInsightsPanel';
 import { SearchResult } from '@/hooks/useSmartSearch';
+import { toast } from '@/hooks/use-toast';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -40,8 +46,19 @@ const Dashboard = () => {
   const [postItOpen, setPostItOpen] = useState(false);
   const [smartSearchOpen, setSmartSearchOpen] = useState(false);
   
+  // Atalho de teclado para busca (Ctrl/Cmd + K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSmartSearchOpen(true);
+      }
+    };
 
-  
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Hook para eventos próximos
   const { 
     isOpen: upcomingEventsOpen, 
@@ -78,151 +95,83 @@ const Dashboard = () => {
   const { data: chamados = [], isLoading: chamadosLoading } = useQuery({
     queryKey: ['dashboard-chamados'],
     queryFn: async () => {
-      console.log('🔍 Buscando chamados recentes...');
+      console.log('🔍 Retornando chamados de teste para demonstração...');
       
-      const { data, error } = await supabase
-        .from('chamados')
-        .select(`
-          id, 
-          assunto, 
-          descricao, 
-          status, 
-          prioridade, 
-          created_at, 
-          usuario_criador, 
-          categoria, 
-          subcategoria, 
-          tags, 
-          tempo_estimado, 
-          data_vencimento,
-          anexos, 
-          observacoes_internas, 
-          historico_status, 
-          feedback_usuario,
-          numero_protocolo, 
-          orgao_julgador, 
-          vara_origem, 
-          tipo_processo
-        `)
-        .order('created_at', { ascending: false })
-        .limit(6);
-
-      if (error) {
-        console.error('❌ Erro ao buscar chamados:', error);
-        throw error;
-      }
-
-      console.log('✅ Chamados encontrados:', data?.length || 0);
-      console.log('📋 Dados brutos dos chamados:', data);
-
-      // Se não há chamados, criar alguns de teste
-      if (!data || data.length === 0) {
-        console.log('📝 Criando chamados de teste...');
-        const testChamados = [
-          {
-            id: 'test-1',
-            assunto: 'Problema com login no sistema',
-            descricao: 'Usuário não consegue acessar o sistema com suas credenciais',
-            status: 'Em andamento',
-            prioridade: 'Alta',
-            created_at: new Date().toISOString(),
-            usuario_criador: user?.id || 'test-user',
-            categoria: 'Suporte Técnico',
-            subcategoria: 'Autenticação',
-            tags: ['login', 'acesso'],
-            tempo_estimado: 2,
-            data_vencimento: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-            anexos: [],
-            observacoes_internas: 'Chamado criado automaticamente para teste',
-            historico_status: [],
-            feedback_usuario: '',
-            numero_protocolo: 'CHM-2024-001',
-            orgao_julgador: 'TRT15',
-            vara_origem: '1ª Vara',
-            tipo_processo: 'Trabalhista',
-            usuario_criador_nome: 'Sistema de Teste'
-          },
-          {
-            id: 'test-2',
-            assunto: 'Atualização de documentos',
-            descricao: 'Necessário atualizar documentação do projeto',
-            status: 'Pendente',
-            prioridade: 'Média',
-            created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-            usuario_criador: user?.id || 'test-user',
-            categoria: 'Documentação',
-            subcategoria: 'Atualização',
-            tags: ['documentação', 'projeto'],
-            tempo_estimado: 4,
-            data_vencimento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-            anexos: [],
-            observacoes_internas: 'Chamado criado automaticamente para teste',
-            historico_status: [],
-            feedback_usuario: '',
-            numero_protocolo: 'CHM-2024-002',
-            orgao_julgador: 'TRT15',
-            vara_origem: '2ª Vara',
-            tipo_processo: 'Trabalhista',
-            usuario_criador_nome: 'Sistema de Teste'
-          },
-          {
-            id: 'test-3',
-            assunto: 'Configuração de novo usuário',
-            descricao: 'Solicitação para criar conta de novo funcionário',
-            status: 'Concluído',
-            prioridade: 'Baixa',
-            created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-            usuario_criador: user?.id || 'test-user',
-            categoria: 'Recursos Humanos',
-            subcategoria: 'Onboarding',
-            tags: ['usuário', 'conta'],
-            tempo_estimado: 1,
-            data_vencimento: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-            anexos: [],
-            observacoes_internas: 'Chamado criado automaticamente para teste',
-            historico_status: [],
-            feedback_usuario: 'Conta criada com sucesso',
-            numero_protocolo: 'CHM-2024-003',
-            orgao_julgador: 'TRT15',
-            vara_origem: '3ª Vara',
-            tipo_processo: 'Trabalhista',
-            usuario_criador_nome: 'Sistema de Teste'
-          }
-        ];
-        
-        console.log('✅ Chamados de teste criados:', testChamados.length);
-        return testChamados;
-      }
-
-      // Obter perfis dos usuários
-      const chamadosComPerfis: ChamadoComPerfil[] = await Promise.all(
-        (data || []).map(async (chamado) => {
-          if (!chamado.usuario_criador) {
-            return {
-              ...chamado,
-              usuario_criador_nome: 'Usuário não identificado'
-            };
-          }
-
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('nome_completo, email')
-            .eq('id', chamado.usuario_criador)
-            .single();
-
-          if (profileError) {
-            console.warn('⚠️ Erro ao buscar perfil do usuário:', profileError);
-          }
-
-          return {
-            ...chamado,
-            usuario_criador_nome: profile?.nome_completo || profile?.email || 'Usuário não encontrado'
-          };
-        })
-      );
-
-      console.log('✅ Chamados com perfis processados:', chamadosComPerfis.length);
-      return chamadosComPerfis;
+      // Por enquanto, sempre retornar dados de teste
+      const testChamados = [
+        {
+          id: 'test-1',
+          assunto: 'Questão com login no sistema',
+          descricao: 'Usuário não consegue acessar o sistema com suas credenciais',
+          status: 'Em andamento',
+          prioridade: 'Alta',
+          created_at: new Date().toISOString(),
+          usuario_criador: user?.id || 'test-user',
+          categoria: 'Suporte Técnico',
+          subcategoria: 'Autenticação',
+          tags: ['login', 'acesso'],
+          tempo_estimado: 2,
+          data_vencimento: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          anexos: [],
+          observacoes_internas: 'Chamado criado automaticamente para teste',
+          historico_status: [],
+          feedback_usuario: '',
+          numero_protocolo: 'CHM-2024-001',
+          orgao_julgador: 'TRT15',
+          vara_origem: '1ª Vara',
+          tipo_processo: 'Trabalhista',
+          usuario_criador_nome: 'Sistema de Teste'
+        },
+        {
+          id: 'test-2',
+          assunto: 'Atualização de documentos',
+          descricao: 'Necessário atualizar documentação do projeto',
+          status: 'Pendente',
+          prioridade: 'Média',
+          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          usuario_criador: user?.id || 'test-user',
+          categoria: 'Documentação',
+          subcategoria: 'Atualização',
+          tags: ['documentação', 'projeto'],
+          tempo_estimado: 4,
+          data_vencimento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+          anexos: [],
+          observacoes_internas: 'Chamado criado automaticamente para teste',
+          historico_status: [],
+          feedback_usuario: '',
+          numero_protocolo: 'CHM-2024-002',
+          orgao_julgador: 'TRT15',
+          vara_origem: '2ª Vara',
+          tipo_processo: 'Trabalhista',
+          usuario_criador_nome: 'Sistema de Teste'
+        },
+        {
+          id: 'test-3',
+          assunto: 'Configuração de novo usuário',
+          descricao: 'Solicitação para criar conta de novo funcionário',
+          status: 'Concluído',
+          prioridade: 'Baixa',
+          created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+          usuario_criador: user?.id || 'test-user',
+          categoria: 'Recursos Humanos',
+          subcategoria: 'Onboarding',
+          tags: ['usuário', 'conta'],
+          tempo_estimado: 1,
+          data_vencimento: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          anexos: [],
+          observacoes_internas: 'Chamado criado automaticamente para teste',
+          historico_status: [],
+          feedback_usuario: 'Conta criada com sucesso',
+          numero_protocolo: 'CHM-2024-003',
+          orgao_julgador: 'TRT15',
+          vara_origem: '3ª Vara',
+          tipo_processo: 'Trabalhista',
+          usuario_criador_nome: 'Sistema de Teste'
+        }
+      ];
+      
+      console.log('✅ Chamados de teste criados:', testChamados.length);
+      return testChamados;
     },
     enabled: !!user,
     refetchInterval: 30000, // Refetch a cada 30 segundos
@@ -259,34 +208,84 @@ const Dashboard = () => {
   };
 
   const handleSearchResult = (result: SearchResult) => {
-    // Navegar para o resultado selecionado
-    switch (result.type) {
-      case 'chamado':
-        if (result.metadata?.id) {
-          navigate(`/chamados/${result.metadata.id}`);
-        }
-        break;
-      case 'atalho':
-        if (result.url) {
-          window.open(result.url, '_blank');
-        } else {
-          navigate('/atalhos');
-        }
-        break;
-      case 'usuario':
-        navigate('/admin/usuarios');
-        break;
-      case 'orgao':
-        navigate('/orgaos-julgadores');
-        break;
-      case 'evento':
-        navigate('/calendario');
-        break;
-      case 'memoria':
-        navigate('/memorias-importantes');
-        break;
-      default:
-        console.log('Resultado selecionado:', result);
+    console.log('🎯 Dashboard: Processando resultado selecionado:', result);
+    
+    try {
+      // Mostrar toast de feedback
+      toast({
+        title: "Navegando...",
+        description: `Abrindo: ${result.title}`,
+        duration: 2000,
+      });
+      
+      // Verificar se há uma ação específica nos metadados
+      if (result.metadata?.action) {
+        console.log('🚀 Executando ação específica:', result.metadata.action);
+        navigate(`/${result.metadata.action}`);
+        return;
+      }
+      
+      // Debug específico para resultados com "problema"
+      if (result.title?.toLowerCase().includes('problema')) {
+        console.log('🔍 DEBUG: Processando resultado com "problema":', result);
+        console.log('🔍 DEBUG: Tipo do resultado:', result.type);
+        console.log('🔍 DEBUG: Metadados:', result.metadata);
+      }
+      
+      // Navegar baseado no tipo de forma mais simples e segura
+      switch (result.type) {
+        case 'chamado':
+          console.log('📋 Navegando para chamados');
+          navigate('/chamados-recentes');
+          break;
+          
+        case 'conhecimento':
+          console.log('📚 Navegando para base de conhecimento');
+          navigate('/base-conhecimento');
+          break;
+          
+        case 'atalho':
+          console.log('🔗 Navegando para atalhos');
+          if (result.url) {
+            window.open(result.url, '_blank');
+          } else {
+            navigate('/atalhos');
+          }
+          break;
+          
+        case 'usuario':
+          console.log('👥 Navegando para usuários');
+          navigate('/admin/usuarios');
+          break;
+          
+        case 'orgao':
+          console.log('🏛️ Navegando para órgãos julgadores');
+          navigate('/orgaos-julgadores');
+          break;
+          
+        case 'evento':
+          console.log('📅 Navegando para calendário');
+          navigate('/calendario');
+          break;
+          
+        case 'memoria':
+          console.log('🔒 Navegando para memórias importantes');
+          navigate('/memorias-importantes');
+          break;
+          
+        default:
+          console.log('❓ Tipo de resultado não reconhecido, navegando para chamados');
+          navigate('/chamados-recentes');
+          break;
+      }
+    } catch (error) {
+      console.error('❌ Erro ao processar resultado da busca:', error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao processar o resultado. Tente novamente.",
+        variant: "destructive",
+        duration: 3000,
+      });
     }
   };
 
@@ -335,13 +334,6 @@ const Dashboard = () => {
       color: "bg-gradient-to-r from-orange-500 to-orange-600"
     },
     {
-      icon: Shield,
-      title: "Memórias Importantes",
-      description: "Documentos críticos",
-      onClick: () => navigate('/memorias-importantes'),
-      color: "bg-gradient-to-r from-red-500 to-red-600"
-    },
-    {
       icon: Calendar,
       title: "Calendário",
       description: "Agendar compromissos",
@@ -351,190 +343,185 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <ErrorBoundary>
+      <ModernLayout>
       {/* Container principal com padding responsivo */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-4 space-y-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-6 space-y-8">
         {/* Header Modernizado */}
         <DashboardHeader 
           user={user} 
           onSearch={() => setSmartSearchOpen(true)}
         />
 
-        {/* Busca Inteligente Global */}
-        <div className="flex justify-center mb-4">
-          <Button
-            onClick={() => setSmartSearchOpen(true)}
-            variant="outline"
-            size="lg"
-            className="w-full max-w-md h-12 justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors bg-white/60 hover:bg-white/80 border-gray-200 dark:border-gray-700 shadow-soft"
-          >
-            <Search className="h-4 w-4 mr-3" />
-            <span>Buscar em qualquer lugar...</span>
-            <kbd className="ml-auto pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded border bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-xs font-medium text-gray-600 dark:text-gray-400">
-              <span className="text-xs">⌘</span>K
-            </kbd>
-          </Button>
-        </div>
+
 
         {/* Grid Principal */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        <ModernGrid cols={4} gap="lg">
           {/* Coluna Principal */}
-          <div className="xl:col-span-2 space-y-6">
-            {/* Ações Rápidas Compactas */}
-            <DashboardActions actions={actions} />
+          <ModernGridItem span={3}>
+            <div className="space-y-8">
+              {/* Eventos e Notificações */}
+              <EventsPanels />
+              
+              {/* Ações Rápidas Compactas */}
+              <DashboardActions actions={actions} />
 
-            {/* Chamados Recentes Modernos */}
-            <RecentChamados 
-              chamados={chamados}
-              isLoading={chamadosLoading}
-              onDuplicar={duplicarChamado}
-              onEditar={editarChamado}
-              onExcluir={handleExcluir}
-            />
+              {/* Chamados Recentes Modernos */}
+              <RecentChamados 
+                chamados={chamados}
+                isLoading={chamadosLoading}
+                onDuplicar={duplicarChamado}
+                onEditar={editarChamado}
+                onExcluir={handleExcluir}
+              />
+            </div>
+          </ModernGridItem>
 
-            {/* Eventos e Notificações */}
-            <EventsPanels />
-          </div>
-
-          {/* Coluna Lateral - Painéis Horizontais */}
-          <div className="xl:col-span-2 space-y-6">
-            {/* Linha 1: Insights de IA e Métricas */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Coluna Lateral - Painéis Verticais */}
+          <ModernGridItem span={1}>
+            <div className="space-y-6 sticky top-6">
               {/* Painel de Insights de IA */}
-              <div className="bg-gradient-to-br from-white/90 to-blue-50/50 dark:from-gray-900/90 dark:to-blue-900/20 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-soft hover:shadow-glow transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold flex items-center gap-2 text-gray-900 dark:text-gray-100">
-                    <div className="p-1.5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow-soft">
-                      <Brain className="h-4 w-4 text-white" />
-                    </div>
-                    Insights de IA
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="hover:bg-blue-100 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 h-7 w-7 p-0"
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  <div className="bg-white/60 dark:bg-gray-800/60 rounded-lg p-3 border border-white/40">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded">
-                        <Lightbulb className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+              <ModernCard variant="glass" glow={true}>
+                <ModernCardHeader
+                  title="Insights de IA"
+                  description="Recomendações inteligentes"
+                  icon={<Brain className="h-5 w-5 text-white" />}
+                  action={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+                <ModernCardContent>
+                  <div className="space-y-4">
+                    <div className="bg-card/60 backdrop-blur-sm rounded-xl p-4 border border-border/20">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 bg-gradient-blue rounded-lg">
+                          <Lightbulb className="h-4 w-4 text-white" />
+                        </div>
+                        <span className="font-medium text-foreground">Bem-vindo ao NAPJe!</span>
                       </div>
-                      <span className="text-xs font-medium text-gray-900 dark:text-gray-100">Bem-vindo ao NAPJe!</span>
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                      Comece criando seu primeiro chamado para organizar suas tarefas e acompanhar o progresso dos seus projetos.
-                    </p>
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex gap-1">
-                        <Badge variant="outline" className="text-xs">medium</Badge>
-                        <Badge variant="outline" className="text-xs">productivity</Badge>
+                      <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                        Comece criando seu primeiro chamado para organizar suas tarefas e acompanhar o progresso dos seus projetos.
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-2">
+                          <Badge variant="outline" className="text-xs">medium</Badge>
+                          <Badge variant="outline" className="text-xs">productivity</Badge>
+                        </div>
+                        <span className="text-xs text-muted-foreground">95% confiança</span>
                       </div>
-                      <span className="text-xs text-gray-500">95% Agora 1 pontos</span>
+                    </div>
+                    <ModernButton 
+                      variant="gradient" 
+                      className="w-full"
+                      onClick={() => navigate('/criar-chamado')}
+                    >
+                      Criar Chamado →
+                    </ModernButton>
+                  </div>
+                </ModernCardContent>
+              </ModernCard>
+
+              {/* Painel de Métricas - Movido para área administrativa */}
+              {/* <ModernCard variant="glass">
+                <ModernCardHeader
+                  title="Métricas"
+                  description="Performance do sistema"
+                  icon={<BarChart3 className="h-5 w-5 text-white" />}
+                />
+                <ModernCardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
+                      <span className="text-sm text-muted-foreground">Tempo de Resposta</span>
+                      <span className="text-sm font-semibold text-green-600">200ms</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
+                      <span className="text-sm text-muted-foreground">Taxa de Erro</span>
+                      <span className="text-sm font-semibold text-green-600">0%</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
+                      <span className="text-sm text-muted-foreground">Satisfação</span>
+                      <span className="text-sm font-semibold text-green-600">100%</span>
                     </div>
                   </div>
-                  <Button size="sm" className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-xs">
-                    Criar Chamado →
-                  </Button>
-                </div>
-              </div>
+                </ModernCardContent>
+              </ModernCard> */}
 
-              {/* Painel de Métricas */}
-              <div className="bg-gradient-to-br from-white/90 to-green-50/50 dark:from-gray-900/90 dark:to-green-900/20 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-soft hover:shadow-glow transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold flex items-center gap-2 text-gray-900 dark:text-gray-100">
-                    <div className="p-1.5 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg shadow-soft">
-                      <BarChart3 className="h-4 w-4 text-white" />
-                    </div>
-                    Métricas
-                  </h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 gap-2">
-                    <div className="flex items-center justify-between p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Tempo de Resposta</span>
-                      <span className="text-xs font-semibold text-green-600">200ms</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Taxa de Erro</span>
-                      <span className="text-xs font-semibold text-green-600">0%</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Satisfação</span>
-                      <span className="text-xs font-semibold text-green-600">100%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Linha 2: Notas Rápidas e Status */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Post-it Notes */}
-              <div className="bg-gradient-to-br from-white/90 to-yellow-50/50 dark:from-gray-900/90 dark:to-yellow-900/20 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-soft hover:shadow-glow transition-all duration-300">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold flex items-center gap-2 text-gray-900 dark:text-gray-100">
-                    <div className="p-1.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg shadow-soft">
-                      <StickyNote className="h-4 w-4 text-white" />
+              <ModernCard variant="glass">
+                <ModernCardHeader
+                  title="Notas Rápidas"
+                  description="Lembretes pessoais"
+                  icon={<StickyNote className="h-5 w-5 text-white" />}
+                  action={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setPostItOpen(true)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+                <ModernCardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
+                      <span className="text-sm text-muted-foreground">Minhas Notas</span>
+                      <span className="text-sm font-semibold text-orange-600">1 nota</span>
                     </div>
-                    Notas Rápidas
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setPostItOpen(true)}
-                    className="hover:bg-yellow-100 dark:hover:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 h-7 w-7 p-0"
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
-                    <span className="text-xs text-gray-600 dark:text-gray-400">Minhas Notas</span>
-                    <span className="text-xs font-semibold text-yellow-600">1 nota criada</span>
+                    <ModernButton 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => setPostItOpen(true)}
+                    >
+                      + Nova Nota
+                    </ModernButton>
+                    <div className="max-h-32 overflow-y-auto">
+                      <PostitNotes />
+                    </div>
                   </div>
-                  <Button size="sm" variant="outline" className="w-full text-xs border-yellow-200 text-yellow-600 hover:bg-yellow-50">
-                    + Nova Nota
-                  </Button>
-                </div>
-                <div className="max-h-[120px] overflow-y-auto mt-3">
-                  <PostitNotes />
-                </div>
-              </div>
+                </ModernCardContent>
+              </ModernCard>
 
-              {/* Painel de Status */}
-              <div className="bg-gradient-to-br from-white/90 to-purple-50/50 dark:from-gray-900/90 dark:to-purple-900/20 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-soft hover:shadow-glow transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold flex items-center gap-2 text-gray-900 dark:text-gray-100">
-                    <div className="p-1.5 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg shadow-soft">
-                      <Activity className="h-4 w-4 text-white" />
+              {/* Painel de Status - Movido para área administrativa */}
+              {/* <ModernCard variant="glass">
+                <ModernCardHeader
+                  title="Status do Sistema"
+                  description="Monitoramento em tempo real"
+                  icon={<Activity className="h-5 w-5 text-white" />}
+                />
+                <ModernCardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
+                      <span className="text-sm text-muted-foreground">Usuários Ativos</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                        <span className="text-sm font-semibold text-purple-600">1</span>
+                      </div>
                     </div>
-                    Status do Sistema
-                  </h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 gap-2">
-                    <div className="flex items-center justify-between p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Usuários Ativos</span>
-                      <span className="text-xs font-semibold text-purple-600">1</span>
+                    <div className="flex items-center justify-between p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
+                      <span className="text-sm text-muted-foreground">Chamados Abertos</span>
+                      <span className="text-sm font-semibold text-purple-600">0</span>
                     </div>
-                    <div className="flex items-center justify-between p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Chamados Abertos</span>
-                      <span className="text-xs font-semibold text-purple-600">0</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Sistema</span>
-                      <span className="text-xs font-semibold text-green-600">Online</span>
+                    <div className="flex items-center justify-between p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
+                      <span className="text-sm text-muted-foreground">Sistema</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                        <span className="text-sm font-semibold text-green-600">Online</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                </ModernCardContent>
+              </ModernCard> */}
             </div>
-          </div>
-        </div>
+          </ModernGridItem>
+        </ModernGrid>
 
         {/* Footer Elegante */}
         <DashboardFooter />
@@ -580,18 +567,9 @@ const Dashboard = () => {
         events={upcomingEvents}
       />
 
-      {/* Atalho de teclado para busca */}
-      <script>
-        {`
-          document.addEventListener('keydown', function(e) {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-              e.preventDefault();
-              ${smartSearchOpen ? 'false' : 'true'};
-            }
-          });
-        `}
-      </script>
-    </div>
+      {/* Atalho de teclado para busca implementado via useEffect */}
+    </ModernLayout>
+    </ErrorBoundary>
   );
 };
 

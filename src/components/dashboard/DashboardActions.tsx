@@ -1,5 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ModernCard, ModernCardContent } from '@/components/ui/modern-card';
+import { ModernGrid, ModernGridItem } from '@/components/layout/ModernGrid';
+import { Sparkles } from 'lucide-react';
 import type { DashboardAction } from '@/types/dashboard';
 
 interface DashboardActionsProps {
@@ -8,56 +9,82 @@ interface DashboardActionsProps {
 
 export const DashboardActions = ({ actions }: DashboardActionsProps) => {
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="h-1 w-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Ações Rápidas</h2>
-        <div className="h-px flex-1 bg-gradient-to-r from-gray-300 dark:from-gray-600 to-transparent"></div>
-      </div>
-      
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
-        {actions.map((action) => (
-          action.customComponent ? (
-            <div key={action.title}>
-              {action.customComponent}
-            </div>
-          ) : (
-            <Card 
-              key={action.title} 
-              className="group hover:shadow-glow transition-all duration-300 cursor-pointer bg-gradient-to-br from-white/90 to-blue-50/50 dark:from-gray-900/90 dark:to-slate-800/50 backdrop-blur-sm border-white/20 hover:border-blue-300 dark:hover:border-blue-600 hover:-translate-y-1 hover:scale-105"
-              onClick={action.onClick}
-            >
-              <CardContent className="p-3">
-                <div className="flex flex-col items-center text-center space-y-3">
-                  {/* Ícone com animação */}
-                  <div className="relative">
-                    <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-soft group-hover:shadow-glow transition-all duration-300 group-hover:scale-110">
-                      <action.icon className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 animate-pulse"></div>
-                  </div>
+    <ModernCard variant="glass" className="mb-8">
+      <div className="p-6">
+        {/* Header da seção */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-gradient-primary rounded-xl shadow-soft">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Ações Rápidas</h2>
+            <p className="text-sm text-muted-foreground">Acesso direto às principais funcionalidades</p>
+          </div>
+          <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent"></div>
+        </div>
+        
+        {/* Grid de ações */}
+        <ModernGrid cols={6} gap="md">
+          {actions.map((action) => (
+            action.customComponent ? (
+              <ModernGridItem key={action.title}>
+                {action.customComponent}
+              </ModernGridItem>
+            ) : (
+              <ModernGridItem key={action.title}>
+                <div className="relative group h-full">
+                  <ModernCard 
+                    variant="glass"
+                    hover={true}
+                    glow={true}
+                    className="h-full"
+                  >
+                    <ModernCardContent className="p-4">
+                      <div className="flex flex-col items-center text-center space-y-3 h-full">
+                        {/* Ícone com animação */}
+                        <div className="relative">
+                          <div className="p-3 bg-gradient-primary rounded-2xl shadow-soft group-hover:shadow-glow transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
+                            <action.icon className="h-6 w-6 text-white" />
+                          </div>
+                          {/* Efeito de brilho */}
+                          <div className="absolute -inset-1 bg-gradient-primary rounded-2xl opacity-0 group-hover:opacity-20 blur-sm transition-all duration-300"></div>
+                        </div>
+                        
+                        {/* Conteúdo */}
+                        <div className="space-y-2 flex-1 flex flex-col justify-center">
+                          <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                            {action.title}
+                          </h3>
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                            {action.description}
+                          </p>
+                        </div>
+                        
+                        {/* Indicador de hover */}
+                        <div className="w-full h-1 bg-gradient-primary rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-x-0 group-hover:scale-x-100"></div>
+                      </div>
+                    </ModernCardContent>
+                  </ModernCard>
                   
-                  {/* Título e descrição */}
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-xs text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                      {action.title}
-                    </h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                      {action.description}
-                    </p>
-                  </div>
-                  
-                  {/* Indicador de ação */}
-                  <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  {/* Botão invisível que cobre todo o card */}
+                  <button
+                    className="absolute inset-0 w-full h-full bg-transparent cursor-pointer z-10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-xl"
+                    onClick={(e) => {
+                      console.log('Button clicked:', action.title);
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (action.onClick) {
+                        action.onClick();
+                      }
+                    }}
+                    aria-label={`${action.title} - ${action.description}`}
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          )
-        ))}
+              </ModernGridItem>
+            )
+          ))}
+        </ModernGrid>
       </div>
-      
-      {/* Gradiente decorativo */}
-      <div className="mt-4 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
-    </div>
+    </ModernCard>
   );
 };

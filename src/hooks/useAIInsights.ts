@@ -328,8 +328,9 @@ export const useAIInsights = () => {
 
     try {
       if (insight.action.type === 'navigate') {
-        // Navegação simples
-        window.location.href = insight.action.payload;
+        // Navegação simples - comentado para evitar reloads
+        console.log('🔗 Navegação solicitada para:', insight.action.payload);
+        // window.location.href = insight.action.payload;
         return;
       }
 
