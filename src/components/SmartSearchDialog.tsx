@@ -18,7 +18,8 @@ import {
   Brain,
   Sparkles,
   Loader2,
-  Trash2
+  Trash2,
+  Lightbulb
 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
