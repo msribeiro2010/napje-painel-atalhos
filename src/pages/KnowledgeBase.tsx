@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { BookOpen, Plus, ArrowLeft, Upload } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useKnowledgeBase } from '@/hooks/useKnowledgeBase';
 import { KnowledgeBaseItem, KnowledgeBaseFormData } from '@/types/knowledge-base';
 import { KnowledgeBaseFilters } from '@/components/knowledge-base/KnowledgeBaseFilters';
@@ -16,9 +16,19 @@ import { DateDisplay } from '@/components/ui/date-display';
 
 const KnowledgeBase = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { items, categories, isLoading, saveItem, deleteItem, incrementView, incrementUtil } = useKnowledgeBase();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Ler parâmetro de busca da URL e pré-popular o campo
+  useEffect(() => {
+    const searchFromUrl = searchParams.get('search');
+    if (searchFromUrl) {
+      setSearchTerm(decodeURIComponent(searchFromUrl));
+      console.log('🔍 Base de Conhecimento: Termo de busca recebido da URL:', searchFromUrl);
+    }
+  }, [searchParams]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<KnowledgeBaseItem | null>(null);

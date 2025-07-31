@@ -233,6 +233,27 @@ export const useSmartSearch = () => {
         conteudo: 'Respostas para as perguntas mais frequentes sobre o sistema NAPJe.',
         categoria: 'FAQ',
         tags: ['faq', 'perguntas', 'respostas', 'ajuda']
+      },
+      {
+        id: 'doc-11',
+        titulo: 'Configuração de Horário e Expediente',
+        conteudo: 'Como configurar horários de funcionamento, plantões e escalas de trabalho no sistema. Inclui configuração de feriados e exceções.',
+        categoria: 'Configuração',
+        tags: ['horário', 'expediente', 'plantão', 'trabalho', 'feriado', 'escala']
+      },
+      {
+        id: 'doc-12',
+        titulo: 'Gestão de Horários de Atendimento',
+        conteudo: 'Definir horários de atendimento ao público, configurar intervalos e pausas. Gestão de horário de funcionamento dos serviços.',
+        categoria: 'Atendimento',
+        tags: ['horário', 'atendimento', 'público', 'serviço', 'funcionamento', 'intervalo']
+      },
+      {
+        id: 'doc-13',
+        titulo: 'Registro de Ponto e Controle de Horário',
+        conteudo: 'Sistema de controle de ponto eletrônico, registro de entrada e saída, gestão de horas extras e compensação.',
+        categoria: 'RH',
+        tags: ['horário', 'ponto', 'entrada', 'saída', 'controle', 'horas', 'extra']
       }
     ];
 
@@ -465,6 +486,12 @@ export const useSmartSearch = () => {
       'erro sistema',
       'sistema lento',
       'problema acesso',
+      
+      // Horários e expediente
+      'horário expediente',
+      'horário atendimento',
+      'configurar horário',
+      'horário plantão',
       
       // Configurações
       'configurar usuário',
