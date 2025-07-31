@@ -1,5 +1,9 @@
 name: 🚀 Deploy Produção - Sistema NAPJe com IA
 
+permissions:
+  contents: write
+  actions: write
+
 on:
   push:
     branches: [ main, master ]
