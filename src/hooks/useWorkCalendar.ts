@@ -26,9 +26,28 @@ export const useWorkCalendar = (month: Date) => {
     
     try {
       console.log('🔄 Buscando marcações do calendário para:', format(month, 'yyyy-MM'));
+      console.log('🔄 Usuário autenticado:', user.id);
       
       const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
       const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      
+      console.log('🔄 Range de datas:', {
+        start: monthStart.toISOString().slice(0, 10),
+        end: monthEnd.toISOString().slice(0, 10)
+      });
+
+      // Primeiro, verificar se a tabela existe e tem a estrutura correta
+      const { data: testData, error: testError } = await supabase
+        .from('user_work_calendar')
+        .select('id, date, status')
+        .limit(1);
+
+      if (testError) {
+        console.error('❌ Erro na estrutura da tabela:', testError);
+        throw new Error(`Problema na estrutura da tabela: ${testError.message}`);
+      }
+
+      console.log('✅ Estrutura da tabela verificada');
       
       const { data, error } = await supabase
         .from('user_work_calendar')
@@ -39,6 +58,7 @@ export const useWorkCalendar = (month: Date) => {
         
       if (error) {
         console.error('❌ Erro ao buscar marcações:', error);
+        console.error('❌ Detalhes do erro:', { code: error.code, details: error.details, hint: error.hint });
         throw error;
       }
       
@@ -48,6 +68,7 @@ export const useWorkCalendar = (month: Date) => {
       });
       
       console.log('✅ Marcações carregadas:', Object.keys(marksObj).length, 'dias');
+      console.log('✅ Marcações detalhadas:', marksObj);
       setMarks(marksObj);
       
     } catch (err: unknown) {
@@ -55,22 +76,25 @@ export const useWorkCalendar = (month: Date) => {
       console.error('❌ Erro ao buscar marcações:', err);
       setError(errorMessage);
       toast.error('Erro ao carregar marcações do calendário', {
-        description: 'Verifique sua conexão e tente novamente'
+        description: errorMessage
       });
     } finally {
       setLoading(false);
     }
-  }, [user, month, loading]);
+  }, [user, month.getFullYear(), month.getMonth()]);
 
   const saveMark = useCallback(async (date: string, status: WorkStatus) => {
-    if (!user || loading) {
-      if (!user) {
-        toast.error('Usuário não autenticado');
-      }
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return;
+    }
+
+    if (loading) {
+      console.log('⏳ Operação já em andamento, ignorando...');
       return;
     }
     
-    console.log('🔄 Salvando modalidade:', { date, status });
+    console.log('🔄 Salvando modalidade:', { date, status, userId: user.id });
     
     // Feedback imediato na UI
     setMarks((prev) => ({ ...prev, [date]: status }));
@@ -78,7 +102,7 @@ export const useWorkCalendar = (month: Date) => {
     setError(null);
     
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_work_calendar')
         .upsert({ 
           user_id: user.id, 
@@ -86,15 +110,17 @@ export const useWorkCalendar = (month: Date) => {
           status,
           updated_at: new Date().toISOString()
         }, { 
-          onConflict: ['user_id', 'date'] 
-        });
+          onConflict: 'user_id, date'
+        })
+        .select('id, date, status');
         
       if (error) {
         console.error('❌ Erro ao salvar modalidade:', error);
+        console.error('❌ Detalhes do erro:', { code: error.code, details: error.details, hint: error.hint });
         throw error;
       }
       
-      console.log('✅ Modalidade salva com sucesso');
+      console.log('✅ Modalidade salva com sucesso:', data);
       
       // Labels para o toast
       const statusLabels = {
@@ -122,22 +148,25 @@ export const useWorkCalendar = (month: Date) => {
       });
       
       toast.error('Erro ao salvar modalidade', {
-        description: 'Tente novamente em alguns instantes'
+        description: errorMessage
       });
     } finally {
       setLoading(false);
     }
-  }, [user, loading]);
+  }, [user]);
 
   const removeMark = useCallback(async (date: string) => {
-    if (!user || loading) {
-      if (!user) {
-        toast.error('Usuário não autenticado');
-      }
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return;
+    }
+
+    if (loading) {
+      console.log('⏳ Operação já em andamento, ignorando...');
       return;
     }
     
-    console.log('🔄 Removendo modalidade:', date);
+    console.log('🔄 Removendo modalidade:', { date, userId: user.id });
     
     // Feedback imediato na UI
     const previousMark = marks[date];
@@ -159,6 +188,7 @@ export const useWorkCalendar = (month: Date) => {
         
       if (error) {
         console.error('❌ Erro ao remover modalidade:', error);
+        console.error('❌ Detalhes do erro:', { code: error.code, details: error.details, hint: error.hint });
         throw error;
       }
       
@@ -178,12 +208,12 @@ export const useWorkCalendar = (month: Date) => {
       }
       
       toast.error('Erro ao remover modalidade', {
-        description: 'Tente novamente em alguns instantes'
+        description: errorMessage
       });
     } finally {
       setLoading(false);
     }
-  }, [user, loading, marks]);
+  }, [user, marks]);
 
   // Buscar marcações apenas quando user ou month mudarem
   const currentYear = month.getFullYear();
