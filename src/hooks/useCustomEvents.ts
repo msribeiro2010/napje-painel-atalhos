@@ -29,9 +29,28 @@ export const useCustomEvents = (month: Date) => {
     
     try {
       console.log('🔄 Buscando eventos personalizados para:', format(month, 'yyyy-MM'));
+      console.log('🔄 Usuário autenticado:', user.id);
       
       const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
       const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      
+      console.log('🔄 Range de datas:', {
+        start: monthStart.toISOString().slice(0, 10),
+        end: monthEnd.toISOString().slice(0, 10)
+      });
+
+      // Primeiro, verificar se a tabela existe e tem a estrutura correta
+      const { data: testData, error: testError } = await supabase
+        .from('user_custom_events')
+        .select('id, date, type, title')
+        .limit(1);
+
+      if (testError) {
+        console.error('❌ Erro na estrutura da tabela user_custom_events:', testError);
+        throw new Error(`Problema na estrutura da tabela: ${testError.message}`);
+      }
+
+      console.log('✅ Estrutura da tabela user_custom_events verificada');
       
       const { data, error } = await supabase
         .from('user_custom_events')
@@ -43,10 +62,12 @@ export const useCustomEvents = (month: Date) => {
         
       if (error) {
         console.error('❌ Erro ao buscar eventos:', error);
+        console.error('❌ Detalhes do erro:', { code: error.code, details: error.details, hint: error.hint });
         throw error;
       }
       
       console.log('✅ Eventos carregados:', data?.length || 0, 'eventos');
+      console.log('✅ Eventos detalhados:', data);
       setCustomEvents(data || []);
       
     } catch (err: unknown) {
@@ -54,22 +75,25 @@ export const useCustomEvents = (month: Date) => {
       console.error('❌ Erro ao buscar eventos personalizados:', err);
       setError(errorMessage);
       toast.error('Erro ao carregar eventos personalizados', {
-        description: 'Verifique sua conexão e tente novamente'
+        description: errorMessage
       });
     } finally {
       setLoading(false);
     }
-  }, [user, month.getFullYear(), month.getMonth(), loading]);
+  }, [user, month.getFullYear(), month.getMonth()]);
 
   const addCustomEvent = useCallback(async (event: Omit<CustomEvent, 'id' | 'user_id'>) => {
-    if (!user || loading) {
-      if (!user) {
-        toast.error('Usuário não autenticado');
-      }
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return;
+    }
+
+    if (loading) {
+      console.log('⏳ Operação já em andamento, ignorando...');
       return;
     }
     
-    console.log('🔄 Salvando evento personalizado:', event);
+    console.log('🔄 Salvando evento personalizado:', { event, userId: user.id });
     setLoading(true);
     setError(null);
     
@@ -87,6 +111,7 @@ export const useCustomEvents = (month: Date) => {
         
       if (error) {
         console.error('❌ Erro ao salvar evento:', error);
+        console.error('❌ Detalhes do erro:', { code: error.code, details: error.details, hint: error.hint });
         throw error;
       }
       
@@ -114,22 +139,25 @@ export const useCustomEvents = (month: Date) => {
       console.error('❌ Erro ao adicionar evento:', err);
       setError(errorMessage);
       toast.error('Erro ao salvar evento', {
-        description: 'Tente novamente em alguns instantes'
+        description: errorMessage
       });
     } finally {
       setLoading(false);
     }
-  }, [user, loading]);
+  }, [user]);
 
   const updateCustomEvent = useCallback(async (id: string, event: Omit<CustomEvent, 'id' | 'user_id'>) => {
-    if (!user || loading) {
-      if (!user) {
-        toast.error('Usuário não autenticado');
-      }
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return;
+    }
+
+    if (loading) {
+      console.log('⏳ Operação já em andamento, ignorando...');
       return;
     }
     
-    console.log('🔄 Atualizando evento:', { id, event });
+    console.log('🔄 Atualizando evento:', { id, event, userId: user.id });
     setLoading(true);
     setError(null);
     
@@ -147,6 +175,7 @@ export const useCustomEvents = (month: Date) => {
         
       if (error) {
         console.error('❌ Erro ao atualizar evento:', error);
+        console.error('❌ Detalhes do erro:', { code: error.code, details: error.details, hint: error.hint });
         throw error;
       }
       
@@ -164,17 +193,17 @@ export const useCustomEvents = (month: Date) => {
       console.error('❌ Erro ao atualizar evento:', err);
       setError(errorMessage);
       toast.error('Erro ao atualizar evento', {
-        description: 'Tente novamente em alguns instantes'
+        description: errorMessage
       });
     } finally {
       setLoading(false);
     }
-  }, [user, loading]);
+  }, [user]);
 
   const removeCustomEvent = useCallback(async (id: string) => {
     if (loading) return;
     
-    console.log('🔄 Removendo evento:', id);
+    console.log('🔄 Removendo evento:', { id, userId: user?.id });
     
     // Backup do evento para reverter em caso de erro
     const eventToRemove = customEvents.find(e => e.id === id);
@@ -193,6 +222,7 @@ export const useCustomEvents = (month: Date) => {
         
       if (error) {
         console.error('❌ Erro ao remover evento:', error);
+        console.error('❌ Detalhes do erro:', { code: error.code, details: error.details, hint: error.hint });
         throw error;
       }
       
@@ -212,12 +242,12 @@ export const useCustomEvents = (month: Date) => {
       }
       
       toast.error('Erro ao remover evento', {
-        description: 'Tente novamente em alguns instantes'
+        description: errorMessage
       });
     } finally {
       setLoading(false);
     }
-  }, [loading, customEvents]);
+  }, [loading, customEvents, user]);
 
   // Buscar eventos apenas quando user ou month mudarem
   const currentYear = month.getFullYear();

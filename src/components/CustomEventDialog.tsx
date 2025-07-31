@@ -26,17 +26,48 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!date || !title) {
+      console.error('❌ Dados obrigatórios faltando:', { date, title });
+      return;
+    }
+    
+    console.log('🔄 Enviando evento personalizado:', { 
+      date, type, title, description, 
+      start_time: startTime || undefined, 
+      end_time: endTime || undefined, 
+      url: url || undefined 
+    });
+    
     setLoading(true);
-    await onAdd({ date, type, title, description, start_time: startTime || undefined, end_time: endTime || undefined, url: url || undefined });
-    setLoading(false);
-    setOpen(false);
-    setDate('');
-    setType('curso');
-    setTitle('');
-    setDescription('');
-    setStartTime('');
-    setEndTime('');
-    setUrl('');
+    
+    try {
+      await onAdd({ 
+        date, 
+        type, 
+        title, 
+        description: description || undefined, 
+        start_time: startTime || undefined, 
+        end_time: endTime || undefined, 
+        url: url || undefined 
+      });
+      
+      // Só limpar e fechar se der certo
+      setOpen(false);
+      setDate('');
+      setType('curso');
+      setTitle('');
+      setDescription('');
+      setStartTime('');
+      setEndTime('');
+      setUrl('');
+      
+      console.log('✅ Evento enviado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao enviar evento:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

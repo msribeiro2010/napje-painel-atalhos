@@ -49,11 +49,13 @@ function CalendarComponent() {
   const handleDayClick = async (date: Date) => {
     const key = format(date, 'yyyy-MM-dd');
     
-    // Prevenir cliques múltiplos
-    if (savingDate === key || marksLoading || customEventsLoading) {
+    // Prevenir cliques múltiplos apenas se já estamos salvando essa data específica
+    if (savingDate === key) {
+      console.log('⏳ Já salvando esta data, ignorando clique duplo');
       return;
     }
     
+    console.log('🔄 Clique no dia:', { date: key, currentMarks: marks[key] });
     setSavingDate(key);
     
     try {
