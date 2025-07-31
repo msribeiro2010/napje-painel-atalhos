@@ -13,6 +13,7 @@ import { useWorkCalendar, WorkStatus } from '@/hooks/useWorkCalendar';
 import { toast } from 'sonner';
 import { CustomEventDialog } from '@/components/CustomEventDialog';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
+import { CalendarDebug } from '@/components/CalendarDebug';
 import { ptBR } from 'date-fns/locale';
 
 const calendarLabels = {
@@ -413,6 +414,9 @@ function CalendarComponent() {
           </div>
         </div>
       </div>
+      
+      {/* Componente de debug temporário */}
+      <CalendarDebug month={month} />
     </div>
   );
 }
