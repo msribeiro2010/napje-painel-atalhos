@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, X, Bell, Sparkles, Play, CheckCircle, AlertCircle, Edit, Trash2, Copy, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, X, Bell, Sparkles, Play, CheckCircle, AlertCircle, Edit, Trash2, Copy, ExternalLink, AlertTriangle } from 'lucide-react';
 import { format, isToday, isTomorrow, addDays, isPast, isAfter, isBefore, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useUpcomingEventsModal, UpcomingEvent } from '@/hooks/useUpcomingEventsModal';
@@ -24,11 +24,72 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
   events
 }) => {
   const navigate = useNavigate();
-  const { updateCustomEvent, removeCustomEvent, fetchCustomEvents } = useCustomEvents(new Date());
+  const { updateCustomEvent, removeCustomEvent, fetchCustomEvents, customEvents } = useCustomEvents(new Date());
   const { toast } = useToast();
   const [editingEvent, setEditingEvent] = useState<CustomEvent | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+  const [isCleaningDuplicates, setIsCleaningDuplicates] = useState(false);
+
+  // Detectar eventos duplicados
+  const detectDuplicates = () => {
+    const duplicates: CustomEvent[] = [];
+    const seen = new Map<string, CustomEvent[]>();
+
+    customEvents.forEach(event => {
+      const key = `${event.date}-${event.title.toLowerCase().trim()}`;
+      if (!seen.has(key)) {
+        seen.set(key, []);
+      }
+      seen.get(key)!.push(event);
+    });
+
+    seen.forEach(eventGroup => {
+      if (eventGroup.length > 1) {
+        // Adicionar todos menos o primeiro (manter o mais antigo)
+        duplicates.push(...eventGroup.slice(1));
+      }
+    });
+
+    return duplicates;
+  };
+
+  const duplicateEvents = detectDuplicates();
+
+  const handleCleanDuplicates = async () => {
+    if (duplicateEvents.length === 0) {
+      toast({
+        title: "Nenhuma duplicata encontrada",
+        description: "Não há eventos duplicados para remover.",
+      });
+      return;
+    }
+
+    setIsCleaningDuplicates(true);
+    try {
+      let removedCount = 0;
+      for (const duplicate of duplicateEvents) {
+        await removeCustomEvent(duplicate.id);
+        removedCount++;
+      }
+
+      toast({
+        title: "Duplicatas removidas",
+        description: `${removedCount} evento(s) duplicado(s) foram removidos com sucesso.`,
+      });
+
+      // Atualizar a lista de eventos
+      await fetchCustomEvents();
+    } catch (error) {
+      toast({
+        title: "Erro ao limpar duplicatas",
+        description: "Não foi possível remover alguns eventos duplicados. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCleaningDuplicates(false);
+    }
+  };
 
   const handleCopyUrl = async (url: string) => {
     try {
@@ -231,11 +292,28 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
             </div>
             <div className="flex-1">
               <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-1">
-                🎯 Eventos Próximos
+                🎯 Eventos Atuais
               </DialogTitle>
               <p className="text-sm text-slate-600/80 font-medium">
                 {events.length} evento{events.length !== 1 ? 's' : ''} nos próximos dias • Fique sempre atualizado
               </p>
+              {duplicateEvents.length > 0 && (
+                <div className="flex items-center gap-2 mt-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <span className="text-xs text-amber-700 font-medium">
+                    {duplicateEvents.length} evento(s) duplicado(s) encontrado(s)
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCleanDuplicates}
+                    disabled={isCleaningDuplicates}
+                    className="text-xs py-1 px-2 h-6 text-amber-700 border-amber-300 hover:bg-amber-50"
+                  >
+                    {isCleaningDuplicates ? 'Removendo...' : 'Limpar'}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </DialogHeader>

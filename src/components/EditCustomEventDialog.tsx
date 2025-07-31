@@ -94,7 +94,7 @@ export function EditCustomEventDialog({ isOpen, onOpenChange, event, onUpdate }:
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div>
             <label className="block text-sm font-medium mb-1">Data</label>
-            <Input type="date" value={date} onChange={e => setDate(e.target.value)} required min={format(new Date(), 'yyyy-MM-dd')} />
+            <Input type="date" value={date} onChange={e => setDate(e.target.value)} required />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
