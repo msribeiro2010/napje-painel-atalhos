@@ -28,10 +28,11 @@ function CalendarComponent() {
   const today = new Date();
   const [month, setMonth] = useState(today);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
+  const [savingDate, setSavingDate] = useState<string | null>(null);
   
   // Usar o hook para buscar/salvar marcações do Supabase
   const { marks, loading: marksLoading, saveMark, removeMark, fetchMarks } = useWorkCalendar(month);
-  const { customEvents, addCustomEvent } = useCustomEvents(month);
+  const { customEvents, addCustomEvent, loading: customEventsLoading } = useCustomEvents(month);
 
   const { data: events = [], isLoading: eventsLoading } = useCalendarEvents(month);
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
@@ -45,37 +46,52 @@ function CalendarComponent() {
     return acc;
   }, {} as { [date: string]: typeof events });
 
-  const handleDayClick = (date: Date) => {
+  const handleDayClick = async (date: Date) => {
     const key = format(date, 'yyyy-MM-dd');
-    const current = marks[key] || null;
-    const dayEvents = eventsByDate[key] || [];
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-    const isFeriado = dayEvents.some(e => e.type === 'feriado');
+    
+    // Prevenir cliques múltiplos
+    if (savingDate === key || marksLoading || customEventsLoading) {
+      return;
+    }
+    
+    setSavingDate(key);
+    
+    try {
+      const current = marks[key] || null;
+      const dayEvents = eventsByDate[key] || [];
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+      const isFeriado = dayEvents.some(e => e.type === 'feriado');
 
-    if (isWeekend || isFeriado) {
-      // Só pode marcar Plantão ou remover
-      if (current === null) {
-        saveMark(key, 'plantao');
-      } else if (current === 'plantao') {
-        removeMark(key);
+      if (isWeekend || isFeriado) {
+        // Só pode marcar Plantão ou remover
+        if (current === null) {
+          await saveMark(key, 'plantao');
+        } else if (current === 'plantao') {
+          await removeMark(key);
+        } else {
+          toast.warning('Em finais de semana e feriados só é permitido marcar Plantão.');
+          await saveMark(key, 'plantao');
+        }
       } else {
-        toast.warning('Em finais de semana e feriados só é permitido marcar Plantão.');
-        saveMark(key, 'plantao');
+        // Ciclo normal incluindo Folga
+        const next: WorkStatus | null =
+          current === null ? 'presencial' :
+          current === 'presencial' ? 'ferias' :
+          current === 'ferias' ? 'remoto' :
+          current === 'remoto' ? 'folga' :
+          current === 'folga' ? 'plantao' :
+          null;
+        if (next === null) {
+          await removeMark(key);
+        } else {
+          await saveMark(key, next);
+        }
       }
-    } else {
-      // Ciclo normal incluindo Folga
-      const next: WorkStatus | null =
-        current === null ? 'presencial' :
-        current === 'presencial' ? 'ferias' :
-        current === 'ferias' ? 'remoto' :
-        current === 'remoto' ? 'folga' :
-        current === 'folga' ? 'plantao' :
-        null;
-      if (next === null) {
-        removeMark(key);
-      } else {
-        saveMark(key, next);
-      }
+    } catch (error) {
+      console.error('Erro no handleDayClick:', error);
+      toast.error('Erro ao processar clique no dia');
+    } finally {
+      setSavingDate(null);
     }
   };
 
@@ -214,7 +230,8 @@ function CalendarComponent() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => handleDayClick(date)}
-                    className={`rounded-lg border border-[#e2d8b8] flex flex-col items-center justify-center h-16 w-full transition-all duration-150 focus:outline-none hover:shadow-md relative ${isCurrent ? 'ring-2 ring-[#bfae7c]' : ''} ${animationClass}`}
+                    disabled={savingDate === key}
+                    className={`rounded-lg border border-[#e2d8b8] flex flex-col items-center justify-center h-16 w-full transition-all duration-150 focus:outline-none hover:shadow-md relative ${isCurrent ? 'ring-2 ring-[#bfae7c]' : ''} ${animationClass} ${savingDate === key ? 'opacity-50 cursor-not-allowed animate-pulse' : 'hover:scale-105'}`}
                     style={{ background: backgroundColor }}
                     title={fullTitle}
                   >
