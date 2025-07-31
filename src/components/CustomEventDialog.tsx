@@ -32,12 +32,34 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
       return;
     }
     
+    // Validação adicional do formato da data
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      console.error('❌ Formato de data inválido:', date);
+      alert('Formato de data inválido. Use o formato YYYY-MM-DD');
+      return;
+    }
+    
+    // Verificar se a data não é no passado
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+      console.error('❌ Data no passado:', date);
+      alert('Não é possível criar eventos para datas passadas');
+      return;
+    }
+    
     console.log('🔄 Enviando evento personalizado:', { 
       date, type, title, description, 
       start_time: startTime || undefined, 
       end_time: endTime || undefined, 
       url: url || undefined 
     });
+    
+    console.log('📅 Data específica sendo enviada:', date);
+    console.log('📅 Data convertida:', new Date(date));
     
     setLoading(true);
     
@@ -62,7 +84,7 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
       setEndTime('');
       setUrl('');
       
-      console.log('✅ Evento enviado com sucesso');
+      console.log('✅ Evento enviado com sucesso para a data:', date);
     } catch (error) {
       console.error('❌ Erro ao enviar evento:', error);
     } finally {

@@ -93,29 +93,61 @@ export const useCustomEvents = (month: Date) => {
       return;
     }
     
+    // Validação adicional de dados
+    if (!event.date || !event.title || !event.type) {
+      console.error('❌ Dados obrigatórios faltando:', { date: event.date, title: event.title, type: event.type });
+      toast.error('Dados obrigatórios faltando (data, título ou tipo)');
+      return;
+    }
+
+    // Verificação do formato da data
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(event.date)) {
+      console.error('❌ Formato de data inválido:', event.date);
+      toast.error('Formato de data inválido. Use YYYY-MM-DD');
+      return;
+    }
+    
     console.log('🔄 Salvando evento personalizado:', { event, userId: user.id });
+    console.log('🔄 Data específica a ser salva:', event.date);
     setLoading(true);
     setError(null);
     
     try {
+      const eventToInsert = { 
+        ...event, 
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log('🔄 Dados completos para inserção:', eventToInsert);
+      
       const { data, error } = await supabase
         .from('user_custom_events')
-        .insert({ 
-          ...event, 
-          user_id: user.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+        .insert([eventToInsert])
         .select()
         .single();
         
       if (error) {
         console.error('❌ Erro ao salvar evento:', error);
-        console.error('❌ Detalhes do erro:', { code: error.code, details: error.details, hint: error.hint });
+        console.error('❌ Detalhes do erro:', { code: error.code, details: error.details, hint: error.hint, message: error.message });
+        
+        // Verificar tipos específicos de erro
+        if (error.code === 'PGRST301') {
+          throw new Error('Erro de permissões. Verifique as políticas RLS da tabela.');
+        } else if (error.code === '23503') {
+          throw new Error('Erro de referência. Verifique se o user_id existe na tabela profiles.');
+        } else if (error.message.includes('violates not-null constraint')) {
+          throw new Error('Campo obrigatório não preenchido. Verifique os dados do evento.');
+        }
+        
         throw error;
       }
       
       console.log('✅ Evento salvo com sucesso:', data);
+      console.log('✅ ID do evento criado:', data.id);
+      console.log('✅ Data do evento salvo:', data.date);
       
       // Atualizar lista local
       setCustomEvents(prev => [...prev, data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
@@ -134,6 +166,12 @@ export const useCustomEvents = (month: Date) => {
         description: `"${event.title}" - ${format(new Date(event.date), 'dd/MM/yyyy')}`
       });
       
+      // Recarregar eventos para garantir sincronização
+      setTimeout(() => {
+        console.log('🔄 Recarregando eventos após criação...');
+        fetchCustomEvents();
+      }, 500);
+      
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao adicionar evento';
       console.error('❌ Erro ao adicionar evento:', err);
@@ -144,7 +182,7 @@ export const useCustomEvents = (month: Date) => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, fetchCustomEvents]);
 
   const updateCustomEvent = useCallback(async (id: string, event: Omit<CustomEvent, 'id' | 'user_id'>) => {
     if (!user) {
