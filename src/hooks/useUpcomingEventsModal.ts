@@ -22,7 +22,7 @@ export const useUpcomingEventsModal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasShownToday, setHasShownToday] = useState(false);
   
-  // Buscar eventos dos próximos 2 dias
+  // Buscar eventos dos próximos 7 dias (incluindo hoje)
   const today = useMemo(() => new Date(), []);
   
   // Buscar eventos do mês atual para cobrir todos os próximos dias
@@ -34,65 +34,79 @@ export const useUpcomingEventsModal = () => {
   // Combinar todos os eventos usando useMemo para otimização
   const upcomingEvents: UpcomingEvent[] = useMemo(() => {
     const events: UpcomingEvent[] = [];
+    const seenEvents = new Set<string>(); // Para evitar duplicação
 
-    // Adicionar eventos personalizados dos próximos 2 dias
+    // Adicionar eventos personalizados atuais e futuros (próximos 7 dias)
     customEvents.forEach(event => {
       const eventDate = startOfDay(new Date(event.date));
       const todayStart = startOfDay(today);
       const daysDiff = differenceInDays(eventDate, todayStart);
       
-      if (daysDiff >= 0 && daysDiff <= 2) {
-        events.push({
-          id: `custom-${event.id}`,
-          title: event.title,
-          date: event.date,
-          type: 'custom',
-          description: event.description || undefined,
-          start_time: event.start_time || undefined,
-          end_time: event.end_time || undefined,
-          category: event.type,
-          icon: getCustomEventIcon(event.type),
-          color: getCustomEventColor(event.type),
-          url: event.url || undefined
-        });
+      // Mostrar eventos de hoje (0) até 7 dias no futuro
+      if (daysDiff >= 0 && daysDiff <= 7) {
+        const eventKey = `custom-${event.date}-${event.title}`;
+        if (!seenEvents.has(eventKey)) {
+          seenEvents.add(eventKey);
+          events.push({
+            id: `custom-${event.id}`,
+            title: event.title,
+            date: event.date,
+            type: 'custom',
+            description: event.description || undefined,
+            start_time: event.start_time || undefined,
+            end_time: event.end_time || undefined,
+            category: event.type,
+            icon: getCustomEventIcon(event.type),
+            color: getCustomEventColor(event.type),
+            url: event.url || undefined
+          });
+        }
       }
     });
 
-    // Adicionar feriados
+    // Adicionar feriados atuais e futuros
     feriados.forEach(feriado => {
       const feriadoDate = startOfDay(new Date(feriado.data));
       const todayStart = startOfDay(today);
       const daysDiff = differenceInDays(feriadoDate, todayStart);
       
-      if (daysDiff >= 0 && daysDiff <= 2) {
-        events.push({
-          id: `holiday-${feriado.id}`,
-          title: feriado.descricao,
-          date: format(feriadoDate, 'yyyy-MM-dd'),
-          type: 'holiday',
-          description: feriado.descricao || undefined,
-          icon: '🎉',
-          color: '#fef3c7'
-        });
+      if (daysDiff >= 0 && daysDiff <= 7) {
+        const eventKey = `holiday-${format(feriadoDate, 'yyyy-MM-dd')}-${feriado.descricao}`;
+        if (!seenEvents.has(eventKey)) {
+          seenEvents.add(eventKey);
+          events.push({
+            id: `holiday-${feriado.id}`,
+            title: feriado.descricao,
+            date: format(feriadoDate, 'yyyy-MM-dd'),
+            type: 'holiday',
+            description: feriado.descricao || undefined,
+            icon: '🎉',
+            color: '#fef3c7'
+          });
+        }
       }
     });
 
-    // Adicionar eventos de trabalho especiais
+    // Adicionar eventos de trabalho especiais (atuais e futuros)
     Object.entries(workMarks).forEach(([date, status]) => {
       const eventDate = startOfDay(new Date(date));
       const todayStart = startOfDay(today);
       const daysDiff = differenceInDays(eventDate, todayStart);
       
-      if (daysDiff >= 0 && daysDiff <= 2 && status !== 'presencial') {
-        events.push({
-          id: `work-${date}`,
-          title: getWorkStatusTitle(status),
-          date,
-          type: 'work',
-          description: getWorkStatusDescription(status),
-          icon: getWorkStatusIcon(status),
-          color: getWorkStatusColor(status)
-        });
+      if (daysDiff >= 0 && daysDiff <= 7 && status !== 'presencial') {
+        const eventKey = `work-${date}-${status}`;
+        if (!seenEvents.has(eventKey)) {
+          seenEvents.add(eventKey);
+          events.push({
+            id: `work-${date}`,
+            title: getWorkStatusTitle(status),
+            date,
+            type: 'work',
+            description: getWorkStatusDescription(status),
+            icon: getWorkStatusIcon(status),
+            color: getWorkStatusColor(status)
+          });
+        }
       }
     });
 

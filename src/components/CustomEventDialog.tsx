@@ -40,16 +40,8 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
       return;
     }
     
-    // Verificar se a data não é no passado
-    const selectedDate = new Date(date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (selectedDate < today) {
-      console.error('❌ Data no passado:', date);
-      alert('Não é possível criar eventos para datas passadas');
-      return;
-    }
+    // Permitir criar eventos no passado para casos especiais (eventos recorrentes, correções, etc.)
+    // Removida a validação restritiva de data passada
     
     console.log('🔄 Enviando evento personalizado:', { 
       date, type, title, description, 
@@ -114,7 +106,7 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div>
             <label className="block text-sm font-medium mb-1">Data</label>
-            <Input type="date" value={date} onChange={e => setDate(e.target.value)} required min={format(new Date(), 'yyyy-MM-dd')} />
+            <Input type="date" value={date} onChange={e => setDate(e.target.value)} required />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

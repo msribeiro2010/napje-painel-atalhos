@@ -94,7 +94,7 @@ export const useUpcomingEvents = () => {
           // Filter out null values and apply date range filter
           if (!aniversariante) return false;
           // Incluir aniversários dos últimos 7 dias e próximos 30 dias
-          return aniversariante.daysUntil >= -7 && aniversariante.daysUntil <= 30;
+          return aniversariante.daysUntil >= -3 && aniversariante.daysUntil <= 30;
         }) || [];
 
         // Processar feriados com dias restantes
@@ -123,7 +123,7 @@ export const useUpcomingEvents = () => {
           // Filter out null values and apply date range filter
           if (!feriado) return false;
           // Incluir feriados dos últimos 7 dias e próximos 30 dias
-          return feriado.daysUntil >= -7 && feriado.daysUntil <= 30;
+          return feriado.daysUntil >= -3 && feriado.daysUntil <= 30;
         }) || [];
 
         setEvents({

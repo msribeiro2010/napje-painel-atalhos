@@ -59,7 +59,7 @@ export const UpcomingEventsAlert = () => {
     <Alert className={`mb-6 ${alertColor}`}>
       <Calendar className="h-4 w-4" />
       <AlertTitle className="flex items-center gap-2">
-        <span>Eventos Próximos</span>
+        <span>Eventos e Compromissos</span>
         <CalendarDays className="h-4 w-4" />
       </AlertTitle>
       <AlertDescription className="mt-3">
@@ -92,8 +92,8 @@ export const UpcomingEventsAlert = () => {
           <span>💡</span>
           <span>
             {allEvents.some(e => e.daysUntil <= 1) 
-              ? 'Eventos muito próximos! Verifique preparativos e possíveis mudanças no expediente.'
-              : 'Eventos chegando! Lembre-se de se preparar com antecedência.'
+              ? 'Eventos iminentes! Verifique reuniões, cursos e webinários programados.'
+              : 'Mantenha-se organizado com seus compromissos e eventos importantes.'
             }
           </span>
         </div>
