@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { CustomEventDialog } from '@/components/CustomEventDialog';
 import { EditCustomEventDialog } from '@/components/EditCustomEventDialog';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
-import { CalendarDebug } from '@/components/CalendarDebug';
+
 import { ptBR } from 'date-fns/locale';
 
 const calendarLabels = {
@@ -412,8 +412,7 @@ function CalendarComponent() {
         onUpdate={updateCustomEvent}
       />
 
-      {/* Componente de debug temporário */}
-      <CalendarDebug month={month} />
+
 
       {/* Painel de Sugestões de IA - Flutuante */}
       <div className={`fixed top-4 right-4 w-96 max-h-[90vh] overflow-hidden transition-all duration-500 ease-in-out z-50 ${
