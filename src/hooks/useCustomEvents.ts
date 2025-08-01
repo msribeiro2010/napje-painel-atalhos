@@ -28,30 +28,9 @@ export const useCustomEvents = (month: Date) => {
     setError(null);
     
     try {
-      console.log('🔄 Buscando eventos personalizados para:', format(month, 'yyyy-MM'));
-      console.log('🔄 Usuário autenticado:', user.id);
-      
       // Buscar eventos de um período mais amplo (6 meses antes e depois)
       const startDate = new Date(month.getFullYear(), month.getMonth() - 6, 1);
       const endDate = new Date(month.getFullYear(), month.getMonth() + 6, 0);
-      
-      console.log('🔄 Range de datas:', {
-        start: startDate.toISOString().slice(0, 10),
-        end: endDate.toISOString().slice(0, 10)
-      });
-
-      // Primeiro, verificar se a tabela existe e tem a estrutura correta
-      const { data: testData, error: testError } = await supabase
-        .from('user_custom_events')
-        .select('id, date, type, title')
-        .limit(1);
-
-      if (testError) {
-        console.error('❌ Erro na estrutura da tabela user_custom_events:', testError);
-        throw new Error(`Problema na estrutura da tabela: ${testError.message}`);
-      }
-
-      console.log('✅ Estrutura da tabela user_custom_events verificada');
       
       const { data, error } = await supabase
         .from('user_custom_events')
@@ -62,22 +41,13 @@ export const useCustomEvents = (month: Date) => {
         .order('date', { ascending: true });
         
       if (error) {
-        console.error('❌ Erro ao buscar eventos:', error);
-        console.error('❌ Detalhes do erro:', { code: error.code, details: error.details, hint: error.hint });
         throw error;
       }
-      
-      console.log('✅ Eventos carregados:', data?.length || 0, 'eventos');
-      console.log('✅ Eventos detalhados:', data);
       setCustomEvents(data || []);
       
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar eventos personalizados';
-      console.error('❌ Erro ao buscar eventos personalizados:', err);
       setError(errorMessage);
-      toast.error('Erro ao carregar eventos personalizados', {
-        description: errorMessage
-      });
     } finally {
       setLoading(false);
     }
