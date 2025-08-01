@@ -47,31 +47,52 @@ export const useCustomEvents = (month: Date) => {
   }, [user, month.getFullYear(), month.getMonth()]);
 
   const addCustomEvent = useCallback(async (event: Omit<CustomEvent, 'id' | 'user_id'>) => {
-    if (!user) return;
+    if (!user) {
+      console.error('❌ Usuário não encontrado para adicionar evento');
+      return;
+    }
+    
+    console.log('➕ Iniciando criação do evento:', { event, userId: user.id });
     setLoading(true);
     setError(null);
+    
     try {
       const { data, error } = await supabase
         .from('user_custom_events')
         .insert({ ...event, user_id: user.id })
         .select()
         .single();
-      if (error) throw error;
+        
+      console.log('📊 Resposta do Supabase (criação):', { data, error });
+      
+      if (error) {
+        console.error('❌ Erro do Supabase na criação:', error);
+        throw error;
+      }
       
       // Atualizar lista local ao invés de fazer nova requisição
       setCustomEvents(prev => [...prev, data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+      console.log('✅ Evento criado com sucesso');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao adicionar evento';
+      console.error('❌ Erro detalhado na criação:', err);
       setError(errorMessage);
+      throw err;
     } finally {
       setLoading(false);
     }
   }, [user]);
 
   const updateCustomEvent = useCallback(async (id: string, event: Omit<CustomEvent, 'id' | 'user_id'>) => {
-    if (!user) return;
+    if (!user) {
+      console.error('❌ Usuário não encontrado');
+      return;
+    }
+    
+    console.log('🔄 Iniciando atualização do evento:', { id, event, userId: user.id });
     setLoading(true);
     setError(null);
+    
     try {
       const { data, error } = await supabase
         .from('user_custom_events')
@@ -81,12 +102,19 @@ export const useCustomEvents = (month: Date) => {
         .select()
         .single();
       
-      if (error) throw error;
+      console.log('📊 Resposta do Supabase:', { data, error });
+      
+      if (error) {
+        console.error('❌ Erro do Supabase:', error);
+        throw error;
+      }
       
       // Atualizar lista local ao invés de fazer nova requisição
       setCustomEvents(prev => prev.map(e => e.id === id ? data : e));
+      console.log('✅ Evento atualizado com sucesso');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar evento';
+      console.error('❌ Erro detalhado:', err);
       setError(errorMessage);
       throw err; // Re-throw para que o componente possa capturar o erro
     } finally {

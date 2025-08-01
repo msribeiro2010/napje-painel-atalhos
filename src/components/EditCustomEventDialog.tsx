@@ -48,6 +48,11 @@ export function EditCustomEventDialog({ isOpen, onOpenChange, event, onUpdate }:
     e.preventDefault();
     if (!event) return;
     
+    console.log('📝 Iniciando submissão do formulário:', {
+      eventId: event.id,
+      formData: { date, type, title, description, startTime, endTime, url }
+    });
+    
     setLoading(true);
     try {
       await onUpdate(event.id, {
@@ -59,9 +64,14 @@ export function EditCustomEventDialog({ isOpen, onOpenChange, event, onUpdate }:
         end_time: endTime || undefined,
         url: url || undefined
       });
+      console.log('✅ Formulário submetido com sucesso');
       onOpenChange(false);
     } catch (error) {
-      console.error('Erro ao atualizar evento:', error);
+      console.error('❌ Erro no formulário:', error);
+      // Mostrar toast de erro
+      import('sonner').then(({ toast }) => {
+        toast.error('Não foi possível salvar as alterações. Tente novamente.');
+      });
     } finally {
       setLoading(false);
     }

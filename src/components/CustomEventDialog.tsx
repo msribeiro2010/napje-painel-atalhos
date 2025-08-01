@@ -26,17 +26,41 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('➕ Iniciando criação de novo evento:', {
+      formData: { date, type, title, description, startTime, endTime, url }
+    });
+    
     setLoading(true);
-    await onAdd({ date, type, title, description, start_time: startTime || undefined, end_time: endTime || undefined, url: url || undefined });
-    setLoading(false);
-    setOpen(false);
-    setDate('');
-    setType('curso');
-    setTitle('');
-    setDescription('');
-    setStartTime('');
-    setEndTime('');
-    setUrl('');
+    try {
+      await onAdd({ 
+        date, 
+        type, 
+        title, 
+        description, 
+        start_time: startTime || undefined, 
+        end_time: endTime || undefined, 
+        url: url || undefined 
+      });
+      
+      console.log('✅ Novo evento criado com sucesso');
+      setOpen(false);
+      setDate('');
+      setType('curso');
+      setTitle('');
+      setDescription('');
+      setStartTime('');
+      setEndTime('');
+      setUrl('');
+    } catch (error) {
+      console.error('❌ Erro ao criar novo evento:', error);
+      // Mostrar toast de erro
+      import('sonner').then(({ toast }) => {
+        toast.error('Não foi possível criar o evento. Tente novamente.');
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
