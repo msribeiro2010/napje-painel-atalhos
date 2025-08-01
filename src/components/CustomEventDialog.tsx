@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar, BookOpen, Video, Users, Sparkles, Plus } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 const EVENT_TYPES = [
   { value: 'curso', label: 'Curso', icon: <BookOpen className="h-4 w-4 mr-1 text-blue-600" /> },
@@ -27,23 +28,55 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('➕ Iniciando criação de novo evento:', {
-      formData: { date, type, title, description, startTime, endTime, url }
+    if (!date || !title) {
+      console.error('❌ Dados obrigatórios faltando:', { date, title });
+      toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
+    
+    // Validação adicional do formato da data
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      console.error('❌ Formato de data inválido:', date);
+      toast.error('Formato de data inválido. Use o formato YYYY-MM-DD');
+      return;
+    }
+    
+    // Verificar se a data não é no passado
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+      console.error('❌ Data no passado:', date);
+      toast.error('Não é possível criar eventos para datas passadas');
+      return;
+    }
+    
+    console.log('🔄 Enviando evento personalizado:', { 
+      date, type, title, description, 
+      start_time: startTime || undefined, 
+      end_time: endTime || undefined, 
+      url: url || undefined 
     });
     
+    console.log('📅 Data específica sendo enviada:', date);
+    console.log('📅 Data convertida:', new Date(date));
+    
     setLoading(true);
+    
     try {
       await onAdd({ 
         date, 
         type, 
         title, 
-        description, 
+        description: description || undefined, 
         start_time: startTime || undefined, 
         end_time: endTime || undefined, 
         url: url || undefined 
       });
       
-      console.log('✅ Novo evento criado com sucesso');
+      // Só limpar e fechar se der certo
       setOpen(false);
       setDate('');
       setType('curso');
@@ -52,12 +85,11 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
       setStartTime('');
       setEndTime('');
       setUrl('');
+      
+      console.log('✅ Evento enviado com sucesso para a data:', date);
     } catch (error) {
-      console.error('❌ Erro ao criar novo evento:', error);
-      // Mostrar toast de erro
-      import('sonner').then(({ toast }) => {
-        toast.error('Não foi possível criar o evento. Tente novamente.');
-      });
+      console.error('❌ Erro ao enviar evento:', error);
+      // O toast de erro já é mostrado no hook useCustomEvents
     } finally {
       setLoading(false);
     }
@@ -138,7 +170,7 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
           </div>
           <div className="flex justify-end">
             <Button type="submit" disabled={loading || !date || !title} className="bg-primary text-white hover:bg-primary/90">
-              Salvar Evento
+              {loading ? 'Salvando...' : 'Salvar Evento'}
             </Button>
           </div>
         </form>

@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { CustomEventDialog } from '@/components/CustomEventDialog';
 import { EditCustomEventDialog } from '@/components/EditCustomEventDialog';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
+import { CalendarDebug } from '@/components/CalendarDebug';
 import { ptBR } from 'date-fns/locale';
 
 const calendarLabels = {
@@ -31,10 +32,11 @@ function CalendarComponent() {
   const [showAISuggestions, setShowAISuggestions] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [savingDate, setSavingDate] = useState<string | null>(null);
   
   // Usar o hook para buscar/salvar marcações do Supabase
   const { marks, loading: marksLoading, saveMark, removeMark, fetchMarks } = useWorkCalendar(month);
-  const { customEvents, addCustomEvent, updateCustomEvent, removeCustomEvent } = useCustomEvents(month);
+  const { customEvents, addCustomEvent, updateCustomEvent, removeCustomEvent, loading: customEventsLoading } = useCustomEvents(month);
 
   const { data: events = [], isLoading: eventsLoading } = useCalendarEvents(month);
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
@@ -98,8 +100,6 @@ function CalendarComponent() {
       }
     }
   };
-
-  // Remover clearAllMarks pois não faz mais sentido com Supabase (ou implementar para remover todas as marcações do mês via Supabase)
 
   // Atualizar handleSelectVacationSuggestion para usar saveMark
   const handleSelectVacationSuggestion = (suggestion: VacationSuggestion) => {
@@ -176,7 +176,6 @@ function CalendarComponent() {
             <Brain className="h-4 w-4 mr-1" />
             IA Férias
           </Button>
-          {/* Remover clearAllMarks pois não faz mais sentido com Supabase (ou implementar para remover todas as marcações do mês via Supabase) */}
         </div>
       </div>
       
@@ -405,6 +404,17 @@ function CalendarComponent() {
       </div>
       </div>
 
+      {/* Dialog para editar eventos personalizados */}
+      <EditCustomEventDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        event={editingEvent}
+        onUpdate={updateCustomEvent}
+      />
+
+      {/* Componente de debug temporário */}
+      <CalendarDebug month={month} />
+
       {/* Painel de Sugestões de IA - Flutuante */}
       <div className={`fixed top-4 right-4 w-96 max-h-[90vh] overflow-hidden transition-all duration-500 ease-in-out z-50 ${
         showAISuggestions 
@@ -440,14 +450,6 @@ function CalendarComponent() {
           </div>
         </div>
       </div>
-
-      {/* Dialog para editar eventos personalizados */}
-      <EditCustomEventDialog
-        isOpen={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        event={editingEvent}
-        onUpdate={updateCustomEvent}
-      />
     </div>
   );
 }

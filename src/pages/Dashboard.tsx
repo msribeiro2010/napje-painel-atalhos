@@ -177,7 +177,26 @@ const Dashboard = () => {
           
         case 'conhecimento':
           console.log('📚 Navegando para base de conhecimento');
-          navigate('/base-conhecimento');
+          // Extrair palavras-chave do título para busca
+          let searchTerm = '';
+          
+          // Se há metadados com tags, usar a primeira tag relevante
+          if (result.metadata?.tags && Array.isArray(result.metadata.tags)) {
+            searchTerm = result.metadata.tags[0];
+          } else {
+            // Extrair palavras-chave principais do título
+            const title = result.title?.toLowerCase() || '';
+            const keywords = ['horário', 'problema', 'usuário', 'backup', 'configuração', 'manual', 'erro', 'sistema'];
+            const foundKeyword = keywords.find(keyword => title.includes(keyword));
+            searchTerm = foundKeyword || title.split(' ')[0] || '';
+          }
+          
+          if (searchTerm) {
+            console.log('🔍 Navegando com termo de busca:', searchTerm);
+            navigate(`/base-conhecimento?search=${encodeURIComponent(searchTerm)}`);
+          } else {
+            navigate('/base-conhecimento');
+          }
           break;
           
         case 'atalho':

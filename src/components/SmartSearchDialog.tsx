@@ -18,7 +18,8 @@ import {
   Brain,
   Sparkles,
   Loader2,
-  Trash2
+  Trash2,
+  Lightbulb
 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
@@ -542,7 +543,7 @@ export const SmartSearchDialog = ({
                   Digite algo para começar a buscar em chamados e documentos
                 </p>
                 <div className="flex flex-wrap gap-2 justify-center">
-                  {['problema', 'usuário', 'backup', 'configuração', 'manual'].map(suggestion => (
+                  {['horário', 'problema', 'usuário', 'backup', 'configuração', 'manual'].map(suggestion => (
                     <Button 
                       key={suggestion}
                       variant="outline" 
