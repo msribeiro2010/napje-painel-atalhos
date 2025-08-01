@@ -6,10 +6,10 @@ import { limparCPF } from '@/utils/cpf-utils';
 
 export interface Chamado {
   id: string;
-  titulo: string;
-  descricao: string;
+  titulo: string; // Mapeado do campo 'resumo'
+  descricao: string; // Mapeado do campo 'notas'
   grau: string | null;
-  numero_processo: string | null;
+  numero_processo: string | null; // Mapeado do campo 'processos'
   orgao_julgador: string | null;
   perfil_usuario_afetado: string | null;
   nome_usuario_afetado: string | null;
@@ -31,16 +31,15 @@ export const useChamados = () => {
       const { data, error } = await supabase
         .from('chamados')
         .insert({
-          titulo: resumoFinal,
-          descricao: formData.notas,
+          resumo: resumoFinal,
+          notas: formData.notas,
           grau: formData.grau || null,
-          numero_processo: formData.processos || null,
+          processos: formData.processos || null,
           orgao_julgador: formData.orgaoJulgador || null,
           perfil_usuario_afetado: formData.perfilUsuario || null,
           nome_usuario_afetado: formData.nomeUsuario || null,
           cpf_usuario_afetado: formData.cpfUsuario || null,
-          chamado_origem: formData.chamadoOrigem || null,
-          status: 'Aberto'
+          chamado_origem: formData.chamadoOrigem || null
         })
         .select()
         .single();
@@ -62,12 +61,43 @@ export const useChamados = () => {
     try {
       const { data, error } = await supabase
         .from('chamados')
-        .select('*')
+        .select(`
+          id,
+          resumo,
+          notas,
+          grau,
+          processos,
+          orgao_julgador,
+          perfil_usuario_afetado,
+          nome_usuario_afetado,
+          cpf_usuario_afetado,
+          chamado_origem,
+          descricao_gerada,
+          created_at,
+          created_by
+        `)
         .order('created_at', { ascending: false })
         .limit(limite);
 
       if (error) throw error;
-      return data || [];
+      
+      // Mapear os dados para o formato esperado
+      const chamadosFormatados = (data || []).map(chamado => ({
+        id: chamado.id,
+        titulo: chamado.resumo,
+        descricao: chamado.notas || chamado.descricao_gerada || '',
+        grau: chamado.grau,
+        numero_processo: chamado.processos,
+        orgao_julgador: chamado.orgao_julgador,
+        perfil_usuario_afetado: chamado.perfil_usuario_afetado,
+        nome_usuario_afetado: chamado.nome_usuario_afetado,
+        cpf_usuario_afetado: chamado.cpf_usuario_afetado,
+        chamado_origem: chamado.chamado_origem,
+        created_at: chamado.created_at,
+        status: 'Aberto' // Status padrão
+      }));
+      
+      return chamadosFormatados;
     } catch (err) {
       console.error('Erro ao buscar chamados:', err);
       return [];

@@ -21,18 +21,20 @@ export const useCustomEvents = (month: Date) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchCustomEvents = useCallback(async () => {
-    if (!user || loading) return;
+    if (!user) return;
     setLoading(true);
     setError(null);
     try {
-      const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
-      const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      // Buscar eventos de um período mais amplo (6 meses antes e depois)
+      const startDate = new Date(month.getFullYear(), month.getMonth() - 6, 1);
+      const endDate = new Date(month.getFullYear(), month.getMonth() + 6, 0);
+      
       const { data, error } = await supabase
         .from('user_custom_events')
         .select('*')
         .eq('user_id', user.id)
-        .gte('date', monthStart.toISOString().slice(0, 10))
-        .lte('date', monthEnd.toISOString().slice(0, 10))
+        .gte('date', startDate.toISOString().slice(0, 10))
+        .lte('date', endDate.toISOString().slice(0, 10))
         .order('date', { ascending: true });
       if (error) throw error;
       setCustomEvents(data || []);
@@ -42,10 +44,10 @@ export const useCustomEvents = (month: Date) => {
     } finally {
       setLoading(false);
     }
-  }, [user, month.getFullYear(), month.getMonth(), loading]);
+  }, [user, month.getFullYear(), month.getMonth()]);
 
   const addCustomEvent = useCallback(async (event: Omit<CustomEvent, 'id' | 'user_id'>) => {
-    if (!user || loading) return;
+    if (!user) return;
     setLoading(true);
     setError(null);
     try {
@@ -64,10 +66,10 @@ export const useCustomEvents = (month: Date) => {
     } finally {
       setLoading(false);
     }
-  }, [user, loading]);
+  }, [user]);
 
   const updateCustomEvent = useCallback(async (id: string, event: Omit<CustomEvent, 'id' | 'user_id'>) => {
-    if (!user || loading) return;
+    if (!user) return;
     setLoading(true);
     setError(null);
     try {
@@ -78,6 +80,7 @@ export const useCustomEvents = (month: Date) => {
         .eq('user_id', user.id)
         .select()
         .single();
+      
       if (error) throw error;
       
       // Atualizar lista local ao invés de fazer nova requisição
@@ -85,13 +88,13 @@ export const useCustomEvents = (month: Date) => {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar evento';
       setError(errorMessage);
+      throw err; // Re-throw para que o componente possa capturar o erro
     } finally {
       setLoading(false);
     }
-  }, [user, loading]);
+  }, [user]);
 
   const removeCustomEvent = useCallback(async (id: string) => {
-    if (loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -99,6 +102,7 @@ export const useCustomEvents = (month: Date) => {
         .from('user_custom_events')
         .delete()
         .eq('id', id);
+      
       if (error) throw error;
       
       // Atualizar lista local ao invés de fazer nova requisição
@@ -106,10 +110,11 @@ export const useCustomEvents = (month: Date) => {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao remover evento';
       setError(errorMessage);
+      throw err; // Re-throw para que o componente possa capturar o erro
     } finally {
       setLoading(false);
     }
-  }, [loading]);
+  }, []);
 
   // Buscar eventos apenas quando user ou month mudarem
   const currentYear = month.getFullYear();

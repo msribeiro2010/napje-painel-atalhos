@@ -8,7 +8,7 @@ import { Clock } from '@/components/ui/clock';
 import { DateDisplay } from '@/components/ui/date-display';
 import { EventNotificationBadge } from '@/components/EventNotificationBadge';
 import { WeeklyNotificationsManager } from '@/components/weekly-notifications/WeeklyNotificationsManager';
-import { PastEventsDialog } from '@/components/PastEventsDialog';
+import { EventsManagementDialog } from '@/components/EventsManagementDialog';
 
 
 interface DashboardHeaderProps {
@@ -111,7 +111,7 @@ export const DashboardHeader = ({ user, isBusinessDay, nextBusinessDay, onSearch
             {/* Grupo de notificações */}
             <div className="flex items-center gap-2 bg-primary/10 backdrop-blur-sm border border-primary/20 rounded-xl p-2">
               <EventNotificationBadge />
-              <PastEventsDialog />
+              <EventsManagementDialog />
             </div>
             
             {/* Notificações semanais */}

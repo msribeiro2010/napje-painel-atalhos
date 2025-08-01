@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Home, Sun, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users } from 'lucide-react';
+import { Calendar as CalendarIcon, Home, Sun, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users, Edit, Trash2 } from 'lucide-react';
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useWorkCalendar, WorkStatus } from '@/hooks/useWorkCalendar';
 import { toast } from 'sonner';
 import { CustomEventDialog } from '@/components/CustomEventDialog';
+import { EditCustomEventDialog } from '@/components/EditCustomEventDialog';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
 import { ptBR } from 'date-fns/locale';
 
@@ -28,10 +29,12 @@ function CalendarComponent() {
   const today = new Date();
   const [month, setMonth] = useState(today);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   // Usar o hook para buscar/salvar marcações do Supabase
   const { marks, loading: marksLoading, saveMark, removeMark, fetchMarks } = useWorkCalendar(month);
-  const { customEvents, addCustomEvent } = useCustomEvents(month);
+  const { customEvents, addCustomEvent, updateCustomEvent, removeCustomEvent } = useCustomEvents(month);
 
   const { data: events = [], isLoading: eventsLoading } = useCalendarEvents(month);
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
@@ -75,6 +78,23 @@ function CalendarComponent() {
         removeMark(key);
       } else {
         saveMark(key, next);
+      }
+    }
+  };
+
+  // Funções para gerenciar eventos personalizados
+  const handleEditEvent = (event: any) => {
+    setEditingEvent(event);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteEvent = async (eventId: string, eventTitle: string) => {
+    if (confirm(`Tem certeza que deseja excluir o evento "${eventTitle}"?`)) {
+      try {
+        await removeCustomEvent(eventId);
+        toast.success('Evento excluído com sucesso!');
+      } catch (error) {
+        toast.error('Erro ao excluir evento');
       }
     }
   };
@@ -237,11 +257,37 @@ function CalendarComponent() {
                           <div className="bg-white/90 rounded-full p-1 shadow-md">
                             {customEventIcons[ev.type as keyof typeof customEventIcons]}
                           </div>
-                          {/* Tooltip customizada */}
-                          <span className="hidden group-hover:block absolute z-50 left-6 top-0 bg-white text-xs text-gray-700 rounded shadow px-2 py-1 min-w-[120px] border border-gray-200">
-                            <span className="font-semibold">{ev.title}</span>
-                            {ev.description && <><br />{ev.description}</>}
-                          </span>
+                          {/* Tooltip customizada com botões de ação */}
+                          <div className="hidden group-hover:block absolute z-50 left-6 top-0 bg-white text-xs text-gray-700 rounded shadow border border-gray-200 min-w-[160px]">
+                            <div className="p-2">
+                              <div className="font-semibold mb-1">{ev.title}</div>
+                              {ev.description && <div className="mb-2 text-gray-600">{ev.description}</div>}
+                              <div className="flex gap-1 pt-1 border-t">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditEvent(ev);
+                                  }}
+                                  className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
+                                  title="Editar evento"
+                                >
+                                  <Edit className="h-3 w-3" />
+                                  Editar
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteEvent(ev.id, ev.title);
+                                  }}
+                                  className="flex items-center gap-1 px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
+                                  title="Excluir evento"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                  Excluir
+                                </button>
+                              </div>
+                            </div>
+                          </div>
                         </span>
                       ))}
                     </div>
@@ -394,6 +440,14 @@ function CalendarComponent() {
           </div>
         </div>
       </div>
+
+      {/* Dialog para editar eventos personalizados */}
+      <EditCustomEventDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        event={editingEvent}
+        onUpdate={updateCustomEvent}
+      />
     </div>
   );
 }

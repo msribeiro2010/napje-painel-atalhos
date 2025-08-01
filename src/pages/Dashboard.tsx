@@ -21,7 +21,9 @@ import { DashboardFooter } from '@/components/dashboard/DashboardFooter';
 import { EventsPanels } from '@/components/EventsPanels';
 import { ChatAssistant } from '@/components/ChatAssistant';
 import { EventNotificationModal } from '@/components/EventNotificationModal';
+import { EventNotificationToast } from '@/components/EventNotificationToast';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
+import { useEventReminders } from '@/hooks/useEventReminders';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
 import { useWorkCalendar } from '@/hooks/useWorkCalendar';
 import type { WorkStatus } from '@/hooks/useWorkCalendar';
@@ -43,6 +45,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { isOpen, toggleChat } = useChatAssistant();
   const { modalOpen, setModalOpen } = useEventNotifications();
+  const { upcomingEventsCount } = useEventReminders(); // Adicionar hook de lembretes
   const [postItOpen, setPostItOpen] = useState(false);
   const [smartSearchOpen, setSmartSearchOpen] = useState(false);
   
@@ -91,92 +94,25 @@ const Dashboard = () => {
     enabled: !!user?.id
   });
 
-  // Buscar chamados recentes com react-query
-  const { data: chamados = [], isLoading: chamadosLoading } = useQuery({
-    queryKey: ['dashboard-chamados'],
-    queryFn: async () => {
-      console.log('🔍 Retornando chamados de teste para demonstração...');
-      
-      // Por enquanto, sempre retornar dados de teste
-      const testChamados = [
-        {
-          id: 'test-1',
-          assunto: 'Questão com login no sistema',
-          descricao: 'Usuário não consegue acessar o sistema com suas credenciais',
-          status: 'Em andamento',
-          prioridade: 'Alta',
-          created_at: new Date().toISOString(),
-          usuario_criador: user?.id || 'test-user',
-          categoria: 'Suporte Técnico',
-          subcategoria: 'Autenticação',
-          tags: ['login', 'acesso'],
-          tempo_estimado: 2,
-          data_vencimento: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          anexos: [],
-          observacoes_internas: 'Chamado criado automaticamente para teste',
-          historico_status: [],
-          feedback_usuario: '',
-          numero_protocolo: 'CHM-2024-001',
-          orgao_julgador: 'TRT15',
-          vara_origem: '1ª Vara',
-          tipo_processo: 'Trabalhista',
-          usuario_criador_nome: 'Sistema de Teste'
-        },
-        {
-          id: 'test-2',
-          assunto: 'Atualização de documentos',
-          descricao: 'Necessário atualizar documentação do projeto',
-          status: 'Pendente',
-          prioridade: 'Média',
-          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          usuario_criador: user?.id || 'test-user',
-          categoria: 'Documentação',
-          subcategoria: 'Atualização',
-          tags: ['documentação', 'projeto'],
-          tempo_estimado: 4,
-          data_vencimento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-          anexos: [],
-          observacoes_internas: 'Chamado criado automaticamente para teste',
-          historico_status: [],
-          feedback_usuario: '',
-          numero_protocolo: 'CHM-2024-002',
-          orgao_julgador: 'TRT15',
-          vara_origem: '2ª Vara',
-          tipo_processo: 'Trabalhista',
-          usuario_criador_nome: 'Sistema de Teste'
-        },
-        {
-          id: 'test-3',
-          assunto: 'Configuração de novo usuário',
-          descricao: 'Solicitação para criar conta de novo funcionário',
-          status: 'Concluído',
-          prioridade: 'Baixa',
-          created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-          usuario_criador: user?.id || 'test-user',
-          categoria: 'Recursos Humanos',
-          subcategoria: 'Onboarding',
-          tags: ['usuário', 'conta'],
-          tempo_estimado: 1,
-          data_vencimento: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          anexos: [],
-          observacoes_internas: 'Chamado criado automaticamente para teste',
-          historico_status: [],
-          feedback_usuario: 'Conta criada com sucesso',
-          numero_protocolo: 'CHM-2024-003',
-          orgao_julgador: 'TRT15',
-          vara_origem: '3ª Vara',
-          tipo_processo: 'Trabalhista',
-          usuario_criador_nome: 'Sistema de Teste'
-        }
-      ];
-      
-      console.log('✅ Chamados de teste criados:', testChamados.length);
-      return testChamados;
-    },
-    enabled: !!user,
-    refetchInterval: 30000, // Refetch a cada 30 segundos
-    staleTime: 10000 // Considerar dados frescos por 10 segundos
-  });
+  // Usar o hook useChamadosRecentes para consistência
+  const { chamados: chamadosData, loading: chamadosLoading } = useChamadosRecentes();
+  
+  // Limitar a 3 chamados para o dashboard
+  const chamados = chamadosData.slice(0, 3).map((chamado) => ({
+    id: chamado.id,
+    assunto: chamado.titulo,
+    descricao: chamado.descricao,
+    status: chamado.status || 'Aberto',
+    created_at: chamado.created_at,
+    categoria: chamado.grau || 'Não especificado',
+    usuario_criador_nome: chamado.nome_usuario_afetado || 'Usuário não identificado',
+    numero_processo: chamado.numero_processo,
+    orgao_julgador: chamado.orgao_julgador,
+    perfil_usuario_afetado: chamado.perfil_usuario_afetado,
+    cpf_usuario_afetado: chamado.cpf_usuario_afetado,
+    chamado_origem: chamado.chamado_origem,
+    usuario_criador: chamado.id
+  }));
 
   // Buscar status do próximo dia
   const tomorrow = addDays(new Date(), 1);
@@ -306,11 +242,11 @@ const Dashboard = () => {
       color: "bg-gradient-to-r from-blue-500 to-blue-600"
     },
     {
-      icon: FileText,
-      title: "Chamados",
-      description: "Ver chamados recentes",
-      onClick: () => navigate('/chamados-recentes'),
-      color: "bg-gradient-to-r from-green-500 to-green-600"
+      icon: StickyNote,
+      title: "Notas Rápidas",
+      description: "Gerenciar lembretes",
+      onClick: () => setPostItOpen(true),
+      color: "bg-gradient-to-r from-yellow-500 to-orange-500"
     },
     {
       icon: Zap,
@@ -452,39 +388,67 @@ const Dashboard = () => {
                 </ModernCardContent>
               </ModernCard> */}
 
-              {/* Post-it Notes */}
+              {/* Notas Rápidas Melhoradas */}
               <ModernCard variant="glass">
                 <ModernCardHeader
                   title="Notas Rápidas"
-                  description="Lembretes pessoais"
+                  description="Lembretes e anotações"
                   icon={<StickyNote className="h-5 w-5 text-white" />}
                   action={
-                    <Button
-                      variant="ghost"
+                    <ModernButton
+                      variant="outline"
                       size="sm"
                       onClick={() => setPostItOpen(true)}
-                      className="h-8 w-8 p-0"
+                      icon={<Plus className="h-4 w-4" />}
+                      className="h-8 px-3"
                     >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                      Nova
+                    </ModernButton>
                   }
                 />
                 <ModernCardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
-                      <span className="text-sm text-muted-foreground">Minhas Notas</span>
-                      <span className="text-sm font-semibold text-orange-600">1 nota</span>
+                  <div className="space-y-4">
+                    {/* Preview das notas */}
+                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-4 border border-yellow-200/50 dark:border-yellow-700/50">
+                      <div className="flex items-start gap-3">
+                        <div className="p-1.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex-shrink-0">
+                          <StickyNote className="h-3 w-3 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-foreground mb-1">Lembrete Importante</h4>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            Reunião com a equipe às 14h para discutir novos projetos...
+                          </p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">Hoje</span>
+                            <div className="w-1 h-1 bg-yellow-400 rounded-full"></div>
+                            <span className="text-xs text-muted-foreground">14:00</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+                    
+                    {/* Estatísticas */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="text-center p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
+                        <div className="text-lg font-bold text-orange-600">3</div>
+                        <div className="text-xs text-muted-foreground">Notas Ativas</div>
+                      </div>
+                      <div className="text-center p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
+                        <div className="text-lg font-bold text-green-600">1</div>
+                        <div className="text-xs text-muted-foreground">Hoje</div>
+                      </div>
+                    </div>
+                    
+                    {/* Botão para ver todas */}
                     <ModernButton 
-                      variant="outline" 
+                      variant="gradient" 
                       className="w-full"
                       onClick={() => setPostItOpen(true)}
+                      icon={<StickyNote className="h-4 w-4" />}
                     >
-                      + Nova Nota
+                      Gerenciar Notas
                     </ModernButton>
-                    <div className="max-h-32 overflow-y-auto">
-                      <PostitNotes />
-                    </div>
                   </div>
                 </ModernCardContent>
               </ModernCard>
@@ -559,6 +523,9 @@ const Dashboard = () => {
 
       {/* Event Notification Modal */}
       <EventNotificationModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+
+      {/* Event Notification Toast */}
+      <EventNotificationToast />
 
       {/* Upcoming Events Modal */}
       <UpcomingEventsModal
