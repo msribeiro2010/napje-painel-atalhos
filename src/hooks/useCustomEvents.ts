@@ -16,6 +16,10 @@ export interface CustomEvent {
   url?: string; // URL/link do evento
 }
 
+// Cache simples para reduzir consultas
+const eventsCache = new Map<string, { data: CustomEvent[], timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
 export const useCustomEvents = (month: Date) => {
   const { user } = useAuth();
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
@@ -24,13 +28,24 @@ export const useCustomEvents = (month: Date) => {
 
   const fetchCustomEvents = useCallback(async () => {
     if (!user) return;
+    
+    // Verificar cache primeiro
+    const cacheKey = `${user.id}-${month.getFullYear()}-${month.getMonth()}`;
+    const cached = eventsCache.get(cacheKey);
+    const now = Date.now();
+    
+    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+      setCustomEvents(cached.data);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     
     try {
-      // Buscar eventos de um período mais amplo (6 meses antes e depois)
-      const startDate = new Date(month.getFullYear(), month.getMonth() - 6, 1);
-      const endDate = new Date(month.getFullYear(), month.getMonth() + 6, 0);
+      // Buscar apenas eventos do mês atual para reduzir consumo
+      const startDate = new Date(month.getFullYear(), month.getMonth(), 1);
+      const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0);
       
       const { data, error } = await supabase
         .from('user_custom_events')
@@ -43,7 +58,12 @@ export const useCustomEvents = (month: Date) => {
       if (error) {
         throw error;
       }
-      setCustomEvents(data || []);
+      
+      const events = data || [];
+      setCustomEvents(events);
+      
+      // Salvar no cache
+      eventsCache.set(cacheKey, { data: events, timestamp: now });
       
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar eventos personalizados';
@@ -157,6 +177,10 @@ export const useCustomEvents = (month: Date) => {
       // Atualizar lista local
       setCustomEvents(prev => [...prev, data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
       
+      // Limpar cache para forçar atualização na próxima consulta
+      const cacheKey = `${user.id}-${month.getFullYear()}-${month.getMonth()}`;
+      eventsCache.delete(cacheKey);
+      
       // Labels para o toast
       const typeLabels = {
         webinario: 'Webinário',
@@ -170,12 +194,6 @@ export const useCustomEvents = (month: Date) => {
       toast.success(`${eventTypeLabel} adicionado!`, {
         description: `"${event.title}" - ${format(new Date(event.date), 'dd/MM/yyyy')}`
       });
-      
-      // Recarregar eventos para garantir sincronização
-      setTimeout(() => {
-        console.log('🔄 Recarregando eventos após criação...');
-        fetchCustomEvents();
-      }, 500);
       
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao adicionar evento';
@@ -206,18 +224,7 @@ export const useCustomEvents = (month: Date) => {
     setError(null);
     
     try {
-      // Verificar se o evento existe e pertence ao usuário
-      const { data: existingEvent, error: checkError } = await supabase
-        .from('user_custom_events')
-        .select('id, user_id')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
-      
-      if (checkError || !existingEvent) {
-        console.error('❌ Evento não encontrado ou não pertence ao usuário:', checkError);
-        throw new Error('Evento não encontrado ou sem permissão');
-      }
+      // Remover verificação extra para economizar consultas
       
       const { data, error } = await supabase
         .from('user_custom_events')
@@ -237,6 +244,10 @@ export const useCustomEvents = (month: Date) => {
       
       // Atualizar lista local
       setCustomEvents(prev => prev.map(e => e.id === id ? data : e));
+      
+      // Limpar cache para forçar atualização na próxima consulta
+      const cacheKey = `${user.id}-${month.getFullYear()}-${month.getMonth()}`;
+      eventsCache.delete(cacheKey);
       
       toast.success('Evento atualizado!', {
         description: `"${event.title}" foi modificado com sucesso`
@@ -282,6 +293,11 @@ export const useCustomEvents = (month: Date) => {
       }
       
       console.log('✅ Evento removido com sucesso');
+      
+      // Limpar cache para forçar atualização na próxima consulta
+      const cacheKey = `${user.id}-${month.getFullYear()}-${month.getMonth()}`;
+      eventsCache.delete(cacheKey);
+      
       toast.success('Evento removido!', {
         description: eventToRemove ? `"${eventToRemove.title}" foi excluído` : 'Evento excluído com sucesso'
       });
