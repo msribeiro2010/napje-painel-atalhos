@@ -6,7 +6,7 @@ import UserMenu from '@/components/UserMenu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Clock } from '@/components/ui/clock';
 import { DateDisplay } from '@/components/ui/date-display';
-import { EventNotificationBadge } from '@/components/EventNotificationBadge';
+// import { EventNotificationBadge } from '@/components/EventNotificationBadge';
 import { WeeklyNotificationsManager } from '@/components/weekly-notifications/WeeklyNotificationsManager';
 
 
@@ -108,10 +108,7 @@ export const DashboardHeader = ({ user, isBusinessDay, nextBusinessDay, onSearch
           
           {/* Notificações e Eventos */}
           <div className="flex items-center gap-3">
-            {/* Grupo de notificações */}
-            <div className="flex items-center gap-2 bg-primary/10 backdrop-blur-sm border border-primary/20 rounded-xl p-2">
-              <EventNotificationBadge />
-            </div>
+            {/* Grupo de notificações - REMOVIDO */}
             
             {/* Notificações semanais */}
             <div className="bg-accent/20 backdrop-blur-sm border border-accent/30 rounded-xl p-2">

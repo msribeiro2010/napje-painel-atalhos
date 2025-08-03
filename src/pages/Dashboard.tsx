@@ -30,9 +30,6 @@ import { usePostItNotes } from '@/hooks/usePostItNotes';
 import { ptBR } from 'date-fns/locale';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
-import { useUpcomingEventsModal } from '@/hooks/useUpcomingEventsModal';
-import UpcomingEventsModal from '@/components/UpcomingEventsModal';
-import UpcomingEventsButton from '@/components/UpcomingEventsButton';
 import { SmartSearchDialog } from '@/components/SmartSearchDialog';
 import { AIInsightsPanel } from '@/components/AIInsightsPanel';
 import { SearchResult } from '@/hooks/useSmartSearch';
@@ -64,12 +61,7 @@ const Dashboard = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Hook para eventos próximos
-  const { 
-    isOpen: upcomingEventsOpen, 
-    upcomingEvents, 
-    closeModal: closeUpcomingEvents
-  } = useUpcomingEventsModal();
+  // Hook para eventos próximos removido
   const { 
     duplicarChamado: duplicarChamadoOriginal, 
     editarChamado: editarChamadoOriginal

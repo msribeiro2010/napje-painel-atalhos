@@ -25,7 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FormData } from '@/types/form';
 import { FormSection } from '@/components/FormSection';
 import { GeneratedDescriptionSection } from '@/components/GeneratedDescriptionSection';
-import { UpcomingEventsAlert } from '@/components/UpcomingEventsAlert';
+
 import { validateForm } from '@/utils/form-validation';
 import { generateDescription, formatDescriptionSections } from '@/utils/description-generator';
 import { useUsuarios } from '@/hooks/useUsuarios';
@@ -236,7 +236,7 @@ const Index = () => {
             <UserMenu />
           </div>
 
-          <UpcomingEventsAlert />
+
 
           <div className="relative max-w-4xl mx-auto">
             {/* Formulário */}
@@ -331,7 +331,7 @@ const Index = () => {
           </div>
         </div>
 
-        <UpcomingEventsAlert />
+
 
         {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

@@ -173,51 +173,51 @@ export const useEventNotifications = () => {
     });
   }, [allEvents]);
 
-  // Toast automático para eventos do dia
-  useEffect(() => {
-    if (!loading && hasUpcomingEvents && settings.showToastsForAll && !hasShownInitialToast) {
-      const todayEvents = urgentEvents.filter(e => e.daysUntil === 0);
-      const tomorrowEvents = urgentEvents.filter(e => e.daysUntil === 1);
-      
-      console.log('🔍 useEventNotifications: Verificando eventos para toast');
-      console.log('📊 Total eventos:', allEvents.length);
-      console.log('🚨 Eventos urgentes:', urgentEvents.length);
-      console.log('📅 Eventos hoje:', todayEvents.length);
-      console.log('⏰ Eventos amanhã:', tomorrowEvents.length);
-      
-      if (todayEvents.length > 0) {
-        // Marcar eventos de hoje como ativos
-        todayEvents.forEach(event => {
-          const status = getEventStatus(event.id);
-          if (!status) {
-            updateEventStatus(event.id, 'active');
-          }
-        });
-        
-        toast({
-          title: "🎉 Eventos Acontecendo HOJE!",
-          description: `${todayEvents.map(e => e.title).join(', ')}`,
-          duration: 8000,
-        });
-      } else if (tomorrowEvents.length > 0) {
-        toast({
-          title: "⏰ Eventos Amanhã!",
-          description: `Lembre-se: ${tomorrowEvents.map(e => e.title).join(', ')}`,
-          duration: 6000,
-        });
-      } else if (allEvents.length > 0) {
-        // Mostrar toast informativo se há eventos mas não urgentes
-        const nextEvent = allEvents[0];
-        toast({
-          title: "📅 Próximos Eventos",
-          description: `${nextEvent.title} em ${nextEvent.daysUntil} dias`,
-          duration: 5000,
-        });
-      }
-      
-      setHasShownInitialToast(true);
-    }
-  }, [events, loading, hasUpcomingEvents, settings.showToastsForAll, hasShownInitialToast, urgentEvents, toast, allEvents]);
+  // Toast automático para eventos do dia - DESABILITADO
+  // useEffect(() => {
+  //   if (!loading && hasUpcomingEvents && settings.showToastsForAll && !hasShownInitialToast) {
+  //     const todayEvents = urgentEvents.filter(e => e.daysUntil === 0);
+  //     const tomorrowEvents = urgentEvents.filter(e => e.daysUntil === 1);
+  //     
+  //     console.log('🔍 useEventNotifications: Verificando eventos para toast');
+  //     console.log('📊 Total eventos:', allEvents.length);
+  //     console.log('🚨 Eventos urgentes:', urgentEvents.length);
+  //     console.log('📅 Eventos hoje:', todayEvents.length);
+  //     console.log('⏰ Eventos amanhã:', tomorrowEvents.length);
+  //     
+  //     if (todayEvents.length > 0) {
+  //       // Marcar eventos de hoje como ativos
+  //       todayEvents.forEach(event => {
+  //         const status = getEventStatus(event.id);
+  //         if (!status) {
+  //           updateEventStatus(event.id, 'active');
+  //         }
+  //       });
+  //       
+  //       toast({
+  //         title: "🎉 Eventos Acontecendo HOJE!",
+  //         description: `${todayEvents.map(e => e.title).join(', ')}`,
+  //         duration: 8000,
+  //       });
+  //     } else if (tomorrowEvents.length > 0) {
+  //       toast({
+  //         title: "⏰ Eventos Amanhã!",
+  //         description: `Lembre-se: ${tomorrowEvents.map(e => e.title).join(', ')}`,
+  //         duration: 6000,
+  //       });
+  //     } else if (allEvents.length > 0) {
+  //       // Mostrar toast informativo se há eventos mas não urgentes
+  //       const nextEvent = allEvents[0];
+  //       toast({
+  //         title: "📅 Próximos Eventos",
+  //         description: `${nextEvent.title} em ${nextEvent.daysUntil} dias`,
+  //         duration: 5000,
+  //       });
+  //     }
+  //     
+  //     setHasShownInitialToast(true);
+  //   }
+  // }, [events, loading, hasUpcomingEvents, settings.showToastsForAll, hasShownInitialToast, urgentEvents, toast, allEvents]);
 
   // Modal automático para eventos urgentes
   useEffect(() => {
