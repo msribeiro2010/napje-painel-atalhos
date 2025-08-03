@@ -484,11 +484,11 @@ const Dashboard = () => {
       color: "bg-gradient-to-r from-blue-500 to-blue-600"
     },
     {
-      icon: StickyNote,
-      title: "Notas Rápidas",
-      description: "Gerenciar lembretes",
-      onClick: () => setPostItOpen(true),
-      color: "bg-gradient-to-r from-yellow-500 to-orange-500"
+      icon: Calendar,
+      title: "Calendário",
+      description: "Agendar compromissos",
+      onClick: () => navigate('/calendario'),
+      color: "bg-gradient-to-r from-indigo-500 to-indigo-600"
     },
     {
       icon: Zap,
@@ -510,13 +510,6 @@ const Dashboard = () => {
       description: "Consultar órgãos",
       onClick: () => navigate('/orgaos-julgadores'),
       color: "bg-gradient-to-r from-orange-500 to-orange-600"
-    },
-    {
-      icon: Calendar,
-      title: "Calendário",
-      description: "Agendar compromissos",
-      onClick: () => navigate('/calendario'),
-      color: "bg-gradient-to-r from-indigo-500 to-indigo-600"
     }
   ];
 
