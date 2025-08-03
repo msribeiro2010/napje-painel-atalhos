@@ -47,6 +47,16 @@ export const useEventNotifications = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [hasShownInitialToast, setHasShownInitialToast] = useState(false);
+  
+  // Debug logs
+  useEffect(() => {
+    console.log('🔍 useEventNotifications: Estado atual');
+    console.log('📊 Loading:', loading);
+    console.log('📅 Has upcoming events:', hasUpcomingEvents);
+    console.log('⚙️ Show toasts:', settings.showToastsForAll);
+    console.log('🔔 Has shown initial toast:', hasShownInitialToast);
+    console.log('📋 Events:', events);
+  }, [loading, hasUpcomingEvents, settings.showToastsForAll, hasShownInitialToast, events]);
 
   // Salvar configurações no localStorage
   useEffect(() => {
@@ -169,6 +179,12 @@ export const useEventNotifications = () => {
       const todayEvents = urgentEvents.filter(e => e.daysUntil === 0);
       const tomorrowEvents = urgentEvents.filter(e => e.daysUntil === 1);
       
+      console.log('🔍 useEventNotifications: Verificando eventos para toast');
+      console.log('📊 Total eventos:', allEvents.length);
+      console.log('🚨 Eventos urgentes:', urgentEvents.length);
+      console.log('📅 Eventos hoje:', todayEvents.length);
+      console.log('⏰ Eventos amanhã:', tomorrowEvents.length);
+      
       if (todayEvents.length > 0) {
         // Marcar eventos de hoje como ativos
         todayEvents.forEach(event => {
@@ -189,11 +205,19 @@ export const useEventNotifications = () => {
           description: `Lembre-se: ${tomorrowEvents.map(e => e.title).join(', ')}`,
           duration: 6000,
         });
+      } else if (allEvents.length > 0) {
+        // Mostrar toast informativo se há eventos mas não urgentes
+        const nextEvent = allEvents[0];
+        toast({
+          title: "📅 Próximos Eventos",
+          description: `${nextEvent.title} em ${nextEvent.daysUntil} dias`,
+          duration: 5000,
+        });
       }
       
       setHasShownInitialToast(true);
     }
-  }, [events, loading, hasUpcomingEvents, settings.showToastsForAll, hasShownInitialToast, urgentEvents, toast]);
+  }, [events, loading, hasUpcomingEvents, settings.showToastsForAll, hasShownInitialToast, urgentEvents, toast, allEvents]);
 
   // Modal automático para eventos urgentes
   useEffect(() => {

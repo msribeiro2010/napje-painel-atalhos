@@ -17,11 +17,19 @@ export const EventNotificationToast = () => {
   const { customEvents } = useCustomEvents(currentMonth);
 
   useEffect(() => {
+    // Verificar se já foi notificado hoje
+    const sessionKey = `event_toast_shown_${new Date().toDateString()}`;
+    const alreadyShown = sessionStorage.getItem(sessionKey);
+    
+    if (alreadyShown) {
+      return; // Já mostrou notificação hoje
+    }
+
     // Verificar eventos de hoje e amanhã
     const todayEvents = customEvents.filter(event => isToday(parseISO(event.date)));
     const tomorrowEvents = customEvents.filter(event => isTomorrow(parseISO(event.date)));
 
-    // Mostrar notificação para eventos de hoje
+    // Mostrar notificação para eventos de hoje (prioridade)
     if (todayEvents.length > 0) {
       todayEvents.forEach(event => {
         const EventIcon = EVENT_ICONS[event.type as keyof typeof EVENT_ICONS];
@@ -49,10 +57,12 @@ export const EventNotificationToast = () => {
           }
         });
       });
-    }
-
-    // Mostrar notificação para eventos de amanhã
-    if (tomorrowEvents.length > 0) {
+      
+      // Marcar como mostrado
+      sessionStorage.setItem(sessionKey, 'true');
+    } 
+    // Mostrar notificação para eventos de amanhã (se não há eventos hoje)
+    else if (tomorrowEvents.length > 0) {
       tomorrowEvents.forEach(event => {
         const EventIcon = EVENT_ICONS[event.type as keyof typeof EVENT_ICONS];
         
@@ -79,6 +89,9 @@ export const EventNotificationToast = () => {
           }
         });
       });
+      
+      // Marcar como mostrado
+      sessionStorage.setItem(sessionKey, 'true');
     }
   }, [customEvents]);
 

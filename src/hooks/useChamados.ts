@@ -59,47 +59,65 @@ export const useChamados = () => {
 
   const buscarChamadosRecentes = async (limite: number = 10): Promise<Chamado[]> => {
     try {
+      console.log(`🔍 Buscando ${limite} chamados mais recentes...`);
+      
       const { data, error } = await supabase
         .from('chamados')
-        .select(`
-          id,
-          resumo,
-          notas,
-          grau,
-          processos,
-          orgao_julgador,
-          perfil_usuario_afetado,
-          nome_usuario_afetado,
-          cpf_usuario_afetado,
-          chamado_origem,
-          descricao_gerada,
-          created_at,
-          created_by
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(limite);
 
       if (error) throw error;
       
+      console.log(`✅ Encontrados ${data?.length || 0} chamados no banco`);
+      
+      // Type assertion para usar a estrutura correta da tabela
+      const chamadosData = (data as unknown) as Array<{
+        id: string;
+        titulo: string;
+        descricao: string;
+        created_at: string;
+        numero_processo: string | null;
+        grau: string | null;
+        orgao_julgador: string | null;
+        perfil_usuario_afetado: string | null;
+        nome_usuario_afetado: string | null;
+        cpf_usuario_afetado: string | null;
+        chamado_origem: string | null;
+        status: string | null;
+        tipo: string | null;
+        prioridade: number | null;
+        assunto_id: string | null;
+        created_by: string | null;
+        updated_at: string;
+        oj_detectada: string | null;
+      }>;
+      
       // Mapear os dados para o formato esperado
-      const chamadosFormatados = (data || []).map(chamado => ({
+      const chamadosFormatados = (chamadosData || []).map(chamado => ({
         id: chamado.id,
-        titulo: chamado.resumo,
-        descricao: chamado.notas || chamado.descricao_gerada || '',
+        titulo: chamado.titulo || 'Sem título',
+        descricao: chamado.descricao || 'Sem descrição',
         grau: chamado.grau,
-        numero_processo: chamado.processos,
+        numero_processo: chamado.numero_processo,
         orgao_julgador: chamado.orgao_julgador,
         perfil_usuario_afetado: chamado.perfil_usuario_afetado,
         nome_usuario_afetado: chamado.nome_usuario_afetado,
         cpf_usuario_afetado: chamado.cpf_usuario_afetado,
         chamado_origem: chamado.chamado_origem,
         created_at: chamado.created_at,
-        status: 'Aberto' // Status padrão
+        status: chamado.status || 'Aberto'
       }));
+      
+      console.log(`📋 Chamados formatados:`, chamadosFormatados.map(c => ({
+        id: c.id,
+        titulo: c.titulo,
+        created_at: c.created_at
+      })));
       
       return chamadosFormatados;
     } catch (err) {
-      console.error('Erro ao buscar chamados:', err);
+      console.error('❌ Erro ao buscar chamados:', err);
       return [];
     }
   };

@@ -71,15 +71,29 @@ export const SmartSearchDialog = ({
 
   // Efeito para buscar quando a query muda
   useEffect(() => {
-    if (debouncedQuery && debouncedQuery.trim().length >= 3) {
+    if (debouncedQuery && debouncedQuery.trim().length >= 2) { // Reduzir de 3 para 2 caracteres
       console.log('🔍 SmartSearchDialog: Iniciando busca para:', debouncedQuery);
       console.log('🎯 Filtros ativos:', activeFilters);
+      
+      // Debug específico para "perito"
+      if (debouncedQuery.toLowerCase().includes('perito')) {
+        console.log('🔍 DEBUG: Detectada busca por "perito"');
+        console.log('🔍 DEBUG: Query completa:', debouncedQuery);
+        console.log('🔍 DEBUG: Filtros:', activeFilters);
+      }
       
       hybridSearch(debouncedQuery.trim(), { 
         types: activeFilters,
         limit: 20 
       }).then(results => {
         console.log('✅ SmartSearchDialog: Busca concluída, resultados:', results.length);
+        
+        // Debug específico para resultados de "perito"
+        if (debouncedQuery.toLowerCase().includes('perito')) {
+          console.log('🔍 DEBUG: Resultados para "perito":', results);
+          console.log('🔍 DEBUG: Títulos encontrados:', results.map(r => r.title));
+        }
+        
         if (results.length === 0) {
           console.log('⚠️ SmartSearchDialog: Nenhum resultado encontrado para:', debouncedQuery);
         }
@@ -91,7 +105,7 @@ export const SmartSearchDialog = ({
       });
       
       setShowHistory(false);
-    } else if (debouncedQuery && debouncedQuery.trim().length > 0 && debouncedQuery.trim().length < 3) {
+    } else if (debouncedQuery && debouncedQuery.trim().length > 0 && debouncedQuery.trim().length < 2) {
       // Para queries muito curtas, apenas limpar resultados sem fazer busca
       console.log('🔍 SmartSearchDialog: Query muito curta, aguardando mais caracteres');
       clearResults();
@@ -156,13 +170,25 @@ export const SmartSearchDialog = ({
   const handleResultSelect = (result: any) => {
     console.log('🎯 SmartSearchDialog: Resultado selecionado:', result);
     
-    // Debug específico para resultados com "problema"
-    if (result.title?.toLowerCase().includes('problema')) {
-      console.log('🔍 DEBUG: Selecionado resultado com "problema":', result);
+    // Debug específico para resultados importantes
+    if (result.title?.toLowerCase().includes('problema') || result.title?.toLowerCase().includes('perito')) {
+      console.log('🔍 DEBUG: Selecionado resultado importante:', result);
+      console.log('🔍 DEBUG: Query atual:', query);
     }
     
     try {
-      onResultSelect?.(result);
+      // Adicionar o termo de busca atual aos metadados se não existir
+      const enhancedResult = {
+        ...result,
+        metadata: {
+          ...result.metadata,
+          searchTerm: result.metadata?.searchTerm || query.trim(),
+          originalQuery: query.trim()
+        }
+      };
+      
+      console.log('🚀 SmartSearchDialog: Enviando resultado com contexto:', enhancedResult);
+      onResultSelect?.(enhancedResult);
       onClose();
     } catch (error) {
       console.error('❌ Erro ao processar seleção de resultado:', error);
@@ -327,42 +353,6 @@ export const SmartSearchDialog = ({
                     <Clock className="h-4 w-4 text-primary" />
                     Histórico de Busca
                   </h3>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive transition-colors"
-                        title="Limpar histórico"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-border/20">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2">
-                          <Trash2 className="h-5 w-5 text-destructive" />
-                          Limpar Histórico de Busca
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja limpar todo o histórico de busca? Esta ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => {
-                            clearSearchHistory();
-                            console.log('🗑️ Histórico limpo pelo usuário via botão pequeno');
-                          }}
-                          className="bg-destructive hover:bg-destructive/90"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Limpar Histórico
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
                 </div>
                 <div className="space-y-1">
                   {searchHistory.slice(0, 5).map((item, index) => (
@@ -531,6 +521,13 @@ export const SmartSearchDialog = ({
                   >
                     Buscar "problema"
                   </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setQuery('perito')}
+                  >
+                    Buscar "perito"
+                  </Button>
                 </div>
               </div>
             ) : !query ? (
@@ -543,7 +540,7 @@ export const SmartSearchDialog = ({
                   Digite algo para começar a buscar em chamados e documentos
                 </p>
                 <div className="flex flex-wrap gap-2 justify-center">
-                  {['horário', 'problema', 'usuário', 'backup', 'configuração', 'manual'].map(suggestion => (
+                  {['horário', 'problema', 'perito', 'usuário', 'backup', 'configuração', 'manual'].map(suggestion => (
                     <Button 
                       key={suggestion}
                       variant="outline" 

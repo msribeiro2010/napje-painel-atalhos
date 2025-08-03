@@ -114,49 +114,64 @@ export type Database = {
       }
       chamados: {
         Row: {
+          assunto_id: string | null
           chamado_origem: string | null
           cpf_usuario_afetado: string | null
           created_at: string
           created_by: string | null
-          descricao_gerada: string | null
+          descricao: string
           grau: string | null
           id: string
           nome_usuario_afetado: string | null
-          notas: string | null
+          numero_processo: string | null
+          oj_detectada: string | null
           orgao_julgador: string | null
           perfil_usuario_afetado: string | null
-          processos: string | null
-          resumo: string
+          prioridade: number | null
+          status: string | null
+          tipo: string | null
+          titulo: string
+          updated_at: string
         }
         Insert: {
+          assunto_id?: string | null
           chamado_origem?: string | null
           cpf_usuario_afetado?: string | null
           created_at?: string
           created_by?: string | null
-          descricao_gerada?: string | null
+          descricao: string
           grau?: string | null
           id?: string
           nome_usuario_afetado?: string | null
-          notas?: string | null
+          numero_processo?: string | null
+          oj_detectada?: string | null
           orgao_julgador?: string | null
           perfil_usuario_afetado?: string | null
-          processos?: string | null
-          resumo: string
+          prioridade?: number | null
+          status?: string | null
+          tipo?: string | null
+          titulo: string
+          updated_at?: string
         }
         Update: {
+          assunto_id?: string | null
           chamado_origem?: string | null
           cpf_usuario_afetado?: string | null
           created_at?: string
           created_by?: string | null
-          descricao_gerada?: string | null
+          descricao?: string
           grau?: string | null
           id?: string
           nome_usuario_afetado?: string | null
-          notas?: string | null
+          numero_processo?: string | null
+          oj_detectada?: string | null
           orgao_julgador?: string | null
           perfil_usuario_afetado?: string | null
-          processos?: string | null
-          resumo?: string
+          prioridade?: number | null
+          status?: string | null
+          tipo?: string | null
+          titulo?: string
+          updated_at?: string
         }
         Relationships: []
       }

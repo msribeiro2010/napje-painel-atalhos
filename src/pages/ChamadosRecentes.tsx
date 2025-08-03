@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, FileText, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useChamadosRecentes } from '@/hooks/useChamadosRecentes';
 import { ChamadoCard } from '@/components/ChamadoCard';
 import { Clock } from '@/components/ui/clock';
@@ -11,7 +11,30 @@ import { DateDisplay } from '@/components/ui/date-display';
 
 const ChamadosRecentes = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
+  const [highlightedChamadoId, setHighlightedChamadoId] = useState<string | null>(null);
+
+  // Ler parâmetros da URL ao carregar a página
+  useEffect(() => {
+    const urlSearchTerm = searchParams.get('search');
+    const urlHighlight = searchParams.get('highlight');
+    
+    if (urlSearchTerm) {
+      setSearchTerm(urlSearchTerm);
+      console.log('🔍 ChamadosRecentes: Termo de busca da URL:', urlSearchTerm);
+    }
+    
+    if (urlHighlight) {
+      setHighlightedChamadoId(urlHighlight);
+      console.log('🎯 ChamadosRecentes: Chamado a destacar:', urlHighlight);
+      
+      // Remover destaque após alguns segundos
+      setTimeout(() => {
+        setHighlightedChamadoId(null);
+      }, 5000);
+    }
+  }, [searchParams]);
   
   const {
     chamados,
@@ -74,6 +97,23 @@ const ChamadosRecentes = () => {
           </div>
         </div>
 
+        {/* Indicador de busca ativa */}
+        {searchTerm && (
+          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <span className="text-sm text-blue-800 dark:text-blue-200">
+                Buscando por: <strong>"{searchTerm}"</strong>
+              </span>
+              {highlightedChamadoId && (
+                <span className="text-xs text-blue-600 dark:text-blue-400 ml-2">
+                  • Resultado destacado
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bfae7c] dark:border-[#bfae7c] mx-auto"></div>
@@ -110,6 +150,8 @@ const ChamadosRecentes = () => {
                 onDuplicar={duplicarChamado}
                 onEditar={editarChamado}
                 onExcluir={handleExcluirChamado}
+                isHighlighted={highlightedChamadoId === chamado.id}
+                searchTerm={searchTerm}
               />
             ))}
           </div>

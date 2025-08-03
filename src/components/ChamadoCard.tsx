@@ -25,6 +25,8 @@ interface ChamadoCardProps {
   onDuplicar: (chamado: Chamado) => void;
   onEditar: (chamado: Chamado) => void;
   onExcluir: (id: string) => void;
+  isHighlighted?: boolean;
+  searchTerm?: string;
 }
 
 export const ChamadoCard = ({ 
@@ -33,14 +35,38 @@ export const ChamadoCard = ({
   onTemplate, 
   onDuplicar,
   onEditar, 
-  onExcluir 
+  onExcluir,
+  isHighlighted = false,
+  searchTerm = ''
 }: ChamadoCardProps) => {
+  
+  // Função para destacar texto
+  const highlightText = (text: string, term: string) => {
+    if (!term || !text) return text;
+    
+    const regex = new RegExp(`(${term})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <mark key={index} className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">
+          {part}
+        </mark>
+      ) : part
+    );
+  };
   return (
-    <Card className="hover:shadow-lg transition-shadow bg-[#f8f5e4] dark:bg-[#2d2717] border-[#e2d8b8] dark:border-[#3a3320]">
+    <Card className={`hover:shadow-lg transition-all duration-500 bg-[#f8f5e4] dark:bg-[#2d2717] border-[#e2d8b8] dark:border-[#3a3320] ${
+      isHighlighted 
+        ? 'ring-2 ring-blue-500 ring-opacity-50 shadow-lg bg-blue-50 dark:bg-blue-900/20 animate-pulse' 
+        : ''
+    }`}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-lg text-[#7c6a3c] dark:text-[#f8f5e4]">{chamado.titulo}</CardTitle>
+            <CardTitle className="text-lg text-[#7c6a3c] dark:text-[#f8f5e4]">
+              {highlightText(chamado.titulo, searchTerm)}
+            </CardTitle>
             <CardDescription className="flex items-center mt-2 text-[#bfae7c] dark:text-[#bfae7c]">
               <Clock className="h-4 w-4 mr-1" />
               {formatDistanceToNow(new Date(chamado.created_at), { 
@@ -61,7 +87,7 @@ export const ChamadoCard = ({
           <div>
             <h4 className="font-medium text-[#7c6a3c] dark:text-[#f8f5e4] mb-1">Descrição do Problema</h4>
             <p className="text-[#7c6a3c] dark:text-[#f8f5e4] text-sm bg-[#f3ecd2] dark:bg-[#23201a] p-3 rounded border border-[#e2d8b8] dark:border-[#3a3320]">
-              {chamado.descricao}
+              {highlightText(chamado.descricao, searchTerm)}
             </p>
           </div>
 
@@ -77,7 +103,7 @@ export const ChamadoCard = ({
               <div>
                 <span className="font-medium text-[#7c6a3c] dark:text-[#f8f5e4]">Processo:</span>
                 <span className="ml-2 text-[#bfae7c] dark:text-[#bfae7c] font-mono">
-                  {chamado.numero_processo}
+                  {highlightText(chamado.numero_processo, searchTerm)}
                 </span>
               </div>
             )}
@@ -94,7 +120,9 @@ export const ChamadoCard = ({
             {chamado.orgao_julgador && (
               <div className="md:col-span-2">
                 <span className="font-medium text-[#7c6a3c] dark:text-[#f8f5e4]">Órgão Julgador:</span>
-                <span className="ml-2 text-[#bfae7c] dark:text-[#bfae7c]">{chamado.orgao_julgador}</span>
+                <span className="ml-2 text-[#bfae7c] dark:text-[#bfae7c]">
+                  {highlightText(chamado.orgao_julgador, searchTerm)}
+                </span>
               </div>
             )}
           </div>

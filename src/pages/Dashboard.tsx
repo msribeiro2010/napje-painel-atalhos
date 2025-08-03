@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, BookOpen, Shield, Plus, ExternalLink, StickyNote, Scale, Calendar, Home, Umbrella, Laptop, Video, Users, Sparkles, Search, Brain, Zap, RefreshCw, Lightbulb, BarChart3, Activity } from 'lucide-react';
+import { BookOpen, Plus, StickyNote, Scale, Calendar, Brain, Zap, RefreshCw, Lightbulb } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ModernButton } from '@/components/ui/modern-button';
 import { Badge } from '@/components/ui/badge';
@@ -20,14 +20,13 @@ import { RecentChamados } from '@/components/dashboard/RecentChamados';
 import { DashboardFooter } from '@/components/dashboard/DashboardFooter';
 import { EventsPanels } from '@/components/EventsPanels';
 import { ChatAssistant } from '@/components/ChatAssistant';
-import { EventNotificationModal } from '@/components/EventNotificationModal';
-import { EventNotificationToast } from '@/components/EventNotificationToast';
-import { useEventNotifications } from '@/hooks/useEventNotifications';
-import { useEventReminders } from '@/hooks/useEventReminders';
+// import { EventNotificationModal } from '@/components/EventNotificationModal';
+// import { EventNotificationToast } from '@/components/EventNotificationToast';
+// import { useEventNotifications } from '@/hooks/useEventNotifications';
+// import { useEventReminders } from '@/hooks/useEventReminders';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
-import { useWorkCalendar } from '@/hooks/useWorkCalendar';
-import type { WorkStatus } from '@/hooks/useWorkCalendar';
-import { format, addDays } from 'date-fns';
+import { usePostItNotes } from '@/hooks/usePostItNotes';
+
 import { ptBR } from 'date-fns/locale';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
@@ -44,8 +43,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isOpen, toggleChat } = useChatAssistant();
-  const { modalOpen, setModalOpen } = useEventNotifications();
-  const { upcomingEventsCount } = useEventReminders(); // Adicionar hook de lembretes
+  // const { modalOpen, setModalOpen } = useEventNotifications();
+  // useEventReminders(); // Hook de lembretes
+  const { notes: postItNotes, loading: notesLoading, stats: notesStats, latestNote } = usePostItNotes();
+  
+
   const [postItOpen, setPostItOpen] = useState(false);
   const [smartSearchOpen, setSmartSearchOpen] = useState(false);
   
@@ -66,15 +68,86 @@ const Dashboard = () => {
   const { 
     isOpen: upcomingEventsOpen, 
     upcomingEvents, 
-    openModal: openUpcomingEvents, 
-    closeModal: closeUpcomingEvents, 
-    hasEvents 
+    closeModal: closeUpcomingEvents
   } = useUpcomingEventsModal();
   const { 
-    duplicarChamado, 
-    editarChamado, 
-    handleExcluirChamado 
+    duplicarChamado: duplicarChamadoOriginal, 
+    editarChamado: editarChamadoOriginal
   } = useChamadosRecentes();
+  
+  // Função para recarregar os chamados
+  const recarregarChamados = async () => {
+    setChamadosLoading(true);
+    try {
+      console.log('🔄 Recarregando chamados...');
+      const { data, error } = await supabase
+        .from('chamados')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(3);
+        
+      if (error) {
+        console.error('❌ Erro ao recarregar:', error);
+      } else {
+        // Type assertion para usar a estrutura correta da tabela
+         const chamadosData = (data as unknown) as Array<{
+           id: string;
+           titulo: string;
+           descricao: string;
+           created_at: string;
+           numero_processo: string | null;
+           grau: string | null;
+           orgao_julgador: string | null;
+           perfil_usuario_afetado: string | null;
+           nome_usuario_afetado: string | null;
+           cpf_usuario_afetado: string | null;
+           chamado_origem: string | null;
+           status: string | null;
+           tipo: string | null;
+           prioridade: number | null;
+           assunto_id: string | null;
+           created_by: string | null;
+           updated_at: string;
+           oj_detectada: string | null;
+         }>;
+        
+        const chamadosFormatados = (chamadosData || []).map(chamado => ({
+          id: chamado.id,
+          titulo: chamado.titulo || 'Sem título',
+          descricao: chamado.descricao || 'Sem descrição',
+          grau: chamado.grau,
+          numero_processo: chamado.numero_processo,
+          orgao_julgador: chamado.orgao_julgador,
+          perfil_usuario_afetado: chamado.perfil_usuario_afetado,
+          nome_usuario_afetado: chamado.nome_usuario_afetado,
+          cpf_usuario_afetado: chamado.cpf_usuario_afetado,
+          chamado_origem: chamado.chamado_origem,
+          created_at: chamado.created_at,
+          status: chamado.status || 'Aberto'
+        }));
+        
+        setChamadosRecentes(chamadosFormatados);
+        console.log('✅ Chamados recarregados:', chamadosFormatados.length);
+      }
+    } catch (err) {
+      console.error('❌ Erro ao recarregar chamados:', err);
+    } finally {
+      setChamadosLoading(false);
+    }
+  };
+  
+  // Wrappers para as funções originais com recarga
+  const duplicarChamado = (chamado: any) => {
+    duplicarChamadoOriginal(chamado);
+    // Recarregar após um pequeno delay para dar tempo da navegação
+    setTimeout(recarregarChamados, 500);
+  };
+  
+  const editarChamado = (chamado: any) => {
+    editarChamadoOriginal(chamado);
+    // Recarregar após um pequeno delay para dar tempo da navegação
+    setTimeout(recarregarChamados, 500);
+  };
 
   // Verificar se o usuário é admin
   const { data: isAdmin } = useQuery({
@@ -94,54 +167,144 @@ const Dashboard = () => {
     enabled: !!user?.id
   });
 
-  // Usar o hook useChamadosRecentes para consistência
-  const { chamados: chamadosData, loading: chamadosLoading } = useChamadosRecentes();
+  // Busca direta e simples dos chamados
+  const [chamadosRecentes, setChamadosRecentes] = useState<any[]>([]);
+  const [chamadosLoading, setChamadosLoading] = useState(true);
   
-  // Limitar a 3 chamados para o dashboard
-  const chamados = chamadosData.slice(0, 3).map((chamado) => ({
-    id: chamado.id,
-    assunto: chamado.titulo,
-    descricao: chamado.descricao,
-    status: chamado.status || 'Aberto',
-    created_at: chamado.created_at,
-    categoria: chamado.grau || 'Não especificado',
-    usuario_criador_nome: chamado.nome_usuario_afetado || 'Usuário não identificado',
-    numero_processo: chamado.numero_processo,
-    orgao_julgador: chamado.orgao_julgador,
-    perfil_usuario_afetado: chamado.perfil_usuario_afetado,
-    cpf_usuario_afetado: chamado.cpf_usuario_afetado,
-    chamado_origem: chamado.chamado_origem,
-    usuario_criador: chamado.id
-  }));
+  useEffect(() => {
+    const buscarChamadosSimples = async () => {
+      setChamadosLoading(true);
+      try {
+        console.log('🔍 Buscando chamados diretamente...');
+        const { data, error } = await supabase
+          .from('chamados')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(3);
+          
+        if (error) {
+          console.error('❌ Erro:', error);
+          setChamadosRecentes([]);
+        } else {
+          console.log('✅ Chamados encontrados:', data?.length || 0);
+          console.log('📋 Dados:', data);
+          
+          // Type assertion para usar a estrutura correta da tabela
+           const chamadosData = (data as unknown) as Array<{
+             id: string;
+             titulo: string;
+             descricao: string;
+             created_at: string;
+             numero_processo: string | null;
+             grau: string | null;
+             orgao_julgador: string | null;
+             perfil_usuario_afetado: string | null;
+             nome_usuario_afetado: string | null;
+             cpf_usuario_afetado: string | null;
+             chamado_origem: string | null;
+             status: string | null;
+             tipo: string | null;
+             prioridade: number | null;
+             assunto_id: string | null;
+             created_by: string | null;
+             updated_at: string;
+             oj_detectada: string | null;
+           }>;
+          
+          // Mapear para formato esperado pelo componente RecentChamados
+        const chamadosFormatados = (chamadosData || []).map(chamado => ({
+          id: chamado.id,
+          assunto: chamado.titulo || 'Sem título',
+          descricao: chamado.descricao || 'Sem descrição',
+          categoria: chamado.grau,
+          numero_processo: chamado.numero_processo,
+          orgao_julgador: chamado.orgao_julgador,
+          perfil_usuario_afetado: chamado.perfil_usuario_afetado,
+          usuario_criador_nome: chamado.nome_usuario_afetado,
+          cpf_usuario_afetado: chamado.cpf_usuario_afetado,
+          chamado_origem: chamado.chamado_origem,
+          created_at: chamado.created_at,
+          status: chamado.status || 'Aberto'
+        }));
+          
+          setChamadosRecentes(chamadosFormatados);
+        }
+      } catch (err) {
+        console.error('❌ Erro na busca:', err);
+        setChamadosRecentes([]);
+      } finally {
+        setChamadosLoading(false);
+      }
+    };
+    
+    buscarChamadosSimples();
+  }, []);
+  
+  // Debug: Testar busca direta na tabela
+  const testarBuscaDireta = async () => {
+    try {
+      console.log('🔍 Testando busca direta na tabela chamados...');
+      const { data, error, count } = await supabase
+        .from('chamados')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .limit(10);
+        
+      console.log('📊 Total de chamados na tabela:', count);
+      console.log('📋 Dados encontrados:', data?.length || 0);
+      console.log('📋 Todos os chamados:', data);
+      
+      if (error) {
+        console.error('❌ Erro na busca direta:', error);
+      } else {
+        toast({
+          title: "Debug: Dados da Tabela",
+          description: `Encontrados ${count} chamados na tabela. Veja o console para detalhes.`,
+          duration: 5000,
+        });
+      }
+    } catch (err) {
+      console.error('❌ Erro no teste direto:', err);
+    }
+  };
+  
+  useEffect(() => {
+    // Executar teste apenas uma vez
+    const testKey = `debug_test_${new Date().toDateString()}`;
+    if (!sessionStorage.getItem(testKey)) {
+      setTimeout(testarBuscaDireta, 1000);
+      sessionStorage.setItem(testKey, 'true');
+    }
+  }, []);
+  
+  // Mapear os dados para o formato esperado pelo componente - REMOVIDO
+  // Agora usando diretamente chamadosRecentes que já está no formato correto
+  // const chamados = chamadosRecentes.map((chamado) => ({ ... }));
 
-  // Buscar status do próximo dia
-  const tomorrow = addDays(new Date(), 1);
-  const { marks: tomorrowMarks, loading: marksLoading } = useWorkCalendar(tomorrow);
-  const tomorrowKey = format(tomorrow, 'yyyy-MM-dd');
-  const status: WorkStatus | 'none' = tomorrowMarks[tomorrowKey] || 'none';
-  const tomorrowDateStr = format(tomorrow, 'dd/MM/yyyy');
-
-  // Buscar eventos personalizados do próximo dia
-  const { customEvents, fetchCustomEvents } = useCustomEvents(tomorrow);
-  // Filtrar eventos do próximo dia
-  const customEventsTomorrow = customEvents.filter(ev => ev.date === tomorrowKey);
-
-  // Cores e ícones para tipos de evento
-  const customEventStyles = {
-    curso: { color: '#e3f2fd', border: '#2196f3', icon: <BookOpen className="h-5 w-5 text-blue-600 animate-bounce-slow" /> },
-    webinario: { color: '#ede7f6', border: '#7c3aed', icon: <Video className="h-5 w-5 text-purple-600 animate-pulse-slow" /> },
-    reuniao: { color: '#e8f5e9', border: '#43a047', icon: <Users className="h-5 w-5 text-green-600 animate-fade-slow" /> },
-    outro: { color: '#fff8e1', border: '#ffb300', icon: <Sparkles className="h-5 w-5 text-amber-500 animate-bounce-slow" /> },
+  // Debug: Log dos chamados carregados
+  useEffect(() => {
+    if (!chamadosLoading) {
+      console.log('📋 Dashboard: Chamados carregados:', chamadosRecentes.length);
+      console.log('📋 Dashboard: Dados dos chamados:', chamadosRecentes.map(c => ({
+         id: c.id,
+         assunto: c.assunto,
+         created_at: c.created_at
+       })));
+    }
+  }, [chamadosRecentes, chamadosLoading]);
+  
+  // Debug: Função para testar exclusão
+  const testarExclusao = async () => {
+    if (chamadosRecentes.length > 0) {
+      const primeiroId = chamadosRecentes[0].id;
+      console.log('🧪 Testando exclusão do chamado:', primeiroId);
+      await handleExcluir(primeiroId);
+    } else {
+      console.log('⚠️ Nenhum chamado para testar exclusão');
+    }
   };
 
-  const statusLabel = {
-    presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-4 w-4 text-[#bfae7c] inline" /> },
-    ferias: { label: 'Férias', color: '#ffe6e6', icon: <Umbrella className="h-4 w-4 text-[#e6a1a1] inline" /> },
-    remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Laptop className="h-4 w-4 text-[#7cc3e6] inline" /> },
-    plantao: { label: 'Plantão', color: '#e6ffe6', icon: <Shield className="h-4 w-4 text-[#4caf50] inline" /> },
-    folga: { label: 'Folga', color: '#e0e0e0', icon: <Calendar className="h-4 w-4 text-[#757575] inline" /> },
-    none: { label: 'Sem marcação', color: '#fff', icon: null },
-  };
+
 
   const handleSearchResult = (result: SearchResult) => {
     console.log('🎯 Dashboard: Processando resultado selecionado:', result);
@@ -161,76 +324,93 @@ const Dashboard = () => {
         return;
       }
       
-      // Debug específico para resultados com "problema"
-      if (result.title?.toLowerCase().includes('problema')) {
-        console.log('🔍 DEBUG: Processando resultado com "problema":', result);
+      // Debug específico para resultados importantes
+      if (result.title?.toLowerCase().includes('problema') || result.title?.toLowerCase().includes('perito')) {
+        console.log('🔍 DEBUG: Processando resultado importante:', result);
         console.log('🔍 DEBUG: Tipo do resultado:', result.type);
         console.log('🔍 DEBUG: Metadados:', result.metadata);
       }
       
-      // Navegar baseado no tipo de forma mais simples e segura
+      // Navegar baseado no tipo com contexto específico
       switch (result.type) {
         case 'chamado':
-          console.log('📋 Navegando para chamados');
-          navigate('/chamados-recentes');
+          console.log('📋 Navegando para chamado específico');
+          console.log('🔍 Dados do resultado:', {
+            id: result.id,
+            title: result.title,
+            searchTerm: result.metadata?.searchTerm,
+            originalQuery: result.metadata?.originalQuery
+          });
+          
+          // Navegar para chamados recentes com termo de busca para filtrar
+          const searchTerm = result.metadata?.searchTerm || result.metadata?.originalQuery || result.title;
+          const navigationUrl = `/chamados-recentes?search=${encodeURIComponent(searchTerm)}&highlight=${encodeURIComponent(result.id)}`;
+          
+          console.log('🚀 URL de navegação:', navigationUrl);
+          navigate(navigationUrl);
           break;
           
         case 'conhecimento':
           console.log('📚 Navegando para base de conhecimento');
-          // Extrair palavras-chave do título para busca
-          let searchTerm = '';
+          // Usar o termo de busca dos metadados se disponível
+          let knowledgeSearchTerm = result.metadata?.searchTerm || '';
           
-          // Se há metadados com tags, usar a primeira tag relevante
-          if (result.metadata?.tags && Array.isArray(result.metadata.tags)) {
-            searchTerm = result.metadata.tags[0];
-          } else {
-            // Extrair palavras-chave principais do título
-            const title = result.title?.toLowerCase() || '';
-            const keywords = ['horário', 'problema', 'usuário', 'backup', 'configuração', 'manual', 'erro', 'sistema'];
-            const foundKeyword = keywords.find(keyword => title.includes(keyword));
-            searchTerm = foundKeyword || title.split(' ')[0] || '';
+          // Se não há termo nos metadados, extrair do título
+          if (!knowledgeSearchTerm) {
+            // Se há metadados com tags, usar a primeira tag relevante
+            if (result.metadata?.tags && Array.isArray(result.metadata.tags)) {
+              knowledgeSearchTerm = result.metadata.tags[0];
+            } else {
+              // Extrair palavras-chave principais do título
+              const title = result.title?.toLowerCase() || '';
+              const keywords = ['horário', 'problema', 'perito', 'usuário', 'backup', 'configuração', 'manual', 'erro', 'sistema'];
+              const foundKeyword = keywords.find(keyword => title.includes(keyword));
+              knowledgeSearchTerm = foundKeyword || title.split(' ')[0] || '';
+            }
           }
           
-          if (searchTerm) {
-            console.log('🔍 Navegando com termo de busca:', searchTerm);
-            navigate(`/base-conhecimento?search=${encodeURIComponent(searchTerm)}`);
+          if (knowledgeSearchTerm) {
+            console.log('🔍 Navegando com termo de busca:', knowledgeSearchTerm);
+            navigate(`/base-conhecimento?search=${encodeURIComponent(knowledgeSearchTerm)}&highlight=${encodeURIComponent(result.id)}`);
           } else {
             navigate('/base-conhecimento');
           }
           break;
           
         case 'atalho':
-          console.log('🔗 Navegando para atalhos');
+          console.log('🔗 Navegando para atalho');
           if (result.url) {
             window.open(result.url, '_blank');
           } else {
-            navigate('/atalhos');
+            const atalhoSearchTerm = result.metadata?.searchTerm || result.title;
+            navigate(`/atalhos?search=${encodeURIComponent(atalhoSearchTerm)}`);
           }
           break;
           
         case 'usuario':
           console.log('👥 Navegando para usuários');
-          navigate('/admin/usuarios');
-          break;
-          
-        case 'orgao':
-          console.log('🏛️ Navegando para órgãos julgadores');
-          navigate('/orgaos-julgadores');
-          break;
-          
-        case 'evento':
-          console.log('📅 Navegando para calendário');
-          navigate('/calendario');
-          break;
-          
-        case 'memoria':
-          console.log('🔒 Navegando para memórias importantes');
-          navigate('/memorias-importantes');
+          const userSearchTerm = result.metadata?.searchTerm || result.title;
+          navigate(`/admin/usuarios?search=${encodeURIComponent(userSearchTerm)}`);
           break;
           
         default:
-          console.log('❓ Tipo de resultado não reconhecido, navegando para chamados');
-          navigate('/chamados-recentes');
+          // Para tipos não definidos no SearchResult, navegamos para páginas específicas
+          if ((result.type as string) === 'orgao') {
+            console.log('🏛️ Navegando para órgãos julgadores');
+            const orgaoSearchTerm = result.metadata?.searchTerm || result.title;
+            navigate(`/orgaos-julgadores?search=${encodeURIComponent(orgaoSearchTerm)}`);
+          } else if ((result.type as string) === 'evento') {
+            console.log('📅 Navegando para calendário');
+            navigate('/calendario');
+          } else if ((result.type as string) === 'memoria') {
+            console.log('🔒 Navegando para memórias importantes');
+            const memoriaSearchTerm = result.metadata?.searchTerm || result.title;
+            navigate(`/memorias-importantes?search=${encodeURIComponent(memoriaSearchTerm)}`);
+          } else {
+            console.log('❓ Tipo de resultado não reconhecido, navegando para chamados');
+            const defaultSearchTerm = result.metadata?.searchTerm || result.title;
+            navigate(`/chamados-recentes?search=${encodeURIComponent(defaultSearchTerm)}`);
+          }
           break;
       }
     } catch (error) {
@@ -242,15 +422,66 @@ const Dashboard = () => {
         duration: 3000,
       });
     }
+    
+    setSmartSearchOpen(false);
   };
 
   const handleExcluir = async (id: string) => {
-    await handleExcluirChamado(id);
-    // O React Query irá automaticamente revalidar a query
+    try {
+      console.log('🗑️ Excluindo chamado:', id);
+      
+      // Verificar se o usuário está autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('👤 Usuário atual:', user?.id);
+      
+      // Excluir do banco de dados
+      const { error, data } = await supabase
+        .from('chamados')
+        .delete()
+        .eq('id', id)
+        .select();
+
+      if (error) {
+        console.error('❌ Erro ao excluir chamado:', error);
+        console.error('❌ Detalhes do erro:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        toast({
+          title: "Erro ao excluir",
+          description: `${error.message}`,
+          variant: "destructive",
+          duration: 5000,
+        });
+        return;
+      }
+
+      console.log('📋 Dados excluídos:', data);
+
+      // Remover da lista local imediatamente
+      setChamadosRecentes(prev => prev.filter(chamado => chamado.id !== id));
+      
+      console.log('✅ Chamado excluído com sucesso');
+      toast({
+        title: "Sucesso",
+        description: "Chamado excluído com sucesso",
+        duration: 3000,
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro ao excluir chamado:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao excluir chamado",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
   };
 
-  // Remove the problematic workCalendar code that doesn't match the hook's interface
-  const today = new Date();
+
 
   const actions: DashboardAction[] = [
     {
@@ -323,7 +554,7 @@ const Dashboard = () => {
 
               {/* Chamados Recentes Modernos */}
               <RecentChamados 
-                chamados={chamados}
+                chamados={chamadosRecentes}
                 isLoading={chamadosLoading}
                 onDuplicar={duplicarChamado}
                 onEditar={editarChamado}
@@ -427,47 +658,83 @@ const Dashboard = () => {
                 />
                 <ModernCardContent>
                   <div className="space-y-4">
-                    {/* Preview das notas */}
-                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-4 border border-yellow-200/50 dark:border-yellow-700/50">
-                      <div className="flex items-start gap-3">
-                        <div className="p-1.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex-shrink-0">
-                          <StickyNote className="h-3 w-3 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-foreground mb-1">Lembrete Importante</h4>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            Reunião com a equipe às 14h para discutir novos projetos...
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">Hoje</span>
-                            <div className="w-1 h-1 bg-yellow-400 rounded-full"></div>
-                            <span className="text-xs text-muted-foreground">14:00</span>
+                    {notesLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                      </div>
+                    ) : latestNote ? (
+                      /* Preview da nota mais recente */
+                      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-4 border border-yellow-200/50 dark:border-yellow-700/50">
+                        <div className="flex items-start gap-3">
+                          <div className="p-1.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex-shrink-0">
+                            <StickyNote className="h-3 w-3 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium text-foreground mb-1">Nota Recente</h4>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {latestNote.content || 'Nota sem conteúdo'}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+                                {new Date(latestNote.created_at).toLocaleDateString('pt-BR')}
+                              </span>
+                              <div className="w-1 h-1 bg-yellow-400 rounded-full"></div>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(latestNote.created_at).toLocaleTimeString('pt-BR', { 
+                                  hour: '2-digit', 
+                                  minute: '2-digit' 
+                                })}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    {/* Estatísticas */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="text-center p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
-                        <div className="text-lg font-bold text-orange-600">3</div>
-                        <div className="text-xs text-muted-foreground">Notas Ativas</div>
+                    ) : (
+                      /* Estado vazio */
+                      <div className="text-center py-8">
+                        <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <StickyNote className="h-8 w-8 text-white" />
+                        </div>
+                        <h4 className="text-sm font-medium text-foreground mb-2">Nenhuma nota criada</h4>
+                        <p className="text-xs text-muted-foreground mb-4">
+                          Crie sua primeira nota rápida para organizar lembretes
+                        </p>
+                        <ModernButton 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setPostItOpen(true)}
+                          icon={<Plus className="h-4 w-4" />}
+                        >
+                          Criar Primeira Nota
+                        </ModernButton>
                       </div>
-                      <div className="text-center p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
-                        <div className="text-lg font-bold text-green-600">1</div>
-                        <div className="text-xs text-muted-foreground">Hoje</div>
-                      </div>
-                    </div>
+                    )}
                     
-                    {/* Botão para ver todas */}
-                    <ModernButton 
-                      variant="gradient" 
-                      className="w-full"
-                      onClick={() => setPostItOpen(true)}
-                      icon={<StickyNote className="h-4 w-4" />}
-                    >
-                      Gerenciar Notas
-                    </ModernButton>
+                    {/* Estatísticas - apenas se houver notas */}
+                    {postItNotes.length > 0 && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="text-center p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
+                          <div className="text-lg font-bold text-orange-600">{notesStats.total}</div>
+                          <div className="text-xs text-muted-foreground">Notas Ativas</div>
+                        </div>
+                        <div className="text-center p-3 bg-card/60 backdrop-blur-sm rounded-xl border border-border/20">
+                          <div className="text-lg font-bold text-green-600">{notesStats.today}</div>
+                          <div className="text-xs text-muted-foreground">Hoje</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Botão para gerenciar */}
+                    {postItNotes.length > 0 && (
+                      <ModernButton 
+                        variant="gradient" 
+                        className="w-full"
+                        onClick={() => setPostItOpen(true)}
+                        icon={<StickyNote className="h-4 w-4" />}
+                      >
+                        Gerenciar Notas
+                      </ModernButton>
+                    )}
                   </div>
                 </ModernCardContent>
               </ModernCard>
@@ -517,7 +784,6 @@ const Dashboard = () => {
         isOpen={smartSearchOpen}
         onClose={() => setSmartSearchOpen(false)}
         onResultSelect={handleSearchResult}
-        placeholder="Buscar chamados, atalhos, usuários, eventos..."
       />
 
       {/* Post-it Modal */}
@@ -540,21 +806,14 @@ const Dashboard = () => {
       {/* Chat Assistant */}
       <ChatAssistant isOpen={isOpen} onToggle={toggleChat} />
 
-      {/* Event Notification Modal */}
-      <EventNotificationModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      {/* Event Notification Modal - REMOVIDO */}
+      {/* <EventNotificationModal isOpen={modalOpen} onOpenChange={setModalOpen} /> */}
 
-      {/* Event Notification Toast */}
-      <EventNotificationToast />
+      {/* Event Notification Toast - REMOVIDO */}
+      {/* <EventNotificationToast /> */}
 
-      {/* Upcoming Events Modal */}
-      <UpcomingEventsModal
-        isOpen={upcomingEventsOpen}
-        onClose={closeUpcomingEvents}
-        events={upcomingEvents}
-      />
-
-      {/* Atalho de teclado para busca implementado via useEffect */}
-    </ModernLayout>
+      {/* Upcoming Events Modal - REMOVIDO */}
+      </ModernLayout>
     </ErrorBoundary>
   );
 };

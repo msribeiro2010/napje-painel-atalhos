@@ -4,12 +4,28 @@ import { useDebounce } from '@/hooks/useDebounce';
 
 export interface SearchResult {
   id: string;
-  type: 'chamado' | 'conhecimento' | 'atalho';
+  type: 'chamado' | 'conhecimento' | 'atalho' | 'usuario';
   title: string;
   description: string;
   url?: string;
   score: number;
-  metadata?: Record<string, any>;
+  metadata?: {
+    // Existing metadata
+    status?: string;
+    categoria?: string;
+    criado_por?: string;
+    data_criacao?: string;
+    tags?: string[];
+    
+    // New navigation metadata
+    specificId?: string;        // ID específico do item
+    searchTerm?: string;        // Termo que gerou o resultado
+    highlightText?: string;     // Texto a ser destacado
+    directUrl?: string;         // URL direta para o item
+    
+    // Legacy support
+    [key: string]: any;
+  };
 }
 
 export const useSmartSearch = () => {
@@ -32,6 +48,62 @@ export const useSmartSearch = () => {
     }
   }, []);
 
+  // Função para extrair texto a ser destacado
+  const extractHighlightText = useCallback((query: string, chamado: any): string => {
+    const queryLower = query.toLowerCase().trim();
+    const searchableFields = [
+      { text: chamado.assunto, weight: 3 },
+      { text: chamado.descricao, weight: 2 },
+      { text: chamado.categoria, weight: 1 },
+      { text: chamado.status, weight: 1 }
+    ];
+
+    // Encontrar o campo com maior relevância que contém o termo
+    for (const field of searchableFields) {
+      if (field.text && field.text.toLowerCase().includes(queryLower)) {
+        // Extrair um trecho do texto que contém o termo
+        const text = field.text;
+        const index = text.toLowerCase().indexOf(queryLower);
+        if (index !== -1) {
+          const start = Math.max(0, index - 20);
+          const end = Math.min(text.length, index + queryLower.length + 20);
+          return text.substring(start, end);
+        }
+      }
+    }
+
+    return queryLower; // Fallback para o próprio termo de busca
+  }, []);
+
+  // Função para extrair texto a ser destacado de documentos
+  const extractHighlightTextFromDoc = useCallback((query: string, doc: any): string => {
+    const queryLower = query.toLowerCase().trim();
+    
+    // Verificar título primeiro (maior prioridade)
+    if (doc.titulo && doc.titulo.toLowerCase().includes(queryLower)) {
+      return doc.titulo;
+    }
+    
+    // Verificar conteúdo
+    if (doc.conteudo && doc.conteudo.toLowerCase().includes(queryLower)) {
+      const text = doc.conteudo;
+      const index = text.toLowerCase().indexOf(queryLower);
+      if (index !== -1) {
+        const start = Math.max(0, index - 30);
+        const end = Math.min(text.length, index + queryLower.length + 30);
+        return text.substring(start, end);
+      }
+    }
+    
+    // Verificar tags
+    if (doc.tags && doc.tags.some((tag: string) => tag.toLowerCase().includes(queryLower))) {
+      const matchingTag = doc.tags.find((tag: string) => tag.toLowerCase().includes(queryLower));
+      return matchingTag || queryLower;
+    }
+
+    return queryLower; // Fallback para o próprio termo de busca
+  }, []);
+
   // Busca em chamados
   const searchChamados = useCallback(async (query: string): Promise<SearchResult[]> => {
     console.log('🔍 Buscando em chamados:', query);
@@ -41,42 +113,53 @@ export const useSmartSearch = () => {
         .from('chamados')
         .select(`
           id,
-          assunto,
-          descricao,
-          status,
-          categoria,
+          resumo,
+          notas,
+          grau,
           created_at,
-          usuario_criador_nome
+          nome_usuario_afetado
         `)
-        .or(`assunto.ilike.%${query}%,descricao.ilike.%${query}%,categoria.ilike.%${query}%`)
+        .or(`resumo.ilike.%${query}%,notas.ilike.%${query}%,grau.ilike.%${query}%`)
         .order('created_at', { ascending: false })
         .limit(10);
 
       if (error) {
         console.error('❌ Erro ao buscar chamados:', error);
-        // Retornar dados de exemplo se houver erro
+        console.log('📝 Usando dados de exemplo devido ao erro');
         return getExampleChamados(query);
       }
 
-      console.log('✅ Chamados encontrados:', data?.length || 0);
+      console.log('✅ Chamados encontrados no banco:', data?.length || 0);
 
       // Se não há dados reais, usar dados de exemplo
       if (!data || data.length === 0) {
-        console.log('📝 Usando dados de exemplo para chamados');
-        return getExampleChamados(query);
+        console.log('📝 Nenhum dado real encontrado, usando dados de exemplo');
+        const exampleResults = getExampleChamados(query);
+        console.log('📝 Dados de exemplo filtrados:', exampleResults.length);
+        return exampleResults;
       }
 
       return (data || []).map((chamado, index) => ({
         id: chamado.id,
         type: 'chamado' as const,
-        title: chamado.assunto || 'Chamado sem título',
-        description: chamado.descricao || 'Sem descrição',
+        title: chamado.resumo || 'Chamado sem título',
+        description: chamado.notas || 'Sem descrição',
         score: 100 - index, // Score baseado na posição (mais recentes primeiro)
         metadata: {
-          status: chamado.status,
-          categoria: chamado.categoria,
-          criado_por: chamado.usuario_criador_nome,
-          data_criacao: chamado.created_at
+          status: 'Aberto', // Status padrão
+          categoria: chamado.grau,
+          criado_por: chamado.nome_usuario_afetado,
+          data_criacao: chamado.created_at,
+          // New navigation metadata
+          specificId: chamado.id,
+          searchTerm: query,
+          highlightText: extractHighlightText(query, { 
+            assunto: chamado.resumo, 
+            descricao: chamado.notas, 
+            categoria: chamado.grau, 
+            status: 'Aberto' 
+          }),
+          directUrl: `/chamado/${chamado.id}`
         }
       }));
     } catch (err) {
@@ -132,16 +215,53 @@ export const useSmartSearch = () => {
         categoria: 'Manutenção',
         created_at: new Date(Date.now() - 345600000).toISOString(),
         usuario_criador_nome: 'Carlos Lima'
+      },
+      {
+        id: 'chamado-6',
+        assunto: 'Cadastro de Perito - Erro',
+        descricao: 'Problema no cadastro de perito judicial no sistema PJe',
+        status: 'Em andamento',
+        categoria: 'Cadastro',
+        created_at: new Date(Date.now() - 432000000).toISOString(),
+        usuario_criador_nome: 'Dr. Roberto Pereira'
+      },
+      {
+        id: 'chamado-7',
+        assunto: 'Nomeação de Perito',
+        descricao: 'Solicitação de nomeação de perito para processo judicial',
+        status: 'Pendente',
+        categoria: 'Processo',
+        created_at: new Date(Date.now() - 518400000).toISOString(),
+        usuario_criador_nome: 'Juiz Carlos Mendes'
+      },
+      {
+        id: 'chamado-8',
+        assunto: 'Lista de Peritos Habilitados',
+        descricao: 'Atualização da lista de peritos habilitados para nomeação',
+        status: 'Concluído',
+        categoria: 'Administração',
+        created_at: new Date(Date.now() - 604800000).toISOString(),
+        usuario_criador_nome: 'Secretaria Judicial'
       }
     ];
 
-    // Filtrar por query
-    const filtered = exampleChamados.filter(chamado => 
-      chamado.assunto.toLowerCase().includes(query.toLowerCase()) ||
-      chamado.descricao.toLowerCase().includes(query.toLowerCase()) ||
-      chamado.categoria.toLowerCase().includes(query.toLowerCase()) ||
-      chamado.status.toLowerCase().includes(query.toLowerCase())
-    );
+    // Filtrar por query com busca mais inteligente
+    const queryLower = query.toLowerCase().trim();
+    const queryWords = queryLower.split(' ').filter(word => word.length > 0);
+    
+    const filtered = exampleChamados.filter(chamado => {
+      const searchableText = [
+        chamado.assunto,
+        chamado.descricao,
+        chamado.categoria,
+        chamado.status,
+        chamado.usuario_criador_nome
+      ].join(' ').toLowerCase();
+      
+      // Busca por correspondência exata ou parcial
+      return queryWords.some(word => searchableText.includes(word)) ||
+             searchableText.includes(queryLower);
+    });
 
     return filtered.map((chamado, index) => ({
       id: chamado.id,
@@ -153,7 +273,12 @@ export const useSmartSearch = () => {
         status: chamado.status,
         categoria: chamado.categoria,
         criado_por: chamado.usuario_criador_nome,
-        data_criacao: chamado.created_at
+        data_criacao: chamado.created_at,
+        // New navigation metadata
+        specificId: chamado.id,
+        searchTerm: query,
+        highlightText: extractHighlightText(query, chamado),
+        directUrl: `/chamado/${chamado.id}`
       }
     }));
   }, []);
@@ -254,21 +379,50 @@ export const useSmartSearch = () => {
         conteudo: 'Sistema de controle de ponto eletrônico, registro de entrada e saída, gestão de horas extras e compensação.',
         categoria: 'RH',
         tags: ['horário', 'ponto', 'entrada', 'saída', 'controle', 'horas', 'extra']
+      },
+      {
+        id: 'doc-14',
+        titulo: 'Cadastro e Gestão de Peritos',
+        conteudo: 'Manual completo para cadastro de peritos judiciais, incluindo habilitação, nomeação e gestão de especialidades. Procedimentos para manter lista atualizada de peritos.',
+        categoria: 'Judicial',
+        tags: ['perito', 'cadastro', 'nomeação', 'habilitação', 'especialidade', 'judicial']
+      },
+      {
+        id: 'doc-15',
+        titulo: 'Nomeação de Perito em Processos',
+        conteudo: 'Guia para nomeação de peritos em processos judiciais, critérios de seleção, documentação necessária e procedimentos administrativos.',
+        categoria: 'Processo',
+        tags: ['perito', 'nomeação', 'processo', 'seleção', 'documentação', 'administrativo']
+      },
+      {
+        id: 'doc-16',
+        titulo: 'Lista de Peritos Habilitados',
+        conteudo: 'Como consultar e atualizar a lista de peritos habilitados por especialidade, incluindo dados de contato e área de atuação.',
+        categoria: 'Consulta',
+        tags: ['perito', 'lista', 'habilitado', 'especialidade', 'contato', 'atuação']
       }
     ];
 
     // Busca mais inteligente por texto
+    const queryLower = query.toLowerCase().trim();
+    const queryWords = queryLower.split(' ').filter(word => word.length > 0);
+    
     const resultados = baseConhecimento.filter(doc => {
-      const queryLower = query.toLowerCase();
-      return (
-        doc.titulo.toLowerCase().includes(queryLower) ||
-        doc.conteudo.toLowerCase().includes(queryLower) ||
-        doc.categoria.toLowerCase().includes(queryLower) ||
-        doc.tags.some(tag => tag.toLowerCase().includes(queryLower))
-      );
+      const searchableText = [
+        doc.titulo,
+        doc.conteudo,
+        doc.categoria,
+        ...doc.tags
+      ].join(' ').toLowerCase();
+      
+      // Busca por correspondência exata ou parcial
+      return queryWords.some(word => searchableText.includes(word)) ||
+             searchableText.includes(queryLower) ||
+             doc.tags.some(tag => tag.toLowerCase().includes(queryLower));
     });
 
-    console.log('✅ Documentos encontrados:', resultados.length);
+    console.log('✅ Documentos encontrados na base de conhecimento:', resultados.length);
+    console.log('📋 Documentos que correspondem à busca:', resultados.map(doc => doc.titulo));
 
     return resultados.map((doc, index) => ({
       id: doc.id,
@@ -278,7 +432,12 @@ export const useSmartSearch = () => {
       score: 90 - index,
       metadata: {
         categoria: doc.categoria,
-        tags: doc.tags
+        tags: doc.tags,
+        // New navigation metadata
+        specificId: doc.id,
+        searchTerm: query,
+        highlightText: extractHighlightTextFromDoc(query, doc),
+        directUrl: `/base-conhecimento/${doc.id}`
       }
     }));
   }, []);
@@ -382,9 +541,9 @@ export const useSmartSearch = () => {
 
     console.log('🚀 Iniciando busca híbrida:', { query, types, limit });
     
-    // Debug específico para a palavra "problema"
-    if (query.toLowerCase().includes('problema')) {
-      console.log('🔍 DEBUG: Detectada busca por "problema"');
+    // Debug específico para palavras importantes
+    if (query.toLowerCase().includes('problema') || query.toLowerCase().includes('perito')) {
+      console.log('🔍 DEBUG: Detectada busca por palavra-chave:', query.toLowerCase());
       console.log('🔍 DEBUG: Query completa:', query);
       console.log('🔍 DEBUG: Tipos de busca:', types);
     }
@@ -521,7 +680,14 @@ export const useSmartSearch = () => {
       'integração pje',
       'configurar pje',
       'api sistema',
-      'webhook'
+      'webhook',
+      
+      // Judicial
+      'cadastro perito',
+      'nomeação perito',
+      'lista perito',
+      'perito habilitado',
+      'perito judicial'
     ];
 
     const filtered = suggestions.filter(suggestion => 

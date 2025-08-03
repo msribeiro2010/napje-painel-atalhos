@@ -21,6 +21,14 @@ export const useChamadosRecentes = () => {
     carregarChamados();
   }, []);
 
+  // Função específica para buscar apenas os últimos 3 chamados para o dashboard
+  const buscarUltimos3Chamados = async () => {
+    setLoading(true);
+    const dados = await buscarChamadosRecentes(3);
+    setChamados(dados);
+    setLoading(false);
+  };
+
   const handleCopiarDescricao = (chamado: Chamado) => {
     copiarDescricao(chamado);
     toast.success('Descrição copiada para a área de transferência!');
@@ -85,6 +93,7 @@ export const useChamadosRecentes = () => {
     criarTemplateDoChamado, 
     duplicarChamado,
     editarChamado, 
-    handleExcluirChamado 
+    handleExcluirChamado,
+    buscarUltimos3Chamados
   };
 };

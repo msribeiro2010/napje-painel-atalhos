@@ -16,6 +16,12 @@ interface EventReminder {
 
 export const useEventReminders = () => {
   const [reminders, setReminders] = useState<EventReminder[]>([]);
+  const [notifiedEvents, setNotifiedEvents] = useState<Set<string>>(() => {
+    // Carregar eventos já notificados da sessão atual
+    const sessionKey = `notified_events_${new Date().toDateString()}`;
+    const saved = sessionStorage.getItem(sessionKey);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
   const currentMonth = new Date();
   const { customEvents } = useCustomEvents(currentMonth);
 
@@ -51,12 +57,12 @@ export const useEventReminders = () => {
     }
   }, [customEvents, reminders]);
 
-  // Mostrar notificações para eventos próximos
+  // Mostrar notificações para eventos próximos (com controle de duplicação)
   const showEventNotifications = useCallback(() => {
     const now = new Date();
     
     reminders.forEach(reminder => {
-      if (!reminder.notified) {
+      if (!reminder.notified && !notifiedEvents.has(reminder.eventId)) {
         const eventDate = parseISO(reminder.date);
         
         if (isToday(eventDate)) {
@@ -68,6 +74,15 @@ export const useEventReminders = () => {
               onClick: () => window.location.href = '/calendario'
             }
           });
+          
+          // Marcar como notificado na sessão
+          setNotifiedEvents(prev => {
+            const newSet = new Set([...prev, reminder.eventId]);
+            const sessionKey = `notified_events_${new Date().toDateString()}`;
+            sessionStorage.setItem(sessionKey, JSON.stringify([...newSet]));
+            return newSet;
+          });
+          
         } else if (isTomorrow(eventDate)) {
           toast(`⏰ Evento Amanhã: ${reminder.title}`, {
             description: `Lembre-se: "${reminder.title}" acontece amanhã (${format(eventDate, 'dd/MM/yyyy', { locale: ptBR })})`,
@@ -77,9 +92,17 @@ export const useEventReminders = () => {
               onClick: () => window.location.href = '/calendario'
             }
           });
+          
+          // Marcar como notificado na sessão
+          setNotifiedEvents(prev => {
+            const newSet = new Set([...prev, reminder.eventId]);
+            const sessionKey = `notified_events_${new Date().toDateString()}`;
+            sessionStorage.setItem(sessionKey, JSON.stringify([...newSet]));
+            return newSet;
+          });
         }
 
-        // Marcar como notificado
+        // Marcar como notificado no reminder
         setReminders(prev => 
           prev.map(r => 
             r.id === reminder.id ? { ...r, notified: true } : r
@@ -87,7 +110,7 @@ export const useEventReminders = () => {
         );
       }
     });
-  }, [reminders]);
+  }, [reminders, notifiedEvents]);
 
   // Criar lembrete manual para um evento específico
   const createManualReminder = useCallback((eventId: string, reminderDate: Date) => {
@@ -135,15 +158,18 @@ export const useEventReminders = () => {
   // Verificar e criar lembretes automáticos periodicamente
   useEffect(() => {
     createAutoReminders();
-    const interval = setInterval(createAutoReminders, 60000); // Verificar a cada minuto
+    const interval = setInterval(createAutoReminders, 5 * 60000); // Verificar a cada 5 minutos
     return () => clearInterval(interval);
   }, [createAutoReminders]);
 
-  // Mostrar notificações periodicamente
+  // Mostrar notificações apenas uma vez por sessão
   useEffect(() => {
-    showEventNotifications();
-    const interval = setInterval(showEventNotifications, 30000); // Verificar a cada 30 segundos
-    return () => clearInterval(interval);
+    // Aguardar um pouco antes de mostrar notificações para evitar spam no carregamento
+    const timeout = setTimeout(() => {
+      showEventNotifications();
+    }, 2000);
+    
+    return () => clearTimeout(timeout);
   }, [showEventNotifications]);
 
   return {
