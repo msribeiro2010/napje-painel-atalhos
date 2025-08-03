@@ -78,6 +78,25 @@ export const useCustomEvents = (month: Date) => {
       toast.error('Formato de data inválido. Use YYYY-MM-DD');
       throw new Error('Formato de data inválido');
     }
+
+    // Validação do tipo de evento
+    const validTypes = ['curso', 'webinario', 'reuniao', 'outro'];
+    if (!validTypes.includes(event.type)) {
+      console.error('❌ Tipo de evento inválido:', event.type);
+      toast.error('Tipo de evento inválido');
+      throw new Error('Tipo de evento inválido');
+    }
+
+    // Validação do tamanho dos campos
+    if (event.title.length > 128) {
+      toast.error('Título muito longo (máximo 128 caracteres)');
+      throw new Error('Título muito longo');
+    }
+
+    if (event.description && event.description.length > 1000) {
+      toast.error('Descrição muito longa (máximo 1000 caracteres)');
+      throw new Error('Descrição muito longa');
+    }
     
     console.log('🔄 Salvando evento personalizado:', { event, userId: user.id });
     console.log('🔄 Data específica a ser salva:', event.date);
@@ -85,18 +104,33 @@ export const useCustomEvents = (month: Date) => {
     setError(null);
     
     try {
-      const eventToInsert = { 
-        ...event, 
+      // Preparar dados para inserção, removendo campos undefined
+      const eventToInsert: any = {
         user_id: user.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        date: event.date,
+        type: event.type,
+        title: event.title
       };
+
+      // Adicionar campos opcionais apenas se existirem
+      if (event.description) {
+        eventToInsert.description = event.description;
+      }
+      if (event.start_time) {
+        eventToInsert.start_time = event.start_time;
+      }
+      if (event.end_time) {
+        eventToInsert.end_time = event.end_time;
+      }
+      if (event.url) {
+        eventToInsert.url = event.url;
+      }
       
       console.log('🔄 Dados completos para inserção:', eventToInsert);
       
       const { data, error } = await supabase
         .from('user_custom_events')
-        .insert([eventToInsert])
+        .insert(eventToInsert)
         .select()
         .single();
         
@@ -187,10 +221,7 @@ export const useCustomEvents = (month: Date) => {
       
       const { data, error } = await supabase
         .from('user_custom_events')
-        .update({
-          ...event,
-          updated_at: new Date().toISOString()
-        })
+        .update(event)
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
