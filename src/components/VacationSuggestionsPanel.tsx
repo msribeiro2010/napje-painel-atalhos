@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Brain, Star, Gift, Sparkles, MapPin, TrendingUp, Clock } from 'lucide-react';
+import { Calendar, Brain, Star, Gift, Sparkles, MapPin, TrendingUp, Clock, Zap } from 'lucide-react';
 import { useVacationSuggestions, VacationSuggestion } from '@/hooks/useVacationSuggestions';
+import { useAIVacationSuggestions } from '@/hooks/useAIVacationSuggestions';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -20,7 +21,10 @@ export const VacationSuggestionsPanel = ({
 }: VacationSuggestionsPanelProps) => {
   const queryClient = useQueryClient();
   const { data: suggestions = [], isLoading, error } = useVacationSuggestions(year);
+  const { generateAISuggestions, isLoading: isAILoading, error: aiError } = useAIVacationSuggestions();
   const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<VacationSuggestion[]>([]);
+  const [showAISuggestions, setShowAISuggestions] = useState(false);
   // Removido: const [cleared, setCleared] = useState(false);
 
   // Removido: Função para limpar sugestões
@@ -111,25 +115,76 @@ export const VacationSuggestionsPanel = ({
             <Brain className="h-5 w-5" />
             IA de Férias Inteligentes {year}
           </div>
-          <Badge variant="secondary" className="bg-white/20 text-white">
-            {suggestions.length} sugestões
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={async () => {
+                try {
+                  const aiResults = await generateAISuggestions(year);
+                  setAiSuggestions(aiResults);
+                  setShowAISuggestions(true);
+                } catch (error) {
+                  console.error('Erro ao gerar sugestões com IA:', error);
+                }
+              }}
+              disabled={isAILoading}
+              size="sm"
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+            >
+              {isAILoading ? (
+                <Brain className="h-4 w-4 mr-1 animate-pulse" />
+              ) : (
+                <Zap className="h-4 w-4 mr-1" />
+              )}
+              {isAILoading ? 'Gerando...' : 'IA OpenAI'}
+            </Button>
+            <Badge variant="secondary" className="bg-white/20 text-white">
+              {showAISuggestions ? aiSuggestions.length : suggestions.length} sugestões
+            </Badge>
+          </div>
         </CardTitle>
         <p className="text-purple-100 text-sm">
-          Sugestões personalizadas baseadas nos feriados oficiais
+          {showAISuggestions 
+            ? 'Sugestões geradas pela IA OpenAI com base nos feriados oficiais'
+            : 'Sugestões personalizadas baseadas nos feriados oficiais'
+          }
         </p>
       </CardHeader>
       
       <CardContent className="p-6 space-y-4">
-        {suggestions.length === 0 ? (
+        {showAISuggestions && aiSuggestions.length > 0 && (
+          <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">Sugestões da IA OpenAI</span>
+                <Badge className="bg-blue-100 text-blue-800 text-xs">Novo</Badge>
+              </div>
+              <Button
+                onClick={() => setShowAISuggestions(false)}
+                variant="ghost"
+                size="sm"
+                className="text-blue-600 hover:text-blue-800"
+              >
+                Ver sugestões padrão
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {(showAISuggestions ? aiSuggestions : suggestions).length === 0 ? (
           <div className="text-center text-gray-500 py-8">
             <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
             <p className="text-lg font-medium mb-2">Nenhuma sugestão disponível</p>
-            <p className="text-sm">Adicione feriados para {year} para receber sugestões personalizadas</p>
+            <p className="text-sm">
+              {showAISuggestions 
+                ? 'Clique em "IA OpenAI" para gerar sugestões inteligentes'
+                : `Adicione feriados para ${year} para receber sugestões personalizadas`
+              }
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {suggestions.map((suggestion) => (
+            {(showAISuggestions ? aiSuggestions : suggestions).map((suggestion) => (
               <Collapsible
                 key={suggestion.id}
                 open={expandedSuggestion === suggestion.id}

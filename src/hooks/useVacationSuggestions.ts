@@ -1,6 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addDays, startOfYear, endOfYear, differenceInDays, isWeekend, isAfter } from "date-fns";
+import { format, addDays, startOfYear, endOfYear, differenceInDays, isWeekend, isAfter, getDay } from "date-fns";
+
+// Tipo para feriados
+interface Feriado {
+  id: number;
+  data: string;
+  descricao: string;
+  tipo: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface VacationSuggestion {
   id: string;
@@ -23,12 +33,13 @@ export const useVacationSuggestions = (year: number = new Date().getFullYear()) 
         const yearStart = format(startOfYear(new Date(year, 0, 1)), 'yyyy-MM-dd');
         const yearEnd = format(endOfYear(new Date(year, 11, 31)), 'yyyy-MM-dd');
 
+        // Usar query SQL raw para contornar problema de tipos
         const { data: feriados, error } = await supabase
-          .from("feriados")
-          .select("*")
-          .gte("data", yearStart)
-          .lte("data", yearEnd)
-          .order("data", { ascending: true });
+          .from('feriados' as any)
+          .select('*')
+          .gte('data', yearStart)
+          .lte('data', yearEnd)
+          .order('data', { ascending: true }) as { data: Feriado[] | null, error: any };
 
         if (error) {
           console.error('Erro ao buscar feriados:', error);
@@ -53,7 +64,33 @@ export const useVacationSuggestions = (year: number = new Date().getFullYear()) 
   });
 };
 
-function generateVacationSuggestions(holidays: any[], year: number): VacationSuggestion[] {
+// Função para ajustar data para evitar fins de semana
+function adjustDateToAvoidWeekend(date: Date, direction: 'forward' | 'backward'): Date {
+  const adjustedDate = new Date(date);
+  const dayOfWeek = getDay(adjustedDate); // 0 = domingo, 6 = sábado
+  
+  if (direction === 'forward') {
+    // Se for sábado (6), avança para segunda (2 dias)
+    // Se for domingo (0), avança para segunda (1 dia)
+    if (dayOfWeek === 6) {
+      return addDays(adjustedDate, 2);
+    } else if (dayOfWeek === 0) {
+      return addDays(adjustedDate, 1);
+    }
+  } else {
+    // Se for sábado (6), volta para sexta (1 dia)
+    // Se for domingo (0), volta para sexta (2 dias)
+    if (dayOfWeek === 6) {
+      return addDays(adjustedDate, -1);
+    } else if (dayOfWeek === 0) {
+      return addDays(adjustedDate, -2);
+    }
+  }
+  
+  return adjustedDate;
+}
+
+function generateVacationSuggestions(holidays: Feriado[], year: number): VacationSuggestion[] {
   try {
     const suggestions: VacationSuggestion[] = [];
     
@@ -126,17 +163,17 @@ function createBasicSuggestions(year: number): VacationSuggestion[] {
   ];
 }
 
-function identifyHolidayGroups(holidays: any[]) {
-  const groups: any[][] = [];
-  let currentGroup: any[] = [];
+function identifyHolidayGroups(holidays: Feriado[]) {
+  const groups: Feriado[][] = [];
+  let currentGroup: Feriado[] = [];
   
   holidays.forEach((holiday, index) => {
-    const holidayDate = new Date(holiday.data);
+    const holidayDate = createLocalDate(holiday.data);
     
     if (currentGroup.length === 0) {
       currentGroup.push(holiday);
     } else {
-      const lastHoliday = new Date(currentGroup[currentGroup.length - 1].data);
+      const lastHoliday = createLocalDate(currentGroup[currentGroup.length - 1].data);
       const daysDiff = differenceInDays(holidayDate, lastHoliday);
       
       if (daysDiff <= 10) {
@@ -157,28 +194,30 @@ function identifyHolidayGroups(holidays: any[]) {
   return groups;
 }
 
-function createHolidayBasedSuggestions(holidayGroup: any[], year: number, groupIndex: number): VacationSuggestion[] {
+// Função para criar data local a partir de string YYYY-MM-DD
+function createLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day); // month é 0-indexed
+}
+
+function createHolidayBasedSuggestions(holidayGroup: Feriado[], year: number, groupIndex: number): VacationSuggestion[] {
   const suggestions: VacationSuggestion[] = [];
   if (holidayGroup.length === 0) return suggestions;
 
   // O grupo pode conter mais de um feriado próximo (em até 10 dias)
   // A sugestão "após" deve sempre começar no dia seguinte ao último feriado do grupo
-  const firstHoliday = new Date(holidayGroup[0].data);
-  const lastHoliday = new Date(holidayGroup[holidayGroup.length - 1].data);
-
-  // DEBUG LOGS
-  console.log('[IA Férias] Grupo de feriados:', holidayGroup.map(h => h.data));
-  console.log('[IA Férias] lastHoliday:', lastHoliday.toISOString());
+  const firstHoliday = createLocalDate(holidayGroup[0].data);
+  const lastHoliday = createLocalDate(holidayGroup[holidayGroup.length - 1].data);
 
   // Antes do primeiro feriado do grupo
-  const beforeEnd = addDays(firstHoliday, -1); // Dia anterior ao feriado
-  const beforeStart = addDays(beforeEnd, -9); // 9 dias antes do beforeEnd (total 10 dias)
+  const beforeEnd = adjustDateToAvoidWeekend(addDays(firstHoliday, -1), 'backward'); // Dia anterior ao feriado, evitando fim de semana
+  const beforeStart = adjustDateToAvoidWeekend(addDays(beforeEnd, -9), 'backward'); // 9 dias antes do beforeEnd (total 10 dias úteis)
   if (beforeStart.getFullYear() === year) {
     suggestions.push({
       id: `before-${groupIndex}`,
       startDate: format(beforeStart, 'yyyy-MM-dd'),
       endDate: format(beforeEnd, 'yyyy-MM-dd'),
-      totalDays: 10,
+      totalDays: differenceInDays(beforeEnd, beforeStart) + 1,
       workDays: calculateWorkDays(beforeStart, beforeEnd),
       score: calculateScore(beforeStart, beforeEnd, holidayGroup, 'before'),
       reason: `Emendar com ${holidayGroup.map(h => h.descricao).join(', ')}`,
@@ -192,16 +231,28 @@ function createHolidayBasedSuggestions(holidayGroup: any[], year: number, groupI
     });
   }
 
-  // Após o último feriado do grupo: férias começam no dia seguinte ao último feriado
-  const afterStart = addDays(lastHoliday, 1);
-  const afterEnd = addDays(afterStart, 9); // 10 dias de férias, de afterStart até afterEnd inclusive
-  console.log('[IA Férias] afterStart:', afterStart.toISOString(), 'afterEnd:', afterEnd.toISOString());
+  // Após o último feriado do grupo: férias começam no primeiro dia útil após o feriado
+  // Se o feriado for em dia útil, as férias começam no dia seguinte
+  // Se o feriado for em fim de semana, as férias começam na segunda-feira seguinte
+  let afterStart = addDays(lastHoliday, 1);
+  afterStart = adjustDateToAvoidWeekend(afterStart, 'forward');
+  // Calcular 8 dias úteis a partir do afterStart (padrão das sugestões básicas)
+  let afterEnd = new Date(afterStart);
+  let workDaysCount = 0;
+  while (workDaysCount < 6) { // 6 dias adicionais para totalizar 7 dias úteis (incluindo o primeiro dia)
+    afterEnd = addDays(afterEnd, 1);
+    if (!isWeekend(afterEnd)) {
+      workDaysCount++;
+    }
+  }
+  afterEnd = adjustDateToAvoidWeekend(afterEnd, 'backward'); // Garantir que termine em dia útil
+  
   if (afterEnd.getFullYear() === year) {
     suggestions.push({
       id: `after-${groupIndex}`,
       startDate: format(afterStart, 'yyyy-MM-dd'),
       endDate: format(afterEnd, 'yyyy-MM-dd'),
-      totalDays: 10,
+      totalDays: differenceInDays(afterEnd, afterStart) + 1,
       workDays: calculateWorkDays(afterStart, afterEnd),
       score: calculateScore(afterStart, afterEnd, holidayGroup, 'after'),
       reason: `Estender após ${holidayGroup.map(h => h.descricao).join(', ')}`,
@@ -209,7 +260,8 @@ function createHolidayBasedSuggestions(holidayGroup: any[], year: number, groupI
       benefits: [
         'Máximo aproveitamento dos feriados',
         'Volta ao trabalho mais descansado',
-        'Evita multidões do retorno'
+        'Evita multidões do retorno',
+        'Período otimizado (evita fins de semana)'
       ],
       period: getPeriodType(lastHoliday)
     });
@@ -218,7 +270,7 @@ function createHolidayBasedSuggestions(holidayGroup: any[], year: number, groupI
   return suggestions;
 }
 
-function createStrategicSuggestions(holidays: any[], year: number): VacationSuggestion[] {
+function createStrategicSuggestions(holidays: Feriado[], year: number): VacationSuggestion[] {
   const suggestions: VacationSuggestion[] = [];
   
   const janStart = new Date(year, 0, 8);
@@ -264,7 +316,7 @@ function createStrategicSuggestions(holidays: any[], year: number): VacationSugg
   return suggestions;
 }
 
-function createYearEndSuggestions(holidays: any[], year: number): VacationSuggestion[] {
+function createYearEndSuggestions(holidays: Feriado[], year: number): VacationSuggestion[] {
   const suggestions: VacationSuggestion[] = [];
   
   const yearEndStart = new Date(year, 11, 20);
@@ -309,7 +361,7 @@ function calculateWorkDays(startDate: Date, endDate: Date): number {
   return workDays;
 }
 
-function calculateScore(startDate: Date, endDate: Date, holidays: any[], position: 'before' | 'after'): number {
+function calculateScore(startDate: Date, endDate: Date, holidays: Feriado[], position: 'before' | 'after'): number {
   let score = 50;
   
   score += holidays.length * 15;

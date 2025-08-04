@@ -4,6 +4,16 @@ import { useCustomEvents } from './useCustomEvents';
 import { useFeriados } from './useFeriados';
 import { useWorkCalendar } from './useWorkCalendar';
 
+// Interface local para feriados
+interface Feriado {
+  id: number;
+  data: string;
+  descricao: string;
+  tipo: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface UpcomingEvent {
   id: string;
   title: string;
@@ -27,7 +37,8 @@ export const useUpcomingEventsModal = () => {
   
   // Buscar eventos do mês atual para cobrir todos os próximos dias
   const { customEvents } = useCustomEvents(today);
-  const { data: feriados = [] } = useFeriados();
+  const { data: feriadosData = [] } = useFeriados();
+  const feriados = feriadosData as unknown as Feriado[];
   // Usar apenas um hook useWorkCalendar para o mês atual
   const { marks: workMarks } = useWorkCalendar(today);
 
@@ -70,7 +81,7 @@ export const useUpcomingEventsModal = () => {
           title: feriado.descricao,
           date: format(feriadoDate, 'yyyy-MM-dd'),
           type: 'holiday',
-          description: feriado.descricao || undefined,
+          description: feriado.descricao,
           icon: '🎉',
           color: '#fef3c7'
         });
@@ -170,9 +181,9 @@ function getWorkStatusDescription(status: string): string {
 function getWorkStatusIcon(status: string): string {
   const icons = {
     ferias: '🏖️',
-    remoto: '💻',
-    plantao: '🛡️',
-    folga: '😴'
+    remoto: '☕',
+    plantao: '⛑️',
+    folga: '🏖️'
   };
   return icons[status as keyof typeof icons] || '📅';
 }

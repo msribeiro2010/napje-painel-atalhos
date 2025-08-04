@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Home, Sun, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users, Edit, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Home, Sun, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users, Edit, Trash2, Building2, HardHat, Umbrella, Briefcase, Coffee } from 'lucide-react';
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
@@ -18,11 +18,11 @@ import { useCustomEvents } from '@/hooks/useCustomEvents';
 import { ptBR } from 'date-fns/locale';
 
 const calendarLabels = {
-  presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Home className="h-5 w-5 text-[#8b7355] drop-shadow-sm" /> },
-  ferias: { label: 'Férias', color: '#ffe6e6', icon: <Sun className="h-5 w-5 text-[#d4756b] drop-shadow-sm" /> },
-  remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Laptop className="h-5 w-5 text-[#5ba3d4] drop-shadow-sm" /> },
-  plantao: { label: 'Plantão', color: '#e6ffe6', icon: <Shield className="h-5 w-5 text-[#2e7d32] drop-shadow-sm" /> },
-  folga: { label: 'Folga', color: '#e0e0e0', icon: <CalendarIcon className="h-5 w-5 text-[#424242] drop-shadow-sm" /> },
+  presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Building2 className="h-5 w-5 text-[#8b7355] drop-shadow-sm" /> },
+  ferias: { label: 'Férias', color: '#ffe6e6', icon: <Umbrella className="h-5 w-5 text-[#d4756b] drop-shadow-sm" /> },
+  remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Coffee className="h-5 w-5 text-[#5ba3d4] drop-shadow-sm" /> },
+  plantao: { label: 'Plantão', color: '#e6ffe6', icon: <HardHat className="h-5 w-5 text-[#2e7d32] drop-shadow-sm" /> },
+  folga: { label: 'Folga', color: '#e0e0e0', icon: <Umbrella className="h-5 w-5 text-[#424242] drop-shadow-sm" /> },
   none: { label: '', color: '#fff', icon: null },
 };
 
@@ -57,30 +57,25 @@ function CalendarComponent() {
     const isWeekend = date.getDay() === 0 || date.getDay() === 6;
     const isFeriado = dayEvents.some(e => e.type === 'feriado');
 
-    if (isWeekend || isFeriado) {
-      // Só pode marcar Plantão ou remover
-      if (current === null) {
-        saveMark(key, 'plantao');
-      } else if (current === 'plantao') {
-        removeMark(key);
-      } else {
-        toast.warning('Em finais de semana e feriados só é permitido marcar Plantão.');
-        saveMark(key, 'plantao');
-      }
+    // Ciclo completo de modalidades para todos os dias
+    const next: WorkStatus | null =
+      current === null ? 'presencial' :
+      current === 'presencial' ? 'ferias' :
+      current === 'ferias' ? 'remoto' :
+      current === 'remoto' ? 'folga' :
+      current === 'folga' ? 'plantao' :
+      null;
+
+    // Aplicar a próxima modalidade ou remover
+    if (next === null) {
+      removeMark(key);
     } else {
-      // Ciclo normal incluindo Folga
-      const next: WorkStatus | null =
-        current === null ? 'presencial' :
-        current === 'presencial' ? 'ferias' :
-        current === 'ferias' ? 'remoto' :
-        current === 'remoto' ? 'folga' :
-        current === 'folga' ? 'plantao' :
-        null;
-      if (next === null) {
-        removeMark(key);
-      } else {
-        saveMark(key, next);
+      // Validação especial para finais de semana e feriados
+      if ((isWeekend || isFeriado) && next !== 'plantao') {
+        toast.warning('Em finais de semana e feriados só é permitido marcar Plantão.');
+        return;
       }
+      saveMark(key, next);
     }
   };
 
@@ -336,27 +331,27 @@ function CalendarComponent() {
           <div className="flex flex-wrap gap-4">
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
               <span className="inline-block w-4 h-4 rounded bg-[#f5e7c4] dark:bg-amber-200 border border-[#e2d8b8] dark:border-amber-300 shadow-sm"></span>
-              <Home className="h-5 w-5 text-amber-700 dark:text-amber-400 drop-shadow-sm" />
-              Presencial
+              <Building2 className="h-5 w-5 text-amber-700 dark:text-amber-400 drop-shadow-sm" />
+              Presencial (TRT15)
             </span>
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
               <span className="inline-block w-4 h-4 rounded bg-[#ffe6e6] dark:bg-red-200 border border-[#e2d8b8] dark:border-red-300 shadow-sm"></span>
-              <Sun className="h-5 w-5 text-red-600 dark:text-red-400 drop-shadow-sm" />
+              <Umbrella className="h-5 w-5 text-red-600 dark:text-red-400 drop-shadow-sm" />
               Férias
             </span>
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
               <span className="inline-block w-4 h-4 rounded bg-[#e6f7ff] dark:bg-blue-200 border border-[#e2d8b8] dark:border-blue-300 shadow-sm"></span>
-              <Laptop className="h-5 w-5 text-blue-600 dark:text-blue-400 drop-shadow-sm" />
-              Remoto
+              <Coffee className="h-5 w-5 text-blue-600 dark:text-blue-400 drop-shadow-sm" />
+              Home Office
             </span>
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
               <span className="inline-block w-4 h-4 rounded bg-[#e6ffe6] dark:bg-green-200 border border-[#e2d8b8] dark:border-green-300 shadow-sm"></span>
-              <Shield className="h-5 w-5 text-green-600 dark:text-green-400 drop-shadow-sm" />
+              <HardHat className="h-5 w-5 text-green-600 dark:text-green-400 drop-shadow-sm" />
               Plantão
             </span>
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
               <span className="inline-block w-4 h-4 rounded bg-[#e0e0e0] dark:bg-gray-300 border border-[#e2d8b8] dark:border-gray-400 shadow-sm"></span>
-              <CalendarIcon className="h-5 w-5 text-gray-600 dark:text-gray-400 drop-shadow-sm" />
+              <Umbrella className="h-5 w-5 text-gray-600 dark:text-gray-400 drop-shadow-sm" />
               Folga
             </span>
           </div>

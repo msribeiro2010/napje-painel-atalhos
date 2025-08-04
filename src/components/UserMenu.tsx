@@ -16,7 +16,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Shield, Lock, Bot, ExternalLink, Bell, BarChart3 } from 'lucide-react';
+import { User, Settings, LogOut, Shield, Lock, Bot, ExternalLink, Bell, BarChart3, Calendar } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -263,15 +263,15 @@ const UserMenu = () => {
             </DropdownMenuPortal>
           </DropdownMenuSub>
         )}
-        {/* {profile.is_admin && (
+        {profile.is_admin && (
           <DropdownMenuItem 
             onClick={() => navigate('/admin/feriados')}
             className="cursor-pointer hover:bg-gradient-accent"
           >
             <Calendar className="mr-2 h-4 w-4" />
-            <span>Gerenciar Feriados</span>
+            <span>Administração de Feriados</span>
           </DropdownMenuItem>
-        )} */}
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           onClick={handleSignOut}

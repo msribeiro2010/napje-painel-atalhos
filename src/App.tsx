@@ -18,7 +18,7 @@ import Profile from "./pages/Profile";
 import AdminUsers from "./pages/AdminUsers";
 import AdminShortcuts from "./pages/AdminShortcuts";
 import AdminMetrics from "./pages/AdminMetrics";
-// import AdminHolidays from "./pages/AdminHolidays";
+import AdminHolidays from "./pages/AdminHolidays";
 import NotificationSettings from "./pages/NotificationSettings";
 import OrgaosJulgadores from "./pages/OrgaosJulgadores";
 import ImportantMemories from "./pages/ImportantMemories";
@@ -91,11 +91,11 @@ const App = () => (
               <AdminMetrics />
             </ProtectedRoute>
           } />
-          {/* <Route path="/admin/feriados" element={
+          <Route path="/admin/feriados" element={
             <ProtectedRoute requireAdmin={true}>
               <AdminHolidays />
             </ProtectedRoute>
-          } /> */}
+          } />
              <Route path="/orgaos-julgadores" element={
                <ProtectedRoute>
                  <OrgaosJulgadores />
