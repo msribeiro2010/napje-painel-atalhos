@@ -230,30 +230,67 @@ export const SmartSearchDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[85vh] p-0 bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-xl border-border/20 shadow-xl">
-        <DialogHeader className="p-6 pb-4 border-b border-border/20">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-3 text-xl font-bold text-foreground">
-              <div className="p-2.5 bg-gradient-primary rounded-xl shadow-soft">
-                <Brain className="h-5 w-5 text-white" />
+        <DialogHeader className="relative overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-purple-500/3 to-blue-500/5" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(120,119,198,0.08),transparent_60%)]" />
+          
+          <div className="relative p-6 pb-5">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+              {/* Seção principal - Ícone e título */}
+              <div className="lg:col-span-10">
+                <DialogTitle className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="relative">
+                      <div className="p-3 bg-gradient-to-br from-primary via-primary/90 to-purple-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+                        <Brain className="h-6 w-6 text-white drop-shadow-sm" />
+                      </div>
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full border-2 border-white animate-pulse" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col justify-center min-h-[3rem]">
+                    <div className="mb-1">
+                      <div className="flex items-center gap-3 text-xl lg:text-2xl font-bold text-foreground">
+                        <span className="bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent">
+                          Busca Inteligente
+                        </span>
+                        <div className="flex items-center gap-1 bg-primary/10 backdrop-blur-sm px-2 py-1 rounded-full border border-primary/20">
+                          <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+                          <span className="text-xs font-medium text-primary">IA</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-sm text-muted-foreground font-medium">
+                        Encontre chamados, documentos e muito mais
+                      </span>
+                    </div>
+                  </div>
+                </DialogTitle>
               </div>
-              <div className="flex flex-col">
+              
+              {/* Seção de controles */}
+              <div className="lg:col-span-2 flex justify-end">
                 <div className="flex items-center gap-2">
-                  Busca Inteligente
-                  <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                  <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground bg-muted/30 backdrop-blur-sm px-2 py-1 rounded-lg border border-border/20">
+                    <span className="font-mono">⌘K</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onClose}
+                    className="h-9 w-9 p-0 hover:bg-accent/80 hover:scale-105 rounded-xl transition-all duration-200 shadow-sm"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                <span className="text-xs text-muted-foreground font-normal">
-                  Encontre chamados, documentos e muito mais
-                </span>
               </div>
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-9 w-9 p-0 hover:bg-accent rounded-xl"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            </div>
+            
+            {/* Linha decorativa */}
+            <div className="mt-4 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
           </div>
         </DialogHeader>
 

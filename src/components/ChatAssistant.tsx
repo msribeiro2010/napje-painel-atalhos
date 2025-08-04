@@ -255,7 +255,7 @@ O sistema gerará automaticamente um número de protocolo para acompanhamento.`;
     }
     
     // Resposta padrão
-    return `Sou o Assistente TRT15 e estou operando em modo offline limitado.
+    return `Sou o Assistente-Bot e estou operando em modo offline limitado.
 
 📋 **Posso ajudar com:**
 - Orientações sobre criação de chamados
@@ -326,8 +326,8 @@ Como posso ajudá-lo com base nas informações disponíveis?`;
             </div>
           </div>
                       <div className="flex flex-col">
-            <span className="font-bold text-blue-800 text-lg dark:text-blue-100">Assistente TRT15</span>
-            <span className="text-sm text-blue-600 font-normal dark:text-blue-300">Powered by IA</span>
+            <span className="font-bold text-blue-800 text-lg dark:text-blue-100">Assistente-Bot</span>
+            <span className="text-sm text-blue-600 font-normal dark:text-blue-300">Mar-IA</span>
           </div>
           <Badge className={`text-sm font-medium font-roboto border ${
             searchMode === 'auto' ? 'bg-gradient-pastel-green/60 text-green-700 border-green-200/60 dark:bg-green-600/80 dark:text-green-100 dark:border-green-500/50' :
@@ -503,7 +503,7 @@ Como posso ajudá-lo com base nas informações disponíveis?`;
           {messages.length === 1 && !isLoading && (
             <div className="mt-3">
               <div className="flex gap-2 flex-wrap mb-3">
-                {['Como criar um chamado?', 'Problemas de acesso', 'Status do sistema'].map((suggestion) => (
+                {['Erro ao assinar Documento', 'Problemas com o PDPJ', 'Sistema PJe indisponível'].map((suggestion) => (
                   <button
                     key={suggestion}
                     onClick={() => setInputValue(suggestion)}

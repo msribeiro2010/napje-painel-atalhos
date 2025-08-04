@@ -42,7 +42,7 @@ export const DashboardFooter = () => {
               <span>Sistema Operacional</span>
             </div>
             <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-            <span>Powered by IA</span>
+            <span>Mar-IA</span>
           </div>
         </div>
       </ModernCardContent>

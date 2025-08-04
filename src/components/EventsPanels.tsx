@@ -89,7 +89,7 @@ export const EventsPanels = ({ className = "" }: EventsPanelsProps) => {
                 <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                   <Clock className="h-3 w-3" />
                   <span>{format(parseISO(event.date), 'dd/MM', { locale: ptBR })}</span>
-                  {event.start_time && <span>às {event.start_time}</span>}
+                  {event.start_time && <span>às {event.start_time.substring(0, 5)}</span>}
                 </div>
               </div>
             ))}

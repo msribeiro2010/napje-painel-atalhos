@@ -64,6 +64,7 @@ function CalendarComponent() {
       current === 'ferias' ? 'remoto' :
       current === 'remoto' ? 'folga' :
       current === 'folga' ? 'plantao' :
+      current === 'plantao' ? null :
       null;
 
     // Aplicar a próxima modalidade ou remover
