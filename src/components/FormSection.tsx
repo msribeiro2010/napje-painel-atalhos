@@ -5,9 +5,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, FileText, History, Settings } from 'lucide-react';
+import { AlertCircle, FileText } from 'lucide-react';
 import { FormData } from '@/types/form';
-import { perfis, graus, orgaosJulgadores, resumosPadroes } from '@/constants/form-options';
+import { perfis, graus, orgaosJulgadores } from '@/constants/form-options';
 import { obterOrgaoJulgadorDoProcesso } from '@/utils/processo-parser';
 
 import { OrgaoJulgadorSearchSelect } from './OrgaoJulgadorSearchSelect';
@@ -15,6 +15,7 @@ import { OrgaoJulgadorSearchSelect2Grau } from './OrgaoJulgadorSearchSelect2Grau
 import { UsuarioAutoComplete } from './UsuarioAutoComplete';
 import { InputComSugestoes } from './InputComSugestoes';
 import { useSugestoes } from '@/hooks/useSugestoes';
+import { useAssuntosLocal } from '@/hooks/useAssuntosLocal';
 import { useState, useEffect } from 'react';
 
 
@@ -24,37 +25,41 @@ interface FormSectionProps {
   onMultipleInputChange?: (updates: Partial<FormData>) => void;
   onGenerateDescription: () => void;
   onResetForm: () => void;
-  onShowAIHistory?: () => void;
-  onShowAISettings?: () => void;
   validationErrors?: Record<string, string>;
 }
 
-export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onResetForm, onShowAIHistory, onShowAISettings, validationErrors = {} }: FormSectionProps) => {
+export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onResetForm, validationErrors = {} }: FormSectionProps) => {
   const { 
     buscarSugestoesOrgaoJulgador, 
     buscarSugestoesPerfil, 
-    buscarSugestoesChamadoOrigem, 
-    buscarSugestoesResumo,
+    buscarSugestoesChamadoOrigem,
     loading: sugestoesLoading 
   } = useSugestoes();
+
+  // Hook para assuntos locais (substitui sugestões de resumo do Supabase)
+  const { assuntos: assuntosLocais, loading: assuntosLoading } = useAssuntosLocal();
 
   const [sugestoesOrgaoJulgador, setSugestoesOrgaoJulgador] = useState([]);
   const [sugestoesPerfil, setSugestoesPerfil] = useState([]);
   const [sugestoesChamadoOrigem, setSugestoesChamadoOrigem] = useState([]);
-  const [sugestoesResumo, setSugestoesResumo] = useState([]);
+
+  // Converter assuntos locais para formato de sugestões
+  const sugestoesResumo = assuntosLocais.map((assunto, index) => ({
+    valor: assunto.nome,
+    frequencia: 1, // Todos têm frequência 1 por serem dados estáticos
+    ultimo_uso: new Date().toISOString() // Data atual como último uso
+  }));
 
   // Carregar sugestões quando o componente montar
   useEffect(() => {
     const carregarSugestoes = async () => {
-      const [perfis, chamadosOrigem, resumos] = await Promise.all([
+      const [perfis, chamadosOrigem] = await Promise.all([
         buscarSugestoesPerfil(),
-        buscarSugestoesChamadoOrigem(),
-        buscarSugestoesResumo()
+        buscarSugestoesChamadoOrigem()
       ]);
       
       setSugestoesPerfil(perfis);
       setSugestoesChamadoOrigem(chamadosOrigem);
-      setSugestoesResumo(resumos);
     };
     
     carregarSugestoes();
@@ -116,7 +121,7 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
             onChange={(value) => onInputChange('resumo', value)}
             placeholder="Descreva brevemente o problema"
             sugestoes={sugestoesResumo}
-            loading={sugestoesLoading}
+            loading={assuntosLoading}
             className={validationErrors.resumo ? 'border-red-500 focus:border-red-500' : ''}
           />
           {validationErrors.resumo && (
@@ -247,21 +252,6 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
           <Button onClick={onGenerateDescription} className="flex-1 bg-blue-600 hover:bg-blue-700">
             <FileText className="h-4 w-4 mr-2" />
             Gerar Assyst com IA
-          </Button>
-          {onShowAIHistory && (
-            <Button onClick={onShowAIHistory} variant="outline">
-              <History className="h-4 w-4 mr-2" />
-              Histórico IA
-            </Button>
-          )}
-          {onShowAISettings && (
-            <Button onClick={onShowAISettings} variant="outline">
-              <Settings className="h-4 w-4 mr-2" />
-              Config IA
-            </Button>
-          )}
-          <Button onClick={onResetForm} variant="outline">
-            Limpar
           </Button>
         </div>
       </CardContent>

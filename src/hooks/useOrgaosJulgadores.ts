@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { orgaosJulgadores } from '@/constants/form-options';
 
 export interface OrgaoJulgador {
   id: string;
@@ -28,13 +29,53 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
   } = useQuery({
     queryKey: ['orgaos-julgadores', grau],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
-        .order('codigo', { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from(tableName)
+          .select('*')
+          .order('codigo', { ascending: true });
 
-      if (error) throw error;
-      return data as OrgaoJulgador[];
+        if (error) throw error;
+        
+        // Se não há dados no banco, usar dados estáticos como fallback
+        if (!data || data.length === 0) {
+          console.log(`ℹ️ Tabela ${tableName} vazia, usando dados estáticos como fallback`);
+          
+          // Filtrar órgãos por grau baseado no código
+          const orgaosFiltrados = grau === '1grau' 
+            ? orgaosJulgadores.filter(org => parseInt(org.codigo) < 200)
+            : orgaosJulgadores.filter(org => parseInt(org.codigo) >= 200);
+          
+          const orgaosFallback = orgaosFiltrados.map((orgao, index) => ({
+            id: `fallback-${grau}-${index}`,
+            codigo: orgao.codigo,
+            nome: orgao.nome,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }));
+          
+          return orgaosFallback as OrgaoJulgador[];
+        }
+        
+        return data as OrgaoJulgador[];
+      } catch (err) {
+        console.error(`Erro ao carregar órgãos julgadores ${grau} do banco, usando fallback:`, err);
+        
+        // Em caso de erro, usar dados estáticos como fallback
+        const orgaosFiltrados = grau === '1grau' 
+          ? orgaosJulgadores.filter(org => parseInt(org.codigo) < 200)
+          : orgaosJulgadores.filter(org => parseInt(org.codigo) >= 200);
+        
+        const orgaosFallback = orgaosFiltrados.map((orgao, index) => ({
+          id: `fallback-${grau}-${index}`,
+          codigo: orgao.codigo,
+          nome: orgao.nome,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+        
+        return orgaosFallback as OrgaoJulgador[];
+      }
     }
   });
 

@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useAssuntos, Assunto } from '@/hooks/useAssuntos';
+import { useAssuntosLocal, AssuntoLocal } from '@/hooks/useAssuntosLocal';
 
 interface AssuntoSearchSelectProps {
   value: string;
@@ -32,8 +32,8 @@ export const AssuntoSearchSelect = ({
 }: AssuntoSearchSelectProps) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const { assuntos, loading } = useAssuntos();
-  const [filteredAssuntos, setFilteredAssuntos] = useState<Assunto[]>([]);
+  const { assuntos, loading } = useAssuntosLocal();
+  const [filteredAssuntos, setFilteredAssuntos] = useState<AssuntoLocal[]>([]);
   const [filteredResumos, setFilteredResumos] = useState<string[]>([]);
 
   useEffect(() => {

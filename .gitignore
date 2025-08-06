@@ -29,3 +29,26 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Arquivos de deploy temporários
+.last-deploy
+
+# Scripts de teste locais
+test-*.cjs
+monitor-*.cjs
+check-*.cjs
+execute-*.cjs
+populate-*.cjs
+
+# Arquivos SQL de desenvolvimento
+*.sql
+!supabase/migrations/*.sql
+!supabase/seed.sql
+
+# Documentação de desenvolvimento (opcional)
+*_SUMMARY.md
+*_FIXES.md
+SOLUCAO_*.md
+CORRECAO_*.md
+IMPLEMENTACAO_*.md
+RESUMO_*.md

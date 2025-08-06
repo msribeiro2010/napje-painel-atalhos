@@ -19,7 +19,13 @@
     "clean": "rm -rf dist",
     "analyze": "npm run build && npx vite-bundle-analyzer dist",
     "pre-deploy": "npm run clean && npm run lint && npm run type-check && npm run build:prod",
-    "post-deploy": "echo 'Deploy concluído! Verifique: https://msribeiro2010.github.io/napje-painel-atalhos/'"
+    "post-deploy": "echo 'Deploy concluído! Verifique: https://msribeiro2010.github.io/napje-painel-atalhos/'",
+    "supabase:monitor": "node monitor-supabase-usage.cjs",
+    "supabase:test": "node test-important-memories.cjs",
+    "supabase:check": "npm run supabase:monitor && npm run supabase:test",
+    "test:assuntos": "node test-assuntos-local.cjs",
+    "cleanup:repo": "./cleanup-repository.sh",
+    "help:supabase": "node -e \"console.log('\\n📊 Scripts do Supabase disponíveis:\\n'); console.log('• npm run supabase:monitor - Monitora uso e quota'); console.log('• npm run supabase:test - Testa conexão e tabelas'); console.log('• npm run supabase:check - Executa ambos os testes'); console.log('• npm run test:assuntos - Testa assuntos locais (sem Supabase)'); console.log('• npm run cleanup:repo - Limpa arquivos desnecessários do repositório'); console.log('\\n📚 Guias disponíveis:'); console.log('• GUIA_QUOTA_SUPABASE.md - Como resolver problemas de quota'); console.log('• GUIA_CORRECAO_SUPABASE.md - Troubleshooting geral'); console.log('• ARQUIVOS_PARA_EXCLUSAO.md - Guia de limpeza do repositório'); console.log('\\n')\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

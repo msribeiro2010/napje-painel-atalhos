@@ -31,15 +31,16 @@ export const useChamados = () => {
       const { data, error } = await supabase
         .from('chamados')
         .insert({
-          resumo: resumoFinal,
-          notas: formData.notas,
+          titulo: resumoFinal,
+          descricao: formData.notas,
           grau: formData.grau || null,
-          processos: formData.processos || null,
+          numero_processo: formData.processos || null,
           orgao_julgador: formData.orgaoJulgador || null,
           perfil_usuario_afetado: formData.perfilUsuario || null,
           nome_usuario_afetado: formData.nomeUsuario || null,
           cpf_usuario_afetado: formData.cpfUsuario || null,
-          chamado_origem: formData.chamadoOrigem || null
+          chamado_origem: formData.chamadoOrigem || null,
+          status: 'Aberto'
         })
         .select()
         .single();
@@ -155,7 +156,10 @@ export const useChamados = () => {
         .limit(1)
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+      
       return data;
     } catch (err) {
       console.error('Erro ao buscar dados do usuário por CPF:', err);

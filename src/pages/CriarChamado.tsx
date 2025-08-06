@@ -173,12 +173,12 @@ const CriarChamado = () => {
     toast.success(`Template "${template.nome}" aplicado com sucesso!`);
   }, [formData]);
 
-  const handleSelectHistoryItem = useCallback((item: Record<string, unknown>) => {
+  const handleSelectHistoryItem = useCallback((item: any) => {
     setShowAIHistory(false);
     toast.info('Item do histórico selecionado');
   }, []);
 
-  const handleApplyHistoryToForm = useCallback((item: { formData: Record<string, string> }) => {
+  const handleApplyHistoryToForm = useCallback((item: { formData: Record<string, string>; description?: string; solution?: string }) => {
     // Aplicar dados do histórico ao formulário
     const newFormData = {
       ...formData,
@@ -189,8 +189,8 @@ const CriarChamado = () => {
     };
     
     setFormData(newFormData);
-    setAiEnhancedDescription(item.description);
-    setAiSuggestedSolution(item.solution);
+    if (item.description) setAiEnhancedDescription(item.description);
+    if (item.solution) setAiSuggestedSolution(item.solution);
     setShowAIHistory(false);
     setIsDirty(true);
     
@@ -271,7 +271,7 @@ const CriarChamado = () => {
     setShowAIDialog(true);
   };
 
-  const handleProceedToGenerate = (enhancedDescription: string, suggestedSolution: string) => {
+  const handleProceedToGenerate = async (enhancedDescription: string, suggestedSolution: string) => {
     setAiEnhancedDescription(enhancedDescription);
     setAiSuggestedSolution(suggestedSolution);
     
@@ -340,11 +340,35 @@ const CriarChamado = () => {
       description += `${dadosUsuario.join(' / ')}\n\n`;
     }
     
-
-    
     setGeneratedDescription(description);
     setIsGenerated(true);
-    toast.success('Descrição gerada com sucesso!');
+    
+    // Copiar automaticamente os campos para a área de transferência
+    try {
+      // Preparar dados para JIRA
+      const chamadoOrigem = formData.chamadoOrigem || '';
+      const assunto = resumoFinal;
+      const nome = [
+        formData.nomeUsuario,
+        formData.cpfUsuario,
+        formData.perfilUsuario,
+        formData.orgaoJulgador ? formData.orgaoJulgador.replace(/^\d+\s*-\s*/, '') : null
+      ].filter(Boolean).join(' / ');
+      
+      // Copiar campos individuais em sequência
+      await navigator.clipboard.writeText(chamadoOrigem);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await navigator.clipboard.writeText(assunto);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await navigator.clipboard.writeText(nome);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await navigator.clipboard.writeText(description);
+      
+      toast.success('Formulário JIRA preenchido automaticamente! Campos copiados para área de transferência.');
+    } catch (error) {
+      console.error('Erro ao copiar para área de transferência:', error);
+      toast.success('Descrição gerada com sucesso!');
+    }
   };
 
   const resetForm = () => {
@@ -458,8 +482,6 @@ const CriarChamado = () => {
           onMultipleInputChange={handleMultipleInputChange}
           onGenerateDescription={handleGenerateDescription}
           onResetForm={resetForm}
-          onShowAIHistory={() => setShowAIHistory(true)}
-          onShowAISettings={() => setShowAISettings(true)}
           validationErrors={validationErrors}
         />
             

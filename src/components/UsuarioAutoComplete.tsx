@@ -47,8 +47,16 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
       if (formData.cpfUsuario.length >= 3 || formData.nomeUsuario.length >= 3) {
         const termo = formData.cpfUsuario || formData.nomeUsuario;
         const resultados = await buscarUsuarios(termo);
-        setUsuarios(resultados);
-        setShowSuggestions(resultados.length > 0);
+        
+        // Filtrar apenas usuários com CPFs válidos
+        const usuariosComCPFValido = resultados.filter(usuario => {
+          const cpfLimpo = limparCPF(usuario.cpf);
+          const cpfFormatado = formatarCPF(cpfLimpo);
+          return validarCPF(cpfFormatado);
+        });
+        
+        setUsuarios(usuariosComCPFValido);
+        setShowSuggestions(usuariosComCPFValido.length > 0);
       } else {
         setUsuarios([]);
         setShowSuggestions(false);
@@ -62,13 +70,25 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
 
 
   const handleCPFChange = async (valor: string) => {
-    const cpfFormatado = formatarCPF(valor);
+    // Permitir apenas números e formatação
+    const somenteNumeros = valor.replace(/\D/g, '');
+    
+    // Limitar a 11 dígitos - mas sempre atualizar o estado
+    const numerosLimitados = somenteNumeros.slice(0, 11);
+    
+    const cpfFormatado = formatarCPF(numerosLimitados);
     onInputChange('cpfUsuario', cpfFormatado);
     
-    // Se o CPF for válido, buscar dados primeiro na tabela usuarios
-    if (validarCPF(cpfFormatado)) {
+    // Se digitou mais de 11 dígitos, não processar busca
+    if (somenteNumeros.length > 11) {
+      return;
+    }
+    
+    // Se o CPF for válido (11 dígitos), buscar dados primeiro na tabela usuarios
+    if (numerosLimitados.length === 11 && validarCPF(cpfFormatado)) {
       // Primeiro: buscar na tabela usuarios
       const usuario = await buscarUsuarioPorCPF(cpfFormatado);
+      
       if (usuario) {
         onInputChange('nomeUsuario', usuario.nome_completo || '');
         onInputChange('perfilUsuario', usuario.perfil || '');
@@ -82,6 +102,7 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
       
       // Se não encontrou na tabela usuarios, buscar dados de chamados anteriores
       const dadosUsuario = await buscarDadosUsuarioPorCPF(cpfFormatado);
+      
       if (dadosUsuario) {
         onInputChange('nomeUsuario', dadosUsuario.nome_usuario_afetado || '');
         onInputChange('perfilUsuario', dadosUsuario.perfil_usuario_afetado || '');
@@ -99,8 +120,10 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
   };
 
   const selecionarUsuario = (usuario: Usuario) => {
-    console.log('Selecionando usuário:', usuario);
-    onInputChange('cpfUsuario', formatarCPF(usuario.cpf));
+    const cpfLimpo = limparCPF(usuario.cpf);
+    const cpfFormatado = formatarCPF(cpfLimpo);
+    
+    onInputChange('cpfUsuario', cpfFormatado);
     onInputChange('nomeUsuario', usuario.nome_completo);
     onInputChange('perfilUsuario', usuario.perfil || '');
     setShowSuggestions(false);
@@ -109,12 +132,12 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
   };
 
   return (
-    <div className="space-y-4 border-t pt-4">
+    <div className="space-y-4 border-t pt-4 relative">
       <h4 className="font-medium text-gray-700 flex items-center">
         <User className="h-4 w-4 mr-2" />
         Dados do Usuário (Opcional)
       </h4>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             CPF
@@ -133,6 +156,7 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
                 formData.cpfUsuario && !validarCPF(formData.cpfUsuario) ? 'border-red-500' : ''
               } ${dadosEncontrados ? 'pr-10' : ''}`}
               maxLength={14}
+              autoComplete="off"
             />
             {formData.cpfUsuario && !validarCPF(formData.cpfUsuario) && (
               <p className="text-xs text-red-500 mt-1">CPF inválido</p>
@@ -175,8 +199,8 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
       
       {/* Sugestões de usuários - movido para fora do grid */}
       {showSuggestions && usuarios.length > 0 && (
-        <div className="relative z-50">
-          <Card className="p-2 shadow-lg bg-white border mt-2">
+        <div className="absolute z-[9999] w-full mt-1 left-0 right-0">
+          <Card className="p-2 shadow-lg bg-white border border-gray-200">
             <div className="text-xs text-gray-500 mb-2 font-medium">
               Usuários encontrados:
             </div>
@@ -184,12 +208,12 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
               {usuarios.map((usuario) => (
                 <div
                   key={usuario.id}
-                  onClick={(e) => {
+                  onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     selecionarUsuario(usuario);
                   }}
-                  className="p-2 rounded cursor-pointer hover:bg-gray-50 border border-gray-100 transition-colors"
+                  className="w-full p-2 rounded cursor-pointer hover:bg-blue-50 border border-gray-100 transition-colors"
                 >
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-gray-400" />
@@ -198,7 +222,7 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
                         {usuario.nome_completo}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {usuario.cpf} {usuario.perfil && `• ${usuario.perfil}`}
+                        {formatarCPF(usuario.cpf)} {usuario.perfil && `• ${usuario.perfil}`}
                       </div>
                     </div>
                   </div>
