@@ -62,21 +62,21 @@ const ChamadosRecentes = () => {
   }, [chamados, searchTerm]);
 
   return (
-    <div className="min-h-screen bg-[#f8f5e4] dark:bg-[#23201a] p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center">
             <Button 
               variant="outline" 
               onClick={() => navigate('/')} 
-              className="mr-4 text-[#7c6a3c] dark:text-[#f8f5e4] border-[#e2d8b8] dark:border-[#3a3320] bg-[#f8f5e4] dark:bg-[#2d2717] hover:bg-[#f3ecd2] dark:hover:bg-[#28231a]"
+              className="mr-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-[#7c6a3c] dark:text-[#f8f5e4]">Chamados Recentes</h1>
-              <p className="text-[#bfae7c] dark:text-[#bfae7c]">Histórico dos últimos chamados criados</p>
+              <h1 className="text-3xl font-bold text-foreground">Chamados Recentes</h1>
+              <p className="text-muted-foreground">Histórico dos últimos chamados criados</p>
             </div>
           </div>
           
@@ -85,13 +85,13 @@ const ChamadosRecentes = () => {
             <DateDisplay />
             {/* Campo de busca */}
             <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#bfae7c] dark:text-[#bfae7c]" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Buscar por título, descrição, processo..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-[#f8f5e4] dark:bg-[#2d2717] border-[#e2d8b8] dark:border-[#3a3320] text-[#7c6a3c] dark:text-[#f8f5e4] placeholder:text-[#bfae7c] dark:placeholder:text-[#bfae7c]"
+                className="pl-10"
               />
             </div>
           </div>
@@ -99,14 +99,14 @@ const ChamadosRecentes = () => {
 
         {/* Indicador de busca ativa */}
         {searchTerm && (
-          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="mb-4 p-3 bg-secondary border border-border rounded-lg">
             <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm text-blue-800 dark:text-blue-200">
+              <Search className="h-4 w-4 text-foreground" />
+              <span className="text-sm text-foreground">
                 Buscando por: <strong>"{searchTerm}"</strong>
               </span>
               {highlightedChamadoId && (
-                <span className="text-xs text-blue-600 dark:text-blue-400 ml-2">
+                <span className="text-xs text-foreground ml-2">
                   • Resultado destacado
                 </span>
               )}
@@ -116,17 +116,17 @@ const ChamadosRecentes = () => {
 
         {loading ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bfae7c] dark:border-[#bfae7c] mx-auto"></div>
-            <p className="text-[#bfae7c] dark:text-[#bfae7c] mt-4">Carregando chamados...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground mt-4">Carregando chamados...</p>
           </div>
         ) : filteredChamados.length === 0 ? (
-          <Card className="bg-[#f8f5e4] dark:bg-[#2d2717] border-[#e2d8b8] dark:border-[#3a3320]">
+          <Card className="bg-card border-border">
             <CardContent className="p-8 text-center">
-              <FileText className="h-12 w-12 text-[#bfae7c] dark:text-[#bfae7c] mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-[#7c6a3c] dark:text-[#f8f5e4] mb-2">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 {chamados.length === 0 ? 'Nenhum chamado encontrado' : 'Nenhum resultado encontrado'}
               </h3>
-              <p className="text-[#bfae7c] dark:text-[#bfae7c]">
+              <p className="text-muted-foreground">
                 {chamados.length === 0 
                   ? 'Ainda não há chamados criados no sistema.' 
                   : 'Tente ajustar os termos da sua busca.'
@@ -137,7 +137,7 @@ const ChamadosRecentes = () => {
         ) : (
           <div className="space-y-4">
             {searchTerm && (
-              <div className="mb-4 text-sm text-[#bfae7c] dark:text-[#bfae7c]">
+              <div className="mb-4 text-sm text-muted-foreground">
                 Mostrando {filteredChamados.length} de {chamados.length} chamados
               </div>
             )}
