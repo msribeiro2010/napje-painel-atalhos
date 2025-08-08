@@ -325,7 +325,7 @@ const Dashboard = () => {
       
       // Navegar baseado no tipo com contexto específico
       switch (result.type) {
-        case 'chamado':
+        case 'chamado': {
           console.log('📋 Navegando para chamado específico');
           console.log('🔍 Dados do resultado:', {
             id: result.id,
@@ -341,8 +341,9 @@ const Dashboard = () => {
           console.log('🚀 URL de navegação:', navigationUrl);
           navigate(navigationUrl);
           break;
-          
-        case 'conhecimento':
+        }
+        
+        case 'conhecimento': {
           console.log('📚 Navegando para base de conhecimento');
           // Usar o termo de busca dos metadados se disponível
           let knowledgeSearchTerm = result.metadata?.searchTerm || '';
@@ -368,8 +369,9 @@ const Dashboard = () => {
             navigate('/base-conhecimento');
           }
           break;
-          
-        case 'atalho':
+        }
+        
+        case 'atalho': {
           console.log('🔗 Navegando para atalho');
           if (result.url) {
             window.open(result.url, '_blank');
@@ -378,14 +380,16 @@ const Dashboard = () => {
             navigate(`/atalhos?search=${encodeURIComponent(atalhoSearchTerm)}`);
           }
           break;
-          
-        case 'usuario':
+        }
+        
+        case 'usuario': {
           console.log('👥 Navegando para usuários');
           const userSearchTerm = result.metadata?.searchTerm || result.title;
           navigate(`/admin/usuarios?search=${encodeURIComponent(userSearchTerm)}`);
           break;
-          
-        default:
+        }
+        
+        default: {
           // Para tipos não definidos no SearchResult, navegamos para páginas específicas
           if ((result.type as string) === 'orgao') {
             console.log('🏛️ Navegando para órgãos julgadores');
@@ -404,6 +408,7 @@ const Dashboard = () => {
             navigate(`/chamados-recentes?search=${encodeURIComponent(defaultSearchTerm)}`);
           }
           break;
+        }
       }
     } catch (error) {
       console.error('❌ Erro ao processar resultado da busca:', error);

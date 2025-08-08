@@ -5,6 +5,7 @@ import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: process.env.GITHUB_ACTIONS ? '/napje-painel-atalhos/' : '/',
   plugins: [
     react(),
     // Bundle analyzer para otimização
