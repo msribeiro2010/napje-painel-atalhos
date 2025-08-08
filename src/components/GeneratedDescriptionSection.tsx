@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, FileText } from 'lucide-react';
+import { Check, Copy, FileText, Save } from 'lucide-react';
 import { DescriptionSection } from '@/types/form';
 import { toast } from 'sonner';
 
@@ -8,12 +8,14 @@ interface GeneratedDescriptionSectionProps {
   isGenerated: boolean;
   sections: DescriptionSection[];
   generatedDescription: string;
+  onCreateTicket?: () => void;
 }
 
 export const GeneratedDescriptionSection = ({ 
   isGenerated, 
   sections, 
-  generatedDescription 
+  generatedDescription,
+  onCreateTicket 
 }: GeneratedDescriptionSectionProps) => {
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -146,7 +148,13 @@ export const GeneratedDescriptionSection = ({
               })()}
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-6">
+              {onCreateTicket && (
+                <Button onClick={onCreateTicket} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                  <Save className="h-4 w-4 mr-2" />
+                  Criar Chamado
+                </Button>
+              )}
               <Button onClick={copyFullDescription} className="flex-1 bg-green-600 hover:bg-green-700">
                 <Copy className="h-4 w-4 mr-2" />
                 Copiar Descrição Completa
