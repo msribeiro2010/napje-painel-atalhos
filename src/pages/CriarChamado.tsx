@@ -144,18 +144,18 @@ const CriarChamado = () => {
         await salvarUsuario(data.cpfUsuario, data.nomeUsuario, data.perfilUsuario);
       }
       
-      // Salvar rascunho do chamado
-      await salvarChamado({ ...data, isDraft: true });
+      // Não salvar rascunho do chamado na base de dados para evitar triplicação
+      // Apenas salvar localmente ou não salvar nada
       
       setLastSaved(new Date());
       setIsDirty(false);
-      toast.success('Rascunho salvo automaticamente', { duration: 2000 });
+      // Remover toast de salvamento automático para não confundir o usuário
     } catch (error) {
       console.error('Erro no salvamento automático:', error);
     } finally {
       setIsAutoSaving(false);
     }
-  }, [isDirty, salvarUsuario, salvarChamado]);
+  }, [isDirty, salvarUsuario]);
 
   const handleSelectTemplate = useCallback((template: { nome: string; dados: Record<string, unknown> }) => {
     // Aplicar dados do template ao formulário
@@ -262,11 +262,18 @@ const CriarChamado = () => {
       await salvarUsuario(formData.cpfUsuario, formData.nomeUsuario, formData.perfilUsuario);
     }
 
-    // Salvar chamado na base de dados
-    await salvarChamado(formData);
-
-    // Abrir dialog da IA
+    // Não salvar o chamado aqui - apenas abrir o dialog da IA
     setShowAIDialog(true);
+  };
+
+  // Handler simples para o EnhancedAIDialog
+  const handleSimpleGenerate = () => {
+    setShowAIDialog(false);
+    // Gerar descrição usando os dados atuais do formulário
+    const description = generateDescription(formData);
+    setGeneratedDescription(description);
+    setIsGenerated(true);
+    toast.success('Descrição gerada com sucesso!');
   };
 
   const handleProceedToGenerate = async (enhancedDescription: string, suggestedSolution: string) => {
@@ -366,6 +373,24 @@ const CriarChamado = () => {
     } catch (error) {
       console.error('Erro ao copiar para área de transferência:', error);
       toast.success('Descrição gerada com sucesso!');
+    }
+  };
+
+  // Nova função para criar o chamado final
+  const handleCreateTicket = async () => {
+    try {
+      // Salvar usuário se os dados estiverem preenchidos
+      if (formData.cpfUsuario && formData.nomeUsuario) {
+        await salvarUsuario(formData.cpfUsuario, formData.nomeUsuario, formData.perfilUsuario);
+      }
+
+      // Salvar chamado na base de dados apenas agora
+      await salvarChamado(formData);
+      
+      toast.success('Chamado criado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar chamado:', error);
+      toast.error('Erro ao criar chamado');
     }
   };
 
@@ -495,6 +520,7 @@ const CriarChamado = () => {
               isGenerated={isGenerated}
               sections={sections}
               generatedDescription={generatedDescription}
+              onCreateTicket={handleCreateTicket}
             />
             
             {isGenerated && (
@@ -523,14 +549,7 @@ const CriarChamado = () => {
           open={showAIDialog}
           onOpenChange={setShowAIDialog}
           formData={formData}
-          onProceedToGenerate={() => {
-             setShowAIDialog(false);
-             // Gerar descrição usando os dados atuais do formulário
-             const description = generateDescription(formData);
-             setGeneratedDescription(description);
-             setIsGenerated(true);
-             toast.success('Descrição gerada com sucesso!');
-           }}
+          onProceedToGenerate={handleSimpleGenerate}
         />
 
         {/* Template Selector */}
