@@ -144,18 +144,16 @@ const CriarChamado = () => {
         await salvarUsuario(data.cpfUsuario, data.nomeUsuario, data.perfilUsuario);
       }
       
-      // Salvar rascunho do chamado
-      await salvarChamado({ ...data, isDraft: true });
+      // Removido: não salvar mais chamado automaticamente (apenas no clique do botão)
       
       setLastSaved(new Date());
       setIsDirty(false);
-      toast.success('Rascunho salvo automaticamente', { duration: 2000 });
     } catch (error) {
       console.error('Erro no salvamento automático:', error);
     } finally {
       setIsAutoSaving(false);
     }
-  }, [isDirty, salvarUsuario, salvarChamado]);
+  }, [isDirty, salvarUsuario]);
 
   const handleSelectTemplate = useCallback((template: { nome: string; dados: Record<string, unknown> }) => {
     // Aplicar dados do template ao formulário
