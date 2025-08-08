@@ -133,8 +133,6 @@ const CriarChamado = () => {
     return Object.keys(errors).length === 0;
   }, [formData.resumo]);
 
-
-
   // Salvamento automático
   const autoSave = useCallback(async (data: FormData) => {
     if (!isDirty) return;
@@ -197,64 +195,64 @@ const CriarChamado = () => {
     toast.success('Dados do histórico aplicados ao formulário!');
   }, [formData]);
 
-   const handleInputChange = (field: keyof FormData, value: string | boolean) => {
-     const newFormData = {
-       ...formData,
-       [field]: value
-     };
-     
-     setFormData(newFormData);
-     setIsGenerated(false);
-     setIsDirty(true);
-     
-     // Validação em tempo real
-     validateField(field, value);
-     
-     // Configurar salvamento automático
-     if (autoSaveTimeoutRef.current) {
-       clearTimeout(autoSaveTimeoutRef.current);
-     }
-     
-     autoSaveTimeoutRef.current = setTimeout(() => {
-       autoSave(newFormData);
-     }, 3000); // Salvar após 3 segundos de inatividade
-   };
+  const handleInputChange = (field: keyof FormData, value: string | boolean) => {
+    const newFormData = {
+      ...formData,
+      [field]: value
+    };
+    
+    setFormData(newFormData);
+    setIsGenerated(false);
+    setIsDirty(true);
+    
+    // Validação em tempo real
+    validateField(field, value);
+    
+    // Configurar salvamento automático
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      autoSave(newFormData);
+    }, 3000); // Salvar após 3 segundos de inatividade
+  };
 
-   const handleMultipleInputChange = (updates: Partial<FormData>) => {
-     const newFormData = {
-       ...formData,
-       ...updates
-     };
-     
-     setFormData(newFormData);
-     setIsGenerated(false);
-     setIsDirty(true);
-     
-     // Validação em tempo real para cada campo atualizado
-     Object.entries(updates).forEach(([field, value]) => {
-       if (typeof value === 'string' || typeof value === 'boolean') {
-         validateField(field as keyof FormData, value);
-       }
-     });
-     
-     // Configurar salvamento automático
-     if (autoSaveTimeoutRef.current) {
-       clearTimeout(autoSaveTimeoutRef.current);
-     }
-     
-     autoSaveTimeoutRef.current = setTimeout(() => {
-       autoSave(newFormData);
-     }, 3000); // Salvar após 3 segundos de inatividade
-   };
+  const handleMultipleInputChange = (updates: Partial<FormData>) => {
+    const newFormData = {
+      ...formData,
+      ...updates
+    };
+    
+    setFormData(newFormData);
+    setIsGenerated(false);
+    setIsDirty(true);
+    
+    // Validação em tempo real para cada campo atualizado
+    Object.entries(updates).forEach(([field, value]) => {
+      if (typeof value === 'string' || typeof value === 'boolean') {
+        validateField(field as keyof FormData, value);
+      }
+    });
+    
+    // Configurar salvamento automático
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      autoSave(newFormData);
+    }, 3000); // Salvar após 3 segundos de inatividade
+  };
 
-   // Cleanup do timeout
-   useEffect(() => {
-     return () => {
-       if (autoSaveTimeoutRef.current) {
-         clearTimeout(autoSaveTimeoutRef.current);
-       }
-     };
-   }, []);
+  // Cleanup do timeout
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleGenerateDescription = async () => {
     if (!validateForm(formData)) return;
@@ -454,8 +452,6 @@ const CriarChamado = () => {
        });
      }
 
-
-
      return sections;
   };
 
@@ -547,10 +543,10 @@ const CriarChamado = () => {
 
         {/* AI History */}
         {showAIHistory && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-              <div className="flex items-center justify-between p-4 border-b">
-                <h2 className="text-lg font-semibold">Histórico de IA</h2>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-card rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-border">
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <h2 className="text-lg font-semibold text-foreground">Histórico de IA</h2>
                 <Button
                   variant="ghost"
                   size="sm"
