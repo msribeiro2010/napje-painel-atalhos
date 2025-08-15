@@ -27,19 +27,28 @@ const validarCPF = (cpf: string) => {
 };
 
 export const validateForm = (formData: FormData): boolean => {
-  const requiredFields = ['notas'];
-  
-  for (const field of requiredFields) {
-    if (!formData[field as keyof FormData]) {
-      toast.error(`Campo obrigatório não preenchido: ${field}`);
-      return false;
-    }
-  }
-
   // Validar resumo
   const resumoFinal = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
   if (!resumoFinal) {
-    toast.error('Campo obrigatório não preenchido: resumo');
+    toast.error('Campo obrigatório não preenchido: Resumo');
+    return false;
+  }
+
+  // Validar grau
+  if (!formData.grau) {
+    toast.error('Campo obrigatório não preenchido: Grau');
+    return false;
+  }
+
+  // Validar órgão julgador
+  if (!formData.orgaoJulgador) {
+    toast.error('Campo obrigatório não preenchido: Órgão Julgador');
+    return false;
+  }
+
+  // Validar descrição do problema
+  if (!formData.notas) {
+    toast.error('Campo obrigatório não preenchido: Descrição do Problema');
     return false;
   }
 

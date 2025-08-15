@@ -49,25 +49,25 @@ export const ChamadoCard = ({
     
     return parts.map((part, index) => 
       regex.test(part) ? (
-        <mark key={index} className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">
+        <mark key={index} className="bg-accent px-1 rounded">
           {part}
         </mark>
       ) : part
     );
   };
   return (
-    <Card className={`hover:shadow-lg transition-all duration-500 bg-[#f8f5e4] dark:bg-[#2d2717] border-[#e2d8b8] dark:border-[#3a3320] ${
+    <Card className={`hover:shadow-lg transition-all duration-500 bg-card border-border ${
       isHighlighted 
-        ? 'ring-2 ring-blue-500 ring-opacity-50 shadow-lg bg-blue-50 dark:bg-blue-900/20 animate-pulse' 
+        ? 'ring-2 ring-primary/50 shadow-lg bg-secondary animate-pulse' 
         : ''
     }`}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-lg text-[#7c6a3c] dark:text-[#f8f5e4]">
+            <CardTitle className="text-lg text-foreground">
               {highlightText(chamado.titulo, searchTerm)}
             </CardTitle>
-            <CardDescription className="flex items-center mt-2 text-[#bfae7c] dark:text-[#bfae7c]">
+            <CardDescription className="flex items-center mt-2 text-muted-foreground">
               <Clock className="h-4 w-4 mr-1" />
               {formatDistanceToNow(new Date(chamado.created_at), { 
                 addSuffix: true, 
@@ -85,24 +85,24 @@ export const ChamadoCard = ({
       <CardContent>
         <div className="space-y-3">
           <div>
-            <h4 className="font-medium text-[#7c6a3c] dark:text-[#f8f5e4] mb-1">Descrição do Problema</h4>
-            <p className="text-[#7c6a3c] dark:text-[#f8f5e4] text-sm bg-[#f3ecd2] dark:bg-[#23201a] p-3 rounded border border-[#e2d8b8] dark:border-[#3a3320]">
+            <h4 className="font-medium text-foreground mb-1">Descrição do Problema</h4>
+            <p className="text-foreground text-sm bg-muted p-3 rounded border border-border">
               {highlightText(chamado.descricao, searchTerm)}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-[#e2d8b8] dark:border-[#3a3320]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-border">
             {chamado.grau && (
               <div>
-                <span className="font-medium text-[#7c6a3c] dark:text-[#f8f5e4]">Grau:</span>
-                <span className="ml-2 text-[#bfae7c] dark:text-[#bfae7c]">{chamado.grau}</span>
+                <span className="font-medium text-foreground">Grau:</span>
+                <span className="ml-2 text-muted-foreground">{chamado.grau}</span>
               </div>
             )}
             
             {chamado.numero_processo && (
               <div>
-                <span className="font-medium text-[#7c6a3c] dark:text-[#f8f5e4]">Processo:</span>
-                <span className="ml-2 text-[#bfae7c] dark:text-[#bfae7c] font-mono">
+                <span className="font-medium text-foreground">Processo:</span>
+                <span className="ml-2 text-muted-foreground font-mono">
                   {highlightText(chamado.numero_processo, searchTerm)}
                 </span>
               </div>
@@ -110,8 +110,8 @@ export const ChamadoCard = ({
 
             {chamado.chamado_origem && (
               <div>
-                <span className="font-medium text-[#7c6a3c] dark:text-[#f8f5e4]">Chamado Origem:</span>
-                <span className="ml-2 text-[#bfae7c] dark:text-[#bfae7c] font-mono">
+                <span className="font-medium text-foreground">Chamado Origem:</span>
+                <span className="ml-2 text-muted-foreground font-mono">
                   {chamado.chamado_origem}
                 </span>
               </div>
@@ -119,8 +119,8 @@ export const ChamadoCard = ({
             
             {chamado.orgao_julgador && (
               <div className="md:col-span-2">
-                <span className="font-medium text-[#7c6a3c] dark:text-[#f8f5e4]">Órgão Julgador:</span>
-                <span className="ml-2 text-[#bfae7c] dark:text-[#bfae7c]">
+                <span className="font-medium text-foreground">Órgão Julgador:</span>
+                <span className="ml-2 text-muted-foreground">
                   {highlightText(chamado.orgao_julgador, searchTerm)}
                 </span>
               </div>
@@ -128,11 +128,11 @@ export const ChamadoCard = ({
           </div>
 
           {formatarUsuario(chamado) && (
-            <div className="border-t border-[#e2d8b8] dark:border-[#3a3320] pt-3">
+            <div className="border-t border-border pt-3">
               <div className="flex items-center mb-2">
-                <User className="h-4 w-4 mr-2 text-[#bfae7c] dark:text-[#bfae7c]" />
-                <span className="font-medium text-[#7c6a3c] dark:text-[#f8f5e4]">Usuário:</span>
-                <span className="ml-2 text-[#bfae7c] dark:text-[#bfae7c] text-sm">
+                <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span className="font-medium text-foreground">Usuário:</span>
+                <span className="ml-2 text-muted-foreground text-sm">
                   {formatarUsuario(chamado)}
                 </span>
               </div>
@@ -140,13 +140,12 @@ export const ChamadoCard = ({
           )}
 
           {/* Ações do Chamado */}
-          <div className="border-t border-[#e2d8b8] dark:border-[#3a3320] pt-4">
+          <div className="border-t border-border pt-4">
             <div className="flex flex-wrap gap-2 justify-end">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => onCopiar(chamado)}
-                className="text-[#7c6a3c] dark:text-[#f8f5e4] border-[#e2d8b8] dark:border-[#3a3320] bg-[#f8f5e4] dark:bg-[#2d2717] hover:bg-[#f3ecd2] dark:hover:bg-[#28231a]"
               >
                 <Copy className="h-4 w-4 mr-1" />
                 Copiar
@@ -189,20 +188,20 @@ export const ChamadoCard = ({
                     Excluir
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="bg-[#f8f5e4] dark:bg-[#2d2717] border-[#e2d8b8] dark:border-[#3a3320]">
+                <AlertDialogContent className="bg-card border-border">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="text-[#7c6a3c] dark:text-[#f8f5e4]">Confirmar exclusão</AlertDialogTitle>
-                    <AlertDialogDescription className="text-[#bfae7c] dark:text-[#bfae7c]">
+                    <AlertDialogTitle className="text-foreground">Confirmar exclusão</AlertDialogTitle>
+                    <AlertDialogDescription className="text-muted-foreground">
                       Tem certeza que deseja excluir este chamado? Esta ação não pode ser desfeita.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel className="text-[#7c6a3c] dark:text-[#f8f5e4] border-[#e2d8b8] dark:border-[#3a3320] bg-[#f8f5e4] dark:bg-[#2d2717] hover:bg-[#f3ecd2] dark:hover:bg-[#28231a]">
+                    <AlertDialogCancel>
                       Cancelar
                     </AlertDialogCancel>
                     <AlertDialogAction 
                       onClick={() => onExcluir(chamado.id)}
-                      className="bg-red-600 hover:bg-red-700"
+                      className="bg-destructive hover:bg-destructive/90"
                     >
                       Excluir
                     </AlertDialogAction>

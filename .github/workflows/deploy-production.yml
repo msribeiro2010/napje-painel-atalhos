@@ -30,7 +30,7 @@ on:
         type: boolean
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
   FORCE_COLOR: 1
 
 jobs:
@@ -220,6 +220,9 @@ jobs:
           npm run build:prod
           
           echo "✅ Build concluído com sucesso!"
+
+      - name: ♻️ Preparar SPA 404 para GitHub Pages
+        run: cp dist/index.html dist/404.html
           
       - name: 📊 Análise do Build
         run: |
@@ -234,7 +237,7 @@ jobs:
           
           # Verificar arquivos grandes
           echo "🔍 Verificando arquivos grandes (>1MB):"
-          find dist -type f -size +1M -exec ls -lh {} \; || echo "Nenhum arquivo grande encontrado"
+          find dist -type f \( -name "*.js" -o -name "*.css" -o -name "*.html" -o -name "*.json" \) -exec gzip -9 -k {} \;
           
           # Criar arquivo de informações do build
           cat > dist/build-info.json << EOF

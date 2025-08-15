@@ -12,7 +12,8 @@ import {
   Star, Clock, Gift, Phone, Mail, Bot, Kanban, Shield,
   Database, Briefcase, HelpCircle as QuestionCircle, MessageSquare as ChatBubbleIcon, AlertTriangle as ExclamationTriangle,
   Building2, CheckCircle, Bug, Network as Diagram3, ExternalLink as BoxArrowUpRight, Landmark as Bank,
-  User, UserPlus, FileBarChart as FileEarmarkText, Globe as Globe2, CreditCard as Bank2, GripVertical, Heart
+  User, UserPlus, FileBarChart as FileEarmarkText, Globe as Globe2, CreditCard as Bank2, GripVertical, Heart,
+  Square, CheckSquare, ExternalLink
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { useShortcutsPreferences } from '@/hooks/useShortcutsPreferences';
@@ -26,6 +27,7 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverEvent,
   useDroppable,
 } from '@dnd-kit/core';
 import {
@@ -122,7 +124,10 @@ const ShortcutButton = ({
   id,
   favorites,
   onToggleFavorite,
-  onOpenUrl
+  onOpenUrl,
+  multiSelectMode = false,
+  isSelected = false,
+  onToggleSelection
 }: { 
   icon: React.ComponentType<{ className?: string }>, 
   title: string, 
@@ -130,23 +135,30 @@ const ShortcutButton = ({
   id: string,
   favorites: string[],
   onToggleFavorite: (id: string) => void,
-  onOpenUrl: (url: string) => void
+  onOpenUrl: (url: string) => void,
+  multiSelectMode?: boolean,
+  isSelected?: boolean,
+  onToggleSelection?: (id: string) => void
 }) => (
   <div className="relative group animate-fade-in h-full">
     <Button
       variant="outline"
-      className="w-full h-28 p-5 flex flex-col items-center justify-center gap-3 
+      className={`w-full h-28 p-5 flex flex-col items-center justify-center gap-3 
                  bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 
                  dark:from-[#23201a] dark:via-[#2d2717] dark:to-[#181511]
                  hover:from-blue-100 hover:to-purple-100
                  dark:hover:from-[#2d2717] dark:hover:to-[#28231a]
-                 border-2 border-blue-200/60 dark:border-[#3a3320] hover:border-blue-300/80
+                 border-2 hover:border-blue-300/80
                  dark:hover:border-[#bfae7c]/30
                  shadow-lg hover:shadow-2xl
                  transition-all duration-300 ease-out
                  hover:scale-105 hover:-translate-y-1
-                 rounded-2xl group"
-      onClick={() => onOpenUrl(url)}
+                 rounded-2xl group ${
+                   isSelected 
+                     ? 'border-green-400 dark:border-[#bfae7c] bg-green-50 dark:bg-[#bfae7c]/10' 
+                     : 'border-blue-200/60 dark:border-[#3a3320]'
+                 }`}
+      onClick={() => multiSelectMode && onToggleSelection ? onToggleSelection(id) : onOpenUrl(url)}
     >
       <div className="flex flex-col items-center justify-center gap-2 h-full w-full">
         <div className="p-3 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 
@@ -162,13 +174,37 @@ const ShortcutButton = ({
       </div>
     </Button>
     {/* Botão de favorito com ícone de coração, sem estrela */}
+    {/* Checkbox para seleção múltipla */}
+    {multiSelectMode && (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="absolute -top-2 -left-2 h-8 w-8 p-0 
+                   transition-all duration-300 bg-white/95 dark:bg-[#23201a]/95 backdrop-blur-sm shadow-xl 
+                   border border-blue-200 dark:border-[#bfae7c]/30 hover:border-blue-400 dark:hover:border-[#bfae7c]/50 rounded-full
+                   hover:scale-110"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleSelection?.(id);
+        }}
+      >
+        {isSelected ? (
+          <CheckSquare className="h-5 w-5 text-green-600 dark:text-[#bfae7c]" />
+        ) : (
+          <Square className="h-5 w-5 text-gray-400 dark:text-[#bfae7c]/60" />
+        )}
+      </Button>
+    )}
+
+    {/* Botão de favorito */}
     <Button
       variant="ghost"
       size="sm"
-      className="absolute -top-2 -right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 
-                 transition-all duration-300 bg-white/95 dark:bg-[#23201a]/95 backdrop-blur-sm shadow-xl 
+      className={`absolute -top-2 -right-2 h-8 w-8 p-0 transition-all duration-300 bg-white/95 dark:bg-[#23201a]/95 backdrop-blur-sm shadow-xl 
                  border border-pink-200 dark:border-[#bfae7c]/30 hover:border-pink-400 dark:hover:border-[#bfae7c]/50 rounded-full
-                 hover:scale-110"
+                 hover:scale-110 ${
+                   multiSelectMode ? 'opacity-50' : 'opacity-0 group-hover:opacity-100'
+                 }`}
       onClick={(e) => {
         e.stopPropagation();
         onToggleFavorite(id);
@@ -315,13 +351,19 @@ const SortableItem = ({
   onToggleFavorite, 
   onOpenUrl, 
   className, 
-  style 
+  style,
+  multiSelectMode = false,
+  isSelected = false,
+  onToggleSelection
 }: { 
   button: GroupButton,
   onToggleFavorite: (id: string) => void,
   onOpenUrl: (url: string) => void,
   className?: string;
   style?: React.CSSProperties;
+  multiSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: (id: string) => void;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: button.id });
   const mergedStyle = {
@@ -335,21 +377,29 @@ const SortableItem = ({
     <div ref={setNodeRef} style={mergedStyle} className={(className || '') + ' group relative'} {...attributes} {...listeners}>
       <Button
         variant="outline"
-        className="w-full h-28 p-5 flex flex-col items-center justify-center gap-3
+        className={`w-full h-28 p-5 flex flex-col items-center justify-center gap-3
                    bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50
                    dark:from-[#23201a] dark:via-[#2d2717] dark:to-[#181511]
                    hover:from-yellow-100 hover:to-orange-100
                    dark:hover:from-[#2d2717] dark:hover:to-[#28231a]
-                   border-2 border-yellow-300/40 dark:border-[#3a3320] hover:border-yellow-400/60
+                   border-2 hover:border-yellow-400/60
                    dark:hover:border-[#bfae7c]/30
                    shadow-lg hover:shadow-2xl
                    transition-all duration-500 ease-out
                    hover:scale-[1.03] hover:-translate-y-1
                    rounded-2xl relative overflow-hidden
-                   text-center cursor-pointer"
+                   text-center cursor-pointer ${
+                     isSelected 
+                       ? 'border-green-400 dark:border-[#bfae7c] bg-green-50 dark:bg-[#bfae7c]/10' 
+                       : 'border-yellow-300/40 dark:border-[#3a3320]'
+                   }`}
         onClick={(e) => {
           e.stopPropagation();
-          onOpenUrl(button.url);
+          if (multiSelectMode && onToggleSelection) {
+            onToggleSelection(button.id);
+          } else {
+            onOpenUrl(button.url);
+          }
         }}
       >
         <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 
@@ -365,16 +415,40 @@ const SortableItem = ({
           {button.title}
         </span>
       </Button>
+      
+      {/* Checkbox para seleção múltipla */}
+      {multiSelectMode && !isDragging && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute -top-2 -left-2 h-8 w-8 p-0 
+                     transition-all duration-300 bg-white/95 dark:bg-[#23201a]/95 backdrop-blur-sm shadow-xl 
+                     border border-blue-200 dark:border-[#bfae7c]/30 hover:border-blue-400 dark:hover:border-[#bfae7c]/50 rounded-full
+                     hover:scale-110"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelection?.(button.id);
+          }}
+        >
+          {isSelected ? (
+            <CheckSquare className="h-5 w-5 text-green-600 dark:text-[#bfae7c]" />
+          ) : (
+            <Square className="h-5 w-5 text-gray-400 dark:text-[#bfae7c]/60" />
+          )}
+        </Button>
+      )}
+      
       {/* Action button: only appears on card hover and never during drag */}
       {!isDragging && (
         <Button
           variant="ghost"
           size="sm"
-          className="absolute -top-3 -right-3 h-8 w-8 p-0 opacity-0 group-hover:opacity-100
-                     transition-all duration-300 bg-gradient-to-br from-red-500 to-pink-600 
+          className={`absolute -top-3 -right-3 h-8 w-8 p-0 transition-all duration-300 bg-gradient-to-br from-red-500 to-pink-600 
                      hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl 
                      border-2 border-white rounded-full z-10
-                     hover:scale-110 transform-gpu cursor-pointer"
+                     hover:scale-110 transform-gpu cursor-pointer ${
+                       multiSelectMode ? 'opacity-50' : 'opacity-0 group-hover:opacity-100'
+                     }`}
           onClick={(e) => {
             e.stopPropagation();
             onToggleFavorite(button.id);
@@ -405,7 +479,48 @@ const Atalhos = () => {
     groupId: '',
     groupTitle: ''
   });
+  // Estados para seleção múltipla
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedButtons, setSelectedButtons] = useState<string[]>([]);
   const { preferences, loading: preferencesLoading, updateGroupOrder, toggleFavoriteGroup, toggleFavoriteButton, updateFavoriteButtonsOrder } = useShortcutsPreferences();
+
+  // Funções para seleção múltipla
+  const toggleButtonSelection = (buttonId: string) => {
+    setSelectedButtons(prev => 
+      prev.includes(buttonId) 
+        ? prev.filter(id => id !== buttonId)
+        : [...prev, buttonId]
+    );
+  };
+
+  const selectAllFavorites = () => {
+    setSelectedButtons(favorites);
+  };
+
+  const deselectAll = () => {
+    setSelectedButtons([]);
+  };
+
+  const openSelectedUrls = () => {
+    const selectedFavoriteButtons = favoriteButtonsOrdered.filter(button => 
+      selectedButtons.includes(button.id)
+    );
+    
+    selectedFavoriteButtons.forEach(button => {
+      window.open(button.url, '_blank');
+    });
+    
+    // Limpar seleção após abrir
+    setSelectedButtons([]);
+    setMultiSelectMode(false);
+  };
+
+  const toggleMultiSelectMode = () => {
+    setMultiSelectMode(!multiSelectMode);
+    if (multiSelectMode) {
+      setSelectedButtons([]);
+    }
+  };
   const queryClient = useQueryClient();
 
   // Buscar profile do usuário para verificar se é admin
@@ -599,19 +714,22 @@ const Atalhos = () => {
     
     // Drag de botão para favoritos (prioridade)
     if (over && over.id === 'favorites-dropzone') {
-      if (!favorites.includes(active.id)) {
-        setFavorites([...favorites, active.id]);
-        updateFavoriteButtonsOrder([...favorites, active.id]);
+      const activeId = active.id.toString();
+      if (!favorites.includes(activeId)) {
+        setFavorites([...favorites, activeId]);
+        updateFavoriteButtonsOrder([...favorites, activeId]);
       }
       setIsOverFavorites(false);
       return;
     }
     
     // Drag de reordenação de favoritos
-    if (over && active.id !== over.id && favorites.includes(active.id)) {
+    if (over && active.id !== over.id && favorites.includes(active.id.toString())) {
       console.log('Tentando reordenar favoritos');
-      const activeIndex = favorites.findIndex(id => id === active.id);
-      const overIndex = favorites.findIndex(id => id === over.id);
+      const activeId = active.id.toString();
+      const overId = over.id.toString();
+      const activeIndex = favorites.findIndex(id => id === activeId);
+      const overIndex = favorites.findIndex(id => id === overId);
       console.log('Índices:', { activeIndex, overIndex });
       
       if (activeIndex !== -1 && overIndex !== -1) {
@@ -639,7 +757,7 @@ const Atalhos = () => {
   };
 
   // Função para lidar com drag over na área de favoritos
-  const handleDragOver = (event: { over?: { id?: string } }) => {
+  const handleDragOver = (event: DragOverEvent) => {
     const { over } = event;
     if (over && over.id === 'favorites-dropzone') {
       setIsOverFavorites(true);
@@ -807,16 +925,67 @@ const Atalhos = () => {
                 <FavoriteDropZone isOver={isOverFavorites}>
                                   <Card className="mb-8 bg-gradient-card dark:bg-[#23201a] border-2 border-border dark:border-[#3a3320] shadow-xl animate-fade-in">
                   <CardHeader className="pb-4 bg-gradient-accent dark:bg-[#2d2717]">
-                    <CardTitle className="flex items-center gap-3 text-foreground dark:text-[#f8f5e4]">
-                      <div className="p-2 bg-gradient-to-br from-yellow-400 to-amber-500 dark:from-[#bfae7c] dark:to-[#7c6a3c] rounded-lg shadow-lg">
-                        <Star className="h-6 w-6 fill-white dark:fill-[#23201a] text-white dark:text-[#23201a]" />
+                    <CardTitle className="flex items-center justify-between text-foreground dark:text-[#f8f5e4]">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gradient-to-br from-yellow-400 to-amber-500 dark:from-[#bfae7c] dark:to-[#7c6a3c] rounded-lg shadow-lg">
+                          <Star className="h-6 w-6 fill-white dark:fill-[#23201a] text-white dark:text-[#23201a]" />
+                        </div>
+                        <div>
+                          <span className="text-xl font-bold">Favoritos</span>
+                          <p className="text-sm text-muted-foreground dark:text-[#bfae7c] font-normal">
+                            {favoriteButtons.length > 0 ? 'Seus atalhos preferidos' : 'Nenhum favorito selecionado'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-xl font-bold">Favoritos</span>
-                        <p className="text-sm text-muted-foreground dark:text-[#bfae7c] font-normal">
-                          {favoriteButtons.length > 0 ? 'Seus atalhos preferidos' : 'Nenhum favorito selecionado'}
-                        </p>
-                      </div>
+                      
+                      {/* Controles de seleção múltipla */}
+                      {favoriteButtons.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          {multiSelectMode && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={selectAllFavorites}
+                                className="h-8 px-3 text-xs bg-blue-50 dark:bg-[#2d2717] border-blue-200 dark:border-[#bfae7c]/30 text-blue-700 dark:text-[#bfae7c] hover:bg-blue-100 dark:hover:bg-[#28231a]"
+                              >
+                                Selecionar Todos
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={deselectAll}
+                                className="h-8 px-3 text-xs bg-gray-50 dark:bg-[#2d2717] border-gray-200 dark:border-[#bfae7c]/30 text-gray-700 dark:text-[#bfae7c] hover:bg-gray-100 dark:hover:bg-[#28231a]"
+                              >
+                                Limpar
+                              </Button>
+                              {selectedButtons.length > 0 && (
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={openSelectedUrls}
+                                  className="h-8 px-3 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                  <ExternalLink className="h-4 w-4 mr-1" />
+                                  Abrir {selectedButtons.length} Selecionado{selectedButtons.length > 1 ? 's' : ''}
+                                </Button>
+                              )}
+                            </>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={toggleMultiSelectMode}
+                            className={`h-8 px-3 text-xs ${
+                              multiSelectMode 
+                                ? 'bg-orange-50 dark:bg-[#bfae7c]/20 text-orange-700 dark:text-[#f8f5e4] border-orange-200 dark:border-[#bfae7c]/40' 
+                                : 'bg-blue-50 dark:bg-[#2d2717] text-blue-700 dark:text-[#bfae7c] border-blue-200 dark:border-[#bfae7c]/30 hover:bg-blue-100 dark:hover:bg-[#28231a]'
+                            }`}
+                          >
+                            {multiSelectMode ? 'Cancelar Seleção' : 'Seleção Múltipla'}
+                          </Button>
+                        </div>
+                      )}
                     </CardTitle>
                   </CardHeader>
                     {favoriteButtons.length > 0 && (
@@ -834,6 +1003,9 @@ const Atalhos = () => {
                                 onOpenUrl={openUrl}
                                 className="animate-fade-in"
                                 style={{ animationDelay: `${index * 100}ms` }}
+                                multiSelectMode={multiSelectMode}
+                                isSelected={selectedButtons.includes(button.id)}
+                                onToggleSelection={toggleButtonSelection}
                               />
                             ))}
                           </div>
@@ -870,12 +1042,10 @@ const Atalhos = () => {
                         <SortableGroup 
                           key={group.id} 
                           group={group}
-                          isFavorite={preferences.favoriteGroups?.includes(group.id) || false}
                           openGroups={openGroups}
                           favorites={favorites}
                           isAdmin={isAdmin || false}
                           onToggleGroup={toggleGroup}
-                          onToggleFavoriteGroup={toggleFavoriteGroup}
                           onToggleFavoriteButton={toggleFavoriteButton}
                           onOpenUrl={openUrl}
                           onAddShortcut={openAddShortcutDialog}
