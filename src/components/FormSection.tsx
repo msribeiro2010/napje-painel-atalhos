@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, FileText } from 'lucide-react';
+import { AlertCircle, FileText, Save } from 'lucide-react';
 import { FormData } from '@/types/form';
 import { perfis, graus, orgaosJulgadores } from '@/constants/form-options';
 import { obterOrgaoJulgadorDoProcesso } from '@/utils/processo-parser';
@@ -24,11 +24,12 @@ interface FormSectionProps {
   onInputChange: (field: keyof FormData, value: string | boolean) => void;
   onMultipleInputChange?: (updates: Partial<FormData>) => void;
   onGenerateDescription: () => void;
+  onSaveChamado?: () => void;
   onResetForm: () => void;
   validationErrors?: Record<string, string>;
 }
 
-export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onResetForm, validationErrors = {} }: FormSectionProps) => {
+export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onSaveChamado, onResetForm, validationErrors = {} }: FormSectionProps) => {
   const { 
     buscarSugestoesOrgaoJulgador, 
     buscarSugestoesPerfil, 
@@ -249,6 +250,12 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
 
 
         <div className="flex gap-3">
+          {onSaveChamado && (
+            <Button onClick={onSaveChamado} variant="outline" className="flex-1">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Chamado
+            </Button>
+          )}
           <Button onClick={onGenerateDescription} className="flex-1 bg-blue-600 hover:bg-blue-700">
             <FileText className="h-4 w-4 mr-2" />
             Gerar Assyst com IA

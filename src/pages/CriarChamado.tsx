@@ -252,6 +252,29 @@ const CriarChamado = () => {
     };
   }, []);
 
+  const handleSaveChamado = async () => {
+    if (!validateForm(formData)) return;
+
+    try {
+      // Salvar usuário se os dados estiverem preenchidos
+      if (formData.cpfUsuario && formData.nomeUsuario) {
+        await salvarUsuario(formData.cpfUsuario, formData.nomeUsuario, formData.perfilUsuario);
+      }
+
+      // Salvar chamado na base de dados
+      const result = await salvarChamado(formData);
+      
+      if (result) {
+        toast.success('Chamado salvo com sucesso!');
+        // Opcional: redirecionar para a lista de chamados ou limpar o formulário
+        // navigate('/chamados-recentes');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar chamado:', error);
+      toast.error('Erro ao salvar chamado. Tente novamente.');
+    }
+  };
+
   const handleGenerateDescription = async () => {
     if (!validateForm(formData)) return;
 
@@ -475,6 +498,7 @@ const CriarChamado = () => {
           onInputChange={handleInputChange}
           onMultipleInputChange={handleMultipleInputChange}
           onGenerateDescription={handleGenerateDescription}
+          onSaveChamado={handleSaveChamado}
           onResetForm={resetForm}
           validationErrors={validationErrors}
         />
