@@ -208,10 +208,13 @@ export const UsuarioAutoComplete = ({ formData, onInputChange }: UsuarioAutoComp
               {usuarios.map((usuario) => (
                 <div
                   key={usuario.id}
-                  onMouseDown={(e) => {
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     selecionarUsuario(usuario);
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
                   }}
                   className="w-full p-2 rounded cursor-pointer hover:bg-blue-50 border border-gray-100 transition-colors"
                 >
