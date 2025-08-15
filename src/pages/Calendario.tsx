@@ -90,7 +90,23 @@ function CalendarComponent() {
     const isWeekend = date.getDay() === 0 || date.getDay() === 6;
     const isFeriado = dayEvents.some(e => e.type === 'feriado');
 
-    // Ciclo completo de modalidades para todos os dias
+    // Lógica especial para finais de semana e feriados
+    if (isWeekend || isFeriado) {
+      if (current === null) {
+        // Ir diretamente para plantão em finais de semana e feriados
+        saveMark(key, 'plantao');
+      } else if (current === 'plantao') {
+        // Remover plantão se já estiver marcado
+        removeMark(key);
+      } else {
+        // Se houver outra modalidade marcada, substituir por plantão
+        saveMark(key, 'plantao');
+        toast.info('Em finais de semana e feriados só é permitido marcar Plantão.');
+      }
+      return;
+    }
+
+    // Ciclo completo de modalidades para dias úteis
     const next: WorkStatus | null =
       current === null ? 'presencial' :
       current === 'presencial' ? 'ferias' :
@@ -104,11 +120,6 @@ function CalendarComponent() {
     if (next === null) {
       removeMark(key);
     } else {
-      // Validação especial para finais de semana e feriados
-      if ((isWeekend || isFeriado) && next !== 'plantao') {
-        toast.warning('Em finais de semana e feriados só é permitido marcar Plantão.');
-        return;
-      }
       saveMark(key, next);
     }
   };
