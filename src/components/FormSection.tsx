@@ -15,7 +15,7 @@ import { OrgaoJulgadorSearchSelect2Grau } from './OrgaoJulgadorSearchSelect2Grau
 import { UsuarioAutoComplete } from './UsuarioAutoComplete';
 import { InputComSugestoes } from './InputComSugestoes';
 import { useSugestoes } from '@/hooks/useSugestoes';
-import { useAssuntosLocal } from '@/hooks/useAssuntosLocal';
+import { useAssuntos } from '@/hooks/useAssuntos';
 import { useState, useEffect } from 'react';
 
 
@@ -36,17 +36,17 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
     loading: sugestoesLoading 
   } = useSugestoes();
 
-  // Hook para assuntos locais (substitui sugestões de resumo do Supabase)
-  const { assuntos: assuntosLocais, loading: assuntosLoading } = useAssuntosLocal();
+  // Hook para assuntos da tabela do Supabase
+  const { assuntos, loading: assuntosLoading } = useAssuntos();
 
   const [sugestoesOrgaoJulgador, setSugestoesOrgaoJulgador] = useState([]);
   const [sugestoesPerfil, setSugestoesPerfil] = useState([]);
   const [sugestoesChamadoOrigem, setSugestoesChamadoOrigem] = useState([]);
 
-  // Converter assuntos locais para formato de sugestões
-  const sugestoesResumo = assuntosLocais.map((assunto, index) => ({
+  // Converter assuntos da tabela para formato de sugestões
+  const sugestoesResumo = assuntos.map((assunto, index) => ({
     valor: assunto.nome,
-    frequencia: 1, // Todos têm frequência 1 por serem dados estáticos
+    frequencia: 1, // Todos têm frequência 1 por serem dados da tabela
     ultimo_uso: new Date().toISOString() // Data atual como último uso
   }));
 
