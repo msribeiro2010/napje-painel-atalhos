@@ -73,8 +73,11 @@ export const EventsPanels = ({ className = "" }: EventsPanelsProps) => {
   const tomorrowEvents = customEvents.filter(event => isTomorrow(parseISO(event.date)));
   const nextThreeEvents = upcomingEvents.slice(0, 3);
   
-  // Estatísticas
-  const totalEvents = customEvents.length;
+  // Estatísticas - contar apenas eventos futuros (incluindo hoje)
+  const totalEvents = customEvents.filter(event => {
+    const eventDate = parseISO(event.date);
+    return isAfter(eventDate, startOfDay(today)) || isToday(eventDate);
+  }).length;
   const eventsThisWeek = customEvents.filter(event => {
     const eventDate = parseISO(event.date);
     const daysUntil = differenceInDays(eventDate, today);

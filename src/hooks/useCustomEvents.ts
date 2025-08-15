@@ -267,9 +267,14 @@ export const useCustomEvents = (month: Date) => {
   }, [user]);
 
   const removeCustomEvent = useCallback(async (id: string) => {
+    if (!user?.id) {
+      toast.error('Usuário não autenticado');
+      throw new Error('Usuário não autenticado');
+    }
+
     if (loading) return;
     
-    console.log('🔄 Removendo evento:', { id, userId: user?.id });
+    console.log('🔄 Removendo evento:', { id, userId: user.id });
     
     // Backup do evento para reverter em caso de erro
     const eventToRemove = customEvents.find(e => e.id === id);
@@ -284,7 +289,8 @@ export const useCustomEvents = (month: Date) => {
       const { error } = await supabase
         .from('user_custom_events')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
         
       if (error) {
         console.error('❌ Erro ao remover evento:', error);

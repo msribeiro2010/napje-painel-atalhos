@@ -28,9 +28,22 @@ export const AniversariantesSection = () => {
   const mesAtual = currentDate.getMonth() + 1;
 
   const { data: aniversariantes, isLoading } = useAniversariantes();
+  
+  // Filtrar apenas aniversários futuros (não incluir aniversários que já passaram no mês)
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0); // Zerar horas para comparação apenas de data
+  
   const aniversariantesDoMes = aniversariantes?.filter(a => {
     const dataAniversario = new Date(a.data_nascimento + 'T12:00:00');
-    return dataAniversario.getMonth() + 1 === mesAtual;
+    const isMesAtual = dataAniversario.getMonth() + 1 === mesAtual;
+    
+    if (!isMesAtual) return false;
+    
+    // Para aniversários, criar uma data no ano atual para comparação
+    const aniversarioEsteAno = new Date(hoje.getFullYear(), dataAniversario.getMonth(), dataAniversario.getDate());
+    const isFuturoOuHoje = aniversarioEsteAno >= hoje;
+    
+    return isFuturoOuHoje;
   });
 
   const isAdmin = profile?.is_admin && profile?.status === "aprovado";

@@ -37,7 +37,10 @@ export const FeriadosSection = () => {
   const mesAtual = currentDate.getMonth() + 1;
   const anoAtual = currentDate.getFullYear();
 
-  // Filtrar feriados do mês atual
+  // Filtrar apenas feriados futuros (não incluir feriados que já passaram)
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0); // Zerar horas para comparação apenas de data
+  
   const feriadosDoMes = feriados?.filter(f => {
     // Validate that f.data exists
     if (!f.data) {
@@ -53,7 +56,11 @@ export const FeriadosSection = () => {
       return false;
     }
 
-    return dataFeriado.getMonth() + 1 === mesAtual && dataFeriado.getFullYear() === anoAtual;
+    // Filtrar apenas feriados do mês atual que são hoje ou futuros
+    const isMesAtual = dataFeriado.getMonth() + 1 === mesAtual && dataFeriado.getFullYear() === anoAtual;
+    const isFuturoOuHoje = dataFeriado >= hoje;
+    
+    return isMesAtual && isFuturoOuHoje;
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
