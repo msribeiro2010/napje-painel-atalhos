@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, Home, Sun, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users, Edit, Trash2, Building2, HardHat, Umbrella, Briefcase, Coffee } from 'lucide-react';
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday } from 'date-fns';
@@ -27,8 +28,25 @@ const calendarLabels = {
 };
 
 function CalendarComponent() {
+  const [searchParams] = useSearchParams();
   const today = new Date();
-  const [month, setMonth] = useState(today);
+  
+  // Inicializar o mês com base nos parâmetros de URL ou data atual
+  const getInitialMonth = () => {
+    const yearParam = searchParams.get('year');
+    const monthParam = searchParams.get('month');
+    
+    if (yearParam && monthParam) {
+      const year = parseInt(yearParam);
+      const month = parseInt(monthParam) - 1; // Date usa 0-11 para meses
+      if (!isNaN(year) && !isNaN(month) && month >= 0 && month <= 11) {
+        return new Date(year, month, 1);
+      }
+    }
+    return today;
+  };
+  
+  const [month, setMonth] = useState(getInitialMonth);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -37,6 +55,21 @@ function CalendarComponent() {
   // Usar o hook para buscar/salvar marcações do Supabase
   const { marks, loading: marksLoading, saveMark, removeMark, fetchMarks } = useWorkCalendar(month);
   const { customEvents, addCustomEvent, updateCustomEvent, removeCustomEvent, loading: customEventsLoading } = useCustomEvents(month);
+
+  // Atualizar o mês quando os parâmetros de URL mudarem
+  useEffect(() => {
+    const yearParam = searchParams.get('year');
+    const monthParam = searchParams.get('month');
+    
+    if (yearParam && monthParam) {
+      const year = parseInt(yearParam);
+      const monthIndex = parseInt(monthParam) - 1;
+      if (!isNaN(year) && !isNaN(monthIndex) && monthIndex >= 0 && monthIndex <= 11) {
+        const newDate = new Date(year, monthIndex, 1);
+        setMonth(newDate);
+      }
+    }
+  }, [searchParams]);
 
   const { data: events = [], isLoading: eventsLoading } = useCalendarEvents(month);
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
@@ -141,6 +174,11 @@ function CalendarComponent() {
           <span className="font-semibold text-[#7c6a3c] text-xl flex items-center gap-2">
             <CalendarIcon className="h-6 w-6 text-[#bfae7c]" />
             Meu Calendário de Trabalho
+            {(searchParams.get('year') || searchParams.get('month')) && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full ml-2">
+                Navegação do Dashboard
+              </span>
+            )}
           </span>
           <span className="text-[#bfae7c] text-base">{format(month, 'MMMM yyyy', { locale: ptBR })}</span>
         </div>

@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   History, 
   Calendar, 
@@ -21,7 +23,13 @@ import {
   BookOpen,
   Video,
   Users,
-  Sparkles
+  Sparkles,
+  Search,
+  Filter,
+  SortAsc,
+  SortDesc,
+  Plus,
+  BarChart3
 } from 'lucide-react';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
@@ -62,12 +70,46 @@ export const EventsManagementDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'title' | 'type'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
-  // Filtrar eventos futuros
-  const futureEvents = customEvents.filter(event => {
-    const eventDate = parseISO(event.date);
-    return isAfter(eventDate, startOfDay(new Date()));
-  }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  // Filtrar e ordenar eventos futuros
+  const filteredAndSortedFutureEvents = customEvents
+    .filter(event => {
+      const eventDate = parseISO(event.date);
+      const isFuture = isAfter(eventDate, startOfDay(new Date()));
+      
+      // Filtro por busca
+      const matchesSearch = searchTerm === '' || 
+        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (event.description && event.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Filtro por tipo
+      const matchesType = filterType === 'all' || event.type === filterType;
+      
+      return isFuture && matchesSearch && matchesType;
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'date':
+          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+          break;
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case 'type':
+          comparison = a.type.localeCompare(b.type);
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  
+  const futureEvents = filteredAndSortedFutureEvents;
 
   const getEventIcon = (type: 'feriado' | 'aniversario') => {
     return type === 'aniversario' ? 
@@ -154,7 +196,21 @@ export const EventsManagementDialog = () => {
     return null;
   };
 
-  const totalEvents = stats.past + futureEvents.length;
+  const totalEvents = stats.past + customEvents.filter(event => {
+    const eventDate = parseISO(event.date);
+    return isAfter(eventDate, startOfDay(new Date()));
+  }).length;
+  
+  const toggleSort = () => {
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  };
+  
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterType('all');
+    setSortBy('date');
+    setSortOrder('asc');
+  };
 
   return (
     <>
@@ -178,13 +234,83 @@ export const EventsManagementDialog = () => {
 
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-                <Calendar className="h-5 w-5 text-white" />
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                  <Calendar className="h-5 w-5 text-white" />
+                </div>
+                Gerenciar Eventos
               </div>
-              Gerenciar Eventos
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                  <BarChart3 className="h-3 w-3 mr-1" />
+                  {totalEvents} eventos
+                </Badge>
+              </div>
             </DialogTitle>
           </DialogHeader>
+          
+          {/* Controles de Filtro e Busca */}
+          <div className="space-y-3 border-b pb-4">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar eventos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-40">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="curso">Curso</SelectItem>
+                  <SelectItem value="webinario">Webinário</SelectItem>
+                  <SelectItem value="reuniao">Reunião</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Select value={sortBy} onValueChange={(value: 'date' | 'title' | 'type') => setSortBy(value)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date">Data</SelectItem>
+                    <SelectItem value="title">Título</SelectItem>
+                    <SelectItem value="type">Tipo</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleSort}
+                  className="px-3"
+                >
+                  {sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+                </Button>
+              </div>
+              
+              {(searchTerm || filterType !== 'all' || sortBy !== 'date' || sortOrder !== 'asc') && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  Limpar filtros
+                </Button>
+              )}
+            </div>
+          </div>
 
           <Tabs defaultValue="future" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -202,15 +328,54 @@ export const EventsManagementDialog = () => {
 
             {/* Aba de Eventos Futuros */}
             <TabsContent value="future" className="space-y-4 mt-4">
+              {/* Resumo dos resultados */}
+              {(searchTerm || filterType !== 'all') && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Search className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm text-blue-800">
+                        {futureEvents.length} evento{futureEvents.length !== 1 ? 's' : ''} encontrado{futureEvents.length !== 1 ? 's' : ''}
+                        {searchTerm && ` para "${searchTerm}"`}
+                        {filterType !== 'all' && ` do tipo "${filterType}"`}
+                      </span>
+                    </div>
+                    {futureEvents.length === 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFilters}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        Limpar filtros
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+              
               {futureEvents.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-4xl mb-4">📅</div>
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum evento futuro encontrado.
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Use o botão "Adicionar Evento" no calendário para criar novos eventos.
-                  </p>
+                  {searchTerm || filterType !== 'all' ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Nenhum evento encontrado com os filtros aplicados.
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Tente ajustar os filtros ou limpar a busca.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Nenhum evento futuro encontrado.
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Use o botão "Adicionar Evento" no calendário para criar novos eventos.
+                      </p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
