@@ -26,6 +26,7 @@ import { ChatAssistant } from '@/components/ChatAssistant';
 // import { useEventReminders } from '@/hooks/useEventReminders';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
 import { usePostItNotes } from '@/hooks/usePostItNotes';
+import { usePlantaoNotifications } from '@/hooks/usePlantaoNotifications';
 
 import { ptBR } from 'date-fns/locale';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
@@ -35,6 +36,7 @@ import { AIInsightsPanel } from '@/components/AIInsightsPanel';
 import { SearchResult } from '@/hooks/useSmartSearch';
 import { toast } from '@/hooks/use-toast';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { PlantaoPanel } from '@/components/PlantaoPanel';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -44,6 +46,8 @@ const Dashboard = () => {
   // useEventReminders(); // Hook de lembretes
   const { notes: postItNotes, loading: notesLoading, stats: notesStats, latestNote } = usePostItNotes();
   
+  // Hook para notificações de plantão
+  usePlantaoNotifications();
 
   const [postItOpen, setPostItOpen] = useState(false);
   const [smartSearchOpen, setSmartSearchOpen] = useState(false);
@@ -602,6 +606,9 @@ const Dashboard = () => {
                   </div>
                 </ModernCardContent>
               </ModernCard>
+
+              {/* Painel de Plantões */}
+              <PlantaoPanel />
 
               {/* Painel de Métricas - Movido para área administrativa */}
               {/* <ModernCard variant="glass">
