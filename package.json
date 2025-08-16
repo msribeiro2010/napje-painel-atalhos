@@ -25,6 +25,7 @@
     "supabase:check": "npm run supabase:monitor && npm run supabase:test",
     "test:assuntos": "node test-assuntos-local.cjs",
     "cleanup:repo": "./cleanup-repository.sh",
+    "import:feriados": "node scripts/import-feriados-2025.cjs",
     "help:supabase": "node -e \"console.log('\\n📊 Scripts do Supabase disponíveis:\\n'); console.log('• npm run supabase:monitor - Monitora uso e quota'); console.log('• npm run supabase:test - Testa conexão e tabelas'); console.log('• npm run supabase:check - Executa ambos os testes'); console.log('• npm run test:assuntos - Testa assuntos locais (sem Supabase)'); console.log('• npm run cleanup:repo - Limpa arquivos desnecessários do repositório'); console.log('\\n📚 Guias disponíveis:'); console.log('• GUIA_QUOTA_SUPABASE.md - Como resolver problemas de quota'); console.log('• GUIA_CORRECAO_SUPABASE.md - Troubleshooting geral'); console.log('• ARQUIVOS_PARA_EXCLUSAO.md - Guia de limpeza do repositório'); console.log('\\n')\""
   },
   "dependencies": {

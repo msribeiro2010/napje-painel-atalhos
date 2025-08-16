@@ -1,9 +1,10 @@
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, Database, Sparkles } from 'lucide-react';
+import { ArrowLeft, Calendar, Database, Sparkles, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { HolidayUploadManager } from '@/components/admin/HolidayUploadManager';
 import { VacationSuggestionsPanel } from '@/components/VacationSuggestionsPanel';
+import { ImportFeriados2025 } from '@/components/admin/ImportFeriados2025';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const AdminHolidays = () => {
@@ -28,8 +29,12 @@ const AdminHolidays = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="upload" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="import2025" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="import2025" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Feriados 2025
+            </TabsTrigger>
             <TabsTrigger value="upload" className="flex items-center gap-2">
               <Database className="h-4 w-4" />
               Gerenciar Feriados
@@ -43,6 +48,10 @@ const AdminHolidays = () => {
               Visualização
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="import2025">
+            <ImportFeriados2025 />
+          </TabsContent>
 
           <TabsContent value="upload">
             <HolidayUploadManager />
