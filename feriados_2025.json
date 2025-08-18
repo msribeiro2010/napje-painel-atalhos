@@ -1,0 +1,69 @@
+{
+  "feriados": [
+    {
+      "data": "2025-01-01",
+      "descricao": "Confraternização Universal",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-02-17",
+      "descricao": "Carnaval",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-02-18",
+      "descricao": "Carnaval",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-04-18",
+      "descricao": "Sexta-feira Santa",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-04-21",
+      "descricao": "Tiradentes",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-05-01",
+      "descricao": "Dia do Trabalhador",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-06-19",
+      "descricao": "Corpus Christi",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-09-07",
+      "descricao": "Independência do Brasil",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-10-12",
+      "descricao": "Nossa Senhora Aparecida",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-10-27",
+      "descricao": "Dia do Servidor Público",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-11-02",
+      "descricao": "Finados",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-11-15",
+      "descricao": "Proclamação da República",
+      "tipo": "nacional"
+    },
+    {
+      "data": "2025-12-25",
+      "descricao": "Natal",
+      "tipo": "nacional"
+    }
+  ]
+}

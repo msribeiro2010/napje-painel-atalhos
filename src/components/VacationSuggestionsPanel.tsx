@@ -1,0 +1,307 @@
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Brain, Star, Gift, Sparkles, MapPin, TrendingUp, Clock, Zap } from 'lucide-react';
+import { useVacationSuggestions, VacationSuggestion } from '@/hooks/useVacationSuggestions';
+import { useAIVacationSuggestions } from '@/hooks/useAIVacationSuggestions';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useQueryClient } from '@tanstack/react-query';
+
+interface VacationSuggestionsPanelProps {
+  year?: number;
+  onSelectSuggestion?: (suggestion: VacationSuggestion) => void;
+}
+
+export const VacationSuggestionsPanel = ({ 
+  year = new Date().getFullYear(),
+  onSelectSuggestion 
+}: VacationSuggestionsPanelProps) => {
+  const queryClient = useQueryClient();
+  const { data: suggestions = [], isLoading, error } = useVacationSuggestions(year);
+  const { generateAISuggestions, isLoading: isAILoading, error: aiError } = useAIVacationSuggestions();
+  const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<VacationSuggestion[]>([]);
+  const [showAISuggestions, setShowAISuggestions] = useState(false);
+  // Removido: const [cleared, setCleared] = useState(false);
+
+  // Removido: Função para limpar sugestões
+  // const handleClear = () => {
+  //   setCleared(true);
+  //   setExpandedSuggestion(null);
+  // };
+
+  // Remover filtro, mostrar todas as sugestões
+  // const filteredSuggestions = suggestions.filter(s => s.reason.startsWith('Estender após'));
+
+  // Se houver erro, mostrar mensagem amigável
+  if (error) {
+    return (
+      <Card className="shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5" />
+            IA de Férias Inteligentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="text-center text-gray-500">
+            <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+            <p>Erro ao carregar sugestões de IA</p>
+            <p className="text-sm">Tente novamente mais tarde</p>
+            {error.message && error.message.includes('401') && (
+              <p className="text-red-500 text-xs mt-2">Erro de autenticação na API (verifique a chave da OpenAI)</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const getScoreColor = (score: number) => {
+    if (score >= 85) return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    if (score >= 70) return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (score >= 55) return 'bg-amber-100 text-amber-800 border-amber-200';
+    return 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const getPeriodIcon = (period: VacationSuggestion['period']) => {
+    switch (period) {
+      case 'virada-ano': return <Sparkles className="h-4 w-4" />;
+      case 'carnaval': return <Gift className="h-4 w-4" />;
+      case 'junho-julho': return <MapPin className="h-4 w-4" />;
+      default: return <Calendar className="h-4 w-4" />;
+    }
+  };
+
+  const getPeriodLabel = (period: VacationSuggestion['period']) => {
+    const labels = {
+      'primeiro-semestre': '1º Semestre',
+      'segundo-semestre': '2º Semestre', 
+      'virada-ano': 'Virada de Ano',
+      'carnaval': 'Carnaval',
+      'junho-julho': 'Férias de Inverno',
+      'custom': 'Personalizado'
+    };
+    return labels[period];
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5 animate-pulse" />
+            IA de Férias Inteligentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="text-center text-gray-500">
+            <Brain className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+            <p>Analisando feriados e gerando sugestões...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Brain className="h-5 w-5" />
+            IA de Férias Inteligentes {year}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={async () => {
+                try {
+                  const aiResults = await generateAISuggestions(year);
+                  setAiSuggestions(aiResults);
+                  setShowAISuggestions(true);
+                } catch (error) {
+                  console.error('Erro ao gerar sugestões com IA:', error);
+                }
+              }}
+              disabled={isAILoading}
+              size="sm"
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+            >
+              {isAILoading ? (
+                <Brain className="h-4 w-4 mr-1 animate-pulse" />
+              ) : (
+                <Zap className="h-4 w-4 mr-1" />
+              )}
+              {isAILoading ? 'Gerando...' : 'IA OpenAI'}
+            </Button>
+            <Badge variant="secondary" className="bg-white/20 text-white">
+              {showAISuggestions ? aiSuggestions.length : suggestions.length} sugestões
+            </Badge>
+          </div>
+        </CardTitle>
+        <p className="text-purple-100 text-sm">
+          {showAISuggestions 
+            ? 'Sugestões geradas pela IA OpenAI com base nos feriados oficiais'
+            : 'Sugestões personalizadas baseadas nos feriados oficiais'
+          }
+        </p>
+      </CardHeader>
+      
+      <CardContent className="p-6 space-y-4">
+        {showAISuggestions && aiSuggestions.length > 0 && (
+          <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">Sugestões da IA OpenAI</span>
+                <Badge className="bg-blue-100 text-blue-800 text-xs">Novo</Badge>
+              </div>
+              <Button
+                onClick={() => setShowAISuggestions(false)}
+                variant="ghost"
+                size="sm"
+                className="text-blue-600 hover:text-blue-800"
+              >
+                Ver sugestões padrão
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {(showAISuggestions ? aiSuggestions : suggestions).length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium mb-2">Nenhuma sugestão disponível</p>
+            <p className="text-sm">
+              {showAISuggestions 
+                ? 'Clique em "IA OpenAI" para gerar sugestões inteligentes'
+                : `Adicione feriados para ${year} para receber sugestões personalizadas`
+              }
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {(showAISuggestions ? aiSuggestions : suggestions).map((suggestion) => (
+              <Collapsible
+                key={suggestion.id}
+                open={expandedSuggestion === suggestion.id}
+                onOpenChange={(isOpen) => setExpandedSuggestion(isOpen ? suggestion.id : null)}
+              >
+                <Card className="hover:shadow-md transition-shadow duration-200 border-l-4 border-l-purple-500">
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="pb-3 cursor-pointer hover:bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            {getPeriodIcon(suggestion.period)}
+                            <span className="font-semibold text-gray-900">
+                              {suggestion.startDate && suggestion.endDate ? (
+                                <>
+                                  {format(new Date(suggestion.startDate), 'dd MMM', { locale: ptBR })} - {' '}
+                                  {format(new Date(suggestion.endDate), 'dd MMM', { locale: ptBR })}
+                                </>
+                              ) : (
+                                'Datas inválidas'
+                              )}
+                            </span>
+                            <Badge className={getScoreColor(suggestion.score)}>
+                              <Star className="h-3 w-3 mr-1" />
+                              {suggestion.score}%
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">{suggestion.reason}</p>
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {suggestion.totalDays} dias
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {suggestion.workDays} dias úteis
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {getPeriodLabel(suggestion.period)}
+                            </Badge>
+                          </div>
+                        </div>
+                        <TrendingUp className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 pb-4">
+                      <div className="space-y-4">
+                        {/* Feriados relacionados */}
+                        {suggestion.holidays.length > 0 && (
+                          <div>
+                            <h4 className="font-medium text-sm text-gray-700 mb-2 flex items-center gap-1">
+                              <Gift className="h-4 w-4 text-orange-500" />
+                              Feriados Relacionados
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {suggestion.holidays.map((holiday, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs">
+                                  {holiday}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Benefícios */}
+                        <div>
+                          <h4 className="font-medium text-sm text-gray-700 mb-2 flex items-center gap-1">
+                            <Sparkles className="h-4 w-4 text-purple-500" />
+                            Vantagens deste período
+                          </h4>
+                          <ul className="space-y-1">
+                            {suggestion.benefits.map((benefit, index) => (
+                              <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-2 flex-shrink-0"></span>
+                                {benefit}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Botão de ação */}
+                        <div className="flex gap-2 pt-2">
+                          <Button 
+                            onClick={() => onSelectSuggestion?.(suggestion)}
+                            size="sm"
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            <Calendar className="h-3 w-3 mr-1" />
+                            Marcar no Calendário
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
+            ))}
+          </div>
+        )}
+
+        {/* Footer com dica */}
+        <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+          <div className="flex items-start gap-3">
+            <Brain className="h-5 w-5 text-purple-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-purple-900">Dica da IA</p>
+              <p className="text-xs text-purple-700 mt-1">
+                As sugestões são calculadas considerando proximidade com feriados, 
+                economia em viagens e melhor aproveitamento do tempo de descanso.
+              </p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
