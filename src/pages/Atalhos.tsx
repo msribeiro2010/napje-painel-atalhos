@@ -598,7 +598,7 @@ const Atalhos = () => {
 
   // Função para abrir URLs selecionadas - definida após groups
   const openSelectedUrls = () => {
-    // Buscar todos os botões selecionados, não apenas favoritos
+    // Buscar todos os botões selecionados
     const allButtons: GroupButton[] = [];
     groups.forEach(group => {
       group.buttons.forEach(button => {
@@ -608,14 +608,37 @@ const Atalhos = () => {
       });
     });
     
-    // Abrir todas as URLs selecionadas
-    allButtons.forEach(button => {
-      window.open(button.url, '_blank');
+    if (allButtons.length === 0) {
+      return;
+    }
+    
+    // Verificar se há muitas abas para abrir
+    if (allButtons.length > 10) {
+      const confirmOpen = confirm(`Você está prestes a abrir ${allButtons.length} abas. Deseja continuar?`);
+      if (!confirmOpen) {
+        return;
+      }
+    }
+    
+    // Abrir todas as URLs selecionadas com pequeno delay para evitar bloqueio de pop-ups
+    allButtons.forEach((button, index) => {
+      setTimeout(() => {
+        try {
+          const newWindow = window.open(button.url, '_blank');
+          if (!newWindow) {
+            console.warn(`Falha ao abrir ${button.title} - Verifique se o bloqueador de pop-ups está ativo`);
+          }
+        } catch (error) {
+          console.error(`Erro ao abrir ${button.title}:`, error);
+        }
+      }, index * 100); // Delay de 100ms entre cada abertura
     });
     
-    // Limpar seleção após abrir
-    setSelectedButtons([]);
-    setMultiSelectMode(false);
+    // Limpar seleção após iniciar a abertura
+    setTimeout(() => {
+      setSelectedButtons([]);
+      setMultiSelectMode(false);
+    }, allButtons.length * 100 + 200);
   };
 
   const sensors = useSensors(

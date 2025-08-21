@@ -34,6 +34,13 @@ export const useTextEnhancement = () => {
       return null;
     }
 
+    // Verificar se as funcionalidades de IA estão habilitadas
+    const aiEnabled = import.meta.env.VITE_AI_FEATURES_ENABLED === 'true';
+    if (!aiEnabled) {
+      toast.info('⚠️ Funcionalidades de IA estão desabilitadas no modo desenvolvimento');
+      return text; // Retorna o texto original sem modificações
+    }
+
     try {
       setIsEnhancing(true);
       
