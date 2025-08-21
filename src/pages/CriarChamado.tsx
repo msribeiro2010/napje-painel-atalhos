@@ -69,10 +69,66 @@ const CriarChamado = () => {
   const [showAIHistory, setShowAIHistory] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   // Refs para focar nos campos (já declarados acima)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Chave para localStorage
+  const FORM_STORAGE_KEY = 'criar-chamado-form-data';
+  const FORM_METADATA_KEY = 'criar-chamado-metadata';
+  
+  // Funções de persistência local
+  const saveToLocalStorage = useCallback((data: FormData, metadata?: any) => {
+    try {
+      localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(data));
+      const metadataToSave = {
+        timestamp: new Date().toISOString(),
+        isDirty: true,
+        ...metadata
+      };
+      localStorage.setItem(FORM_METADATA_KEY, JSON.stringify(metadataToSave));
+      setAutoSaveStatus('Salvo automaticamente');
+      setTimeout(() => setAutoSaveStatus(''), 3000);
+    } catch (error) {
+      console.error('Erro ao salvar no localStorage:', error);
+    }
+  }, []);
+
+  const loadFromLocalStorage = useCallback(() => {
+    try {
+      const savedData = localStorage.getItem(FORM_STORAGE_KEY);
+      const savedMetadata = localStorage.getItem(FORM_METADATA_KEY);
+      
+      if (savedData && savedMetadata) {
+        const data = JSON.parse(savedData);
+        const metadata = JSON.parse(savedMetadata);
+        
+        // Verificar se os dados não são muito antigos (24 horas)
+        const savedTime = new Date(metadata.timestamp);
+        const now = new Date();
+        const hoursDiff = (now.getTime() - savedTime.getTime()) / (1000 * 60 * 60);
+        
+        if (hoursDiff < 24 && metadata.isDirty) {
+          return { data, metadata };
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar do localStorage:', error);
+    }
+    return null;
+  }, []);
+
+  const clearLocalStorage = useCallback(() => {
+    try {
+      localStorage.removeItem(FORM_STORAGE_KEY);
+      localStorage.removeItem(FORM_METADATA_KEY);
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error('Erro ao limpar localStorage:', error);
+    }
+  }, []);
+
   // Carregar dados dos parâmetros da URL (para funcionalidade de template)
   useEffect(() => {
     const resumo = searchParams.get('resumo');
@@ -104,6 +160,25 @@ const CriarChamado = () => {
       toast.success(message);
     }
   }, [searchParams, editId]);
+
+  // Carregar dados salvos ao inicializar o componente
+  useEffect(() => {
+    const savedForm = loadFromLocalStorage();
+    if (savedForm) {
+      const shouldRestore = window.confirm(
+        'Encontramos dados não salvos de uma sessão anterior. Deseja recuperá-los?'
+      );
+      
+      if (shouldRestore) {
+        setFormData(savedForm.data);
+        setHasUnsavedChanges(true);
+        setIsDirty(true);
+        toast.success('Dados recuperados com sucesso!');
+      } else {
+        clearLocalStorage();
+      }
+    }
+  }, [loadFromLocalStorage, clearLocalStorage]);
   
   // Função de validação de campo individual
   const validateField = useCallback((field: keyof FormData, value: string | boolean) => {
@@ -162,32 +237,45 @@ const CriarChamado = () => {
   
   // Função de salvamento automático
   const autoSave = useCallback(async (data: FormData) => {
-    if (!data.resumo || !data.grau || !data.orgaoJulgador) {
-      return; // Não salvar se campos obrigatórios estão vazios
-    }
+    if (!isDirty) return;
     
     try {
       setIsAutoSaving(true);
       setAutoSaveStatus('Salvando...');
       
-      // Simular salvamento (aqui você implementaria a lógica real)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Salvar no localStorage
+      saveToLocalStorage(data);
+      setHasUnsavedChanges(true);
       
       setLastSaved(new Date());
-      setIsDirty(false);
-      setAutoSaveStatus('Salvo automaticamente');
       
-      // Limpar status após 3 segundos
-      setTimeout(() => {
-        setAutoSaveStatus('');
-      }, 3000);
+      // Simular salvamento no servidor (opcional)
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
     } catch (error) {
-      console.error('Erro no salvamento automático:', error);
+      console.error('Erro no auto-save:', error);
       setAutoSaveStatus('Erro ao salvar');
     } finally {
       setIsAutoSaving(false);
     }
-  }, []);
+  }, [isDirty, saveToLocalStorage]);
+
+  // Handler para beforeunload - avisar sobre dados não salvos
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges || isDirty) {
+        e.preventDefault();
+        e.returnValue = 'Você tem alterações não salvas. Tem certeza que deseja sair?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges, isDirty]);
   
   // Handlers para templates e histórico
   const handleSelectTemplate = useCallback((template: { nome: string; dados: Record<string, unknown> }) => {
@@ -291,6 +379,9 @@ const CriarChamado = () => {
       const result = await salvarChamado(formData);
       
       if (result.success) {
+        // Limpar dados salvos localmente após sucesso
+        clearLocalStorage();
+        
         toast.success(isEditing ? 'Chamado atualizado com sucesso!' : 'Chamado salvo com sucesso!');
         navigate('/dashboard');
       } else {
@@ -300,7 +391,7 @@ const CriarChamado = () => {
       console.error('Erro ao salvar:', error);
       toast.error('Erro inesperado ao salvar chamado');
     }
-  }, [formData, salvarUsuario, salvarChamado, isEditing, navigate]);
+  }, [formData, salvarUsuario, salvarChamado, isEditing, navigate, clearLocalStorage]);
   
   const handleGenerateDescription = useCallback(async () => {
     if (!validateForm(formData)) {
@@ -493,6 +584,10 @@ const CriarChamado = () => {
     setIsDirty(false);
     setLastSaved(null);
     setAutoSaveStatus('');
+    
+    // Limpar dados salvos localmente
+    clearLocalStorage();
+    
     toast.success('Formulário limpo!');
   };
   
@@ -555,12 +650,25 @@ const CriarChamado = () => {
       >
         <div className="flex items-center gap-2">
           {autoSaveStatus && (
-            <Badge variant="outline" className="text-xs">
+            <Badge 
+              variant={autoSaveStatus.includes('Erro') ? 'destructive' : autoSaveStatus.includes('Salvando') ? 'secondary' : 'default'} 
+              className="text-xs flex items-center gap-1"
+            >
+              {autoSaveStatus.includes('Salvando') && <Clock className="h-3 w-3 animate-spin" />}
+              {autoSaveStatus.includes('Salvo') && <CheckCircle className="h-3 w-3" />}
+              {autoSaveStatus.includes('Erro') && <AlertCircle className="h-3 w-3" />}
               {autoSaveStatus}
             </Badge>
           )}
+          {hasUnsavedChanges && !autoSaveStatus && (
+            <Badge variant="outline" className="text-xs flex items-center gap-1 text-amber-600 border-amber-300">
+              <Clock className="h-3 w-3" />
+              Alterações não salvas
+            </Badge>
+          )}
           {lastSaved && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <CheckCircle className="h-3 w-3 text-green-500" />
               Último salvamento: {lastSaved.toLocaleTimeString()}
             </span>
           )}
