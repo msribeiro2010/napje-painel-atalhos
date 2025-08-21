@@ -115,7 +115,7 @@ export const EnhancedAIDialog: React.FC<EnhancedAIDialogProps> = ({
     try {
       const model = aiModels.find(m => m.id === modelId);
       const contextualPrompt = `
-        Gere APENAS a descrição do problema para um chamado de suporte técnico do NAPJe.
+        Gere APENAS a descrição do problema para um chamado de suporte técnico do PJe.
         
         Modelo: ${model?.name}
         Tom: ${selectedTone}

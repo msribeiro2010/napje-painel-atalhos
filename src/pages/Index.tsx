@@ -316,7 +316,7 @@ const Index = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-[#7c6a3c] to-[#a68b5b] bg-clip-text text-transparent">
-                Painel de Controle NAPJe
+                Painel de Controle PJe
               </h1>
               <p className="text-[#bfae7c] text-sm font-medium">
                 Núcleo de Apoio ao PJe - TRT15 | Sistema Integrado de Suporte
@@ -416,7 +416,7 @@ const Index = () => {
         <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
           <CardContent className="p-6">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-[#7c6a3c] mb-2">Sistema NAPJe</h3>
+              <h3 className="text-lg font-semibold text-[#7c6a3c] mb-2">Sistema PJe</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Plataforma integrada para gestão de suporte técnico e abertura de chamados JIRA
               </p>

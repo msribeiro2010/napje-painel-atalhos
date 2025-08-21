@@ -583,7 +583,7 @@ const Dashboard = () => {
                         <div className="p-2 bg-gradient-blue rounded-lg">
                           <Lightbulb className="h-4 w-4 text-white" />
                         </div>
-                        <span className="font-medium text-foreground">Bem-vindo ao NAPJe!</span>
+                        <span className="font-medium text-foreground">Bem-vindo ao PJe!</span>
                       </div>
                       <p className="text-sm text-muted-foreground leading-relaxed mb-3">
                         Comece criando seu primeiro chamado para organizar suas tarefas e acompanhar o progresso dos seus projetos.

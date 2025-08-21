@@ -292,7 +292,7 @@ export const useSmartSearch = () => {
       {
         id: 'doc-1',
         titulo: 'Como criar um novo chamado',
-        conteudo: 'Guia completo para criação de chamados no sistema NAPJe. Inclui passo a passo detalhado.',
+        conteudo: 'Guia completo para criação de chamados no sistema PJe. Inclui passo a passo detalhado.',
         categoria: 'Documentação',
         tags: ['chamado', 'criação', 'guia', 'tutorial']
       },
@@ -327,7 +327,7 @@ export const useSmartSearch = () => {
       {
         id: 'doc-6',
         titulo: 'Manual do usuário',
-        conteudo: 'Manual completo do usuário com todas as funcionalidades do sistema NAPJe.',
+        conteudo: 'Manual completo do usuário com todas as funcionalidades do sistema PJe.',
         categoria: 'Documentação',
         tags: ['manual', 'usuário', 'funcionalidades', 'guia']
       },
@@ -355,7 +355,7 @@ export const useSmartSearch = () => {
       {
         id: 'doc-10',
         titulo: 'FAQ - Perguntas frequentes',
-        conteudo: 'Respostas para as perguntas mais frequentes sobre o sistema NAPJe.',
+        conteudo: 'Respostas para as perguntas mais frequentes sobre o sistema PJe.',
         categoria: 'FAQ',
         tags: ['faq', 'perguntas', 'respostas', 'ajuda']
       },
@@ -452,7 +452,7 @@ export const useSmartSearch = () => {
         id: 'ai-1',
         type: 'conhecimento' as const,
         title: `Sugestão IA: ${query}`,
-        description: `Baseado na sua busca por "${query}", aqui estão algumas sugestões relevantes para o sistema NAPJe.`,
+        description: `Baseado na sua busca por "${query}", aqui estão algumas sugestões relevantes para o sistema PJe.`,
         score: 95,
         metadata: {
           fonte: 'ChatGPT',

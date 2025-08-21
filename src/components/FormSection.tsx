@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, FileText, Save, Sparkles, Zap, User, Hash, Building, Settings, MessageSquare, Scale } from 'lucide-react';
+import { AlertCircle, FileText, Save, Sparkles, Zap, User, Hash, Building, Settings, MessageSquare, Scale, Wand2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { FormData } from '@/types/form';
@@ -27,6 +27,7 @@ interface FormSectionProps {
   onInputChange: (field: keyof FormData, value: string | boolean) => void;
   onMultipleInputChange?: (updates: Partial<FormData>) => void;
   onGenerateDescription: () => void;
+  onOptimizeText?: () => void;
   onSaveChamado?: () => void;
   onResetForm: () => void;
   validationErrors?: Record<string, string>;
@@ -34,7 +35,7 @@ interface FormSectionProps {
   notasRef?: React.RefObject<HTMLTextAreaElement>;
 }
 
-export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onSaveChamado, onResetForm, validationErrors = {}, resumoRef, notasRef }: FormSectionProps) => {
+export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onOptimizeText, onSaveChamado, onResetForm, validationErrors = {}, resumoRef, notasRef }: FormSectionProps) => {
   const { 
     buscarSugestoesOrgaoJulgador, 
     buscarSugestoesPerfil, 
@@ -259,14 +260,28 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
         defaultExpanded={true}
       >
           <div className="space-y-2">
-            <Textarea
-              ref={notasRef}
-              id="notas"
-              value={formData.notas}
-              onChange={(e) => onInputChange('notas', e.target.value)}
-              placeholder="Descreva detalhadamente o problema relatado pelo usuário..."
-              className={`min-h-[120px] resize-none ${validationErrors.notas ? 'border-red-500' : ''}`}
-            />
+            <div className="relative">
+              <Textarea
+                ref={notasRef}
+                id="notas"
+                value={formData.notas}
+                onChange={(e) => onInputChange('notas', e.target.value)}
+                placeholder="Descreva detalhadamente o problema relatado pelo usuário..."
+                className={`min-h-[120px] resize-none pr-20 ${validationErrors.notas ? 'border-red-500' : ''}`}
+              />
+              {formData.notas && onOptimizeText && (
+                <Button
+                  type="button"
+                  onClick={onOptimizeText}
+                  size="sm"
+                  variant="outline"
+                  className="absolute top-2 right-2 h-8 px-2 text-xs bg-white/90 hover:bg-white border-purple-200 hover:border-purple-300 text-purple-700 hover:text-purple-800 shadow-sm"
+                >
+                  <Wand2 className="h-3 w-3 mr-1" />
+                  Otimizar
+                </Button>
+              )}
+            </div>
             {validationErrors.notas && (
               <p className="text-sm text-red-500 flex items-center gap-1">
                 <AlertCircle className="h-4 w-4" />
@@ -320,13 +335,13 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
           <Button 
             onClick={onGenerateDescription}
             size="lg"
-            className="h-14 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group"
+            className="h-14 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group"
           >
             <div className="flex items-center gap-3">
-              <Sparkles className="h-5 w-5 group-hover:rotate-12 group-hover:scale-110 transition-all" />
+              <FileText className="h-5 w-5 group-hover:scale-110 transition-all" />
               <div className="text-left">
-                <div className="font-semibold">Gerar com IA</div>
-                <div className="text-xs text-purple-100">Criar descrição automática</div>
+                <div className="font-semibold">Gerar Chamado</div>
+                <div className="text-xs text-green-100">Criar template final</div>
               </div>
             </div>
           </Button>

@@ -18,6 +18,7 @@ import { validateForm, isFormValid } from '@/utils/form-validation';
 import { generateDescription, formatDescriptionSections, limparDescricaoProblema } from '@/utils/description-generator';
 import { useUsuarios } from '@/hooks/useUsuarios';
 import { useChamados } from '@/hooks/useChamados';
+import { useTextEnhancement } from '@/hooks/useTextEnhancement';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,8 +27,9 @@ import { Separator } from '@/components/ui/separator';
 const CriarChamado = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { salvarUsuario } = useUsuarios();
-  const { salvarChamado } = useChamados();
+  const { salvarUsuario, buscarUsuarios, buscarUsuarioPorCPF, loading: usuariosLoading } = useUsuarios();
+  const { salvarChamado, buscarChamadosRecentes, excluirChamado, buscarDadosUsuarioPorCPF, clearCache, loading: chamadosLoading, error: chamadosError } = useChamados();
+  const { enhanceText } = useTextEnhancement();
   const { addToHistory } = useAIHistory();
   
   const editId = searchParams.get('editId');
@@ -52,6 +54,7 @@ const CriarChamado = () => {
   
   const [generatedDescription, setGeneratedDescription] = useState('');
   const [isGenerated, setIsGenerated] = useState(false);
+  const [sections, setSections] = useState<DescriptionSection[]>([]);
   const [showAIDialog, setShowAIDialog] = useState(false);
   const [aiEnhancedDescription, setAiEnhancedDescription] = useState('');
   const [aiSuggestedSolution, setAiSuggestedSolution] = useState('');
@@ -299,6 +302,40 @@ const CriarChamado = () => {
     }
   }, [formData, salvarUsuario, salvarChamado, isEditing, navigate]);
   
+  const handleGenerateDescription = useCallback(async () => {
+    if (!validateForm(formData)) {
+      toast.error('Preencha todos os campos obrigatórios antes de gerar a descrição');
+      return;
+    }
+    
+    try {
+      setShowAIDialog(true);
+    } catch (error) {
+      console.error('Erro ao gerar descrição:', error);
+      toast.error('Erro ao gerar descrição');
+    }
+  }, [formData]);
+
+  const handleOptimizeText = useCallback(async () => {
+    if (!formData.notas || formData.notas.trim() === '') {
+      toast.error('Digite algum texto no campo de notas para otimizar');
+      return;
+    }
+
+    try {
+      const optimizedText = await enhanceText(formData.notas, 'descricao');
+      
+      if (optimizedText) {
+        setFormData(prev => ({ ...prev, notas: optimizedText }));
+        setIsDirty(true);
+        toast.success('Texto otimizado com sucesso!', { id: 'optimize-text' });
+      }
+    } catch (error) {
+      console.error('Erro ao otimizar texto:', error);
+      toast.error('Erro ao otimizar texto. Tente novamente.', { id: 'optimize-text' });
+    }
+  }, [formData.notas, enhanceText]);
+  
   // Atalhos de teclado
   const handleSaveShortcut = useCallback(() => {
     handleSaveChamado();
@@ -320,12 +357,12 @@ const CriarChamado = () => {
   const { shortcuts } = useFormKeyboardShortcuts({
     onSave: handleSaveShortcut,
     onGenerateDescription: handleGenerateDescriptionShortcut,
+    onShowTemplates: () => setShowTemplateSelector(!showTemplateSelector),
+    onShowAIHistory: () => setShowAIHistory(!showAIHistory),
+    onShowAISettings: () => setShowAISettings(!showAISettings),
+    onShowKeyboardHelp: () => setShowKeyboardHelp(!showKeyboardHelp),
     onFocusResumo: handleFocusResumo,
     onFocusNotas: handleFocusNotas,
-    onToggleTemplates: () => setShowTemplateSelector(!showTemplateSelector),
-    onToggleHistory: () => setShowAIHistory(!showAIHistory),
-    onToggleSettings: () => setShowAISettings(!showAISettings),
-    onToggleKeyboardHelp: () => setShowKeyboardHelp(!showKeyboardHelp),
   });
   
   // Função para lidar com mudanças nos campos do formulário
@@ -384,20 +421,6 @@ const CriarChamado = () => {
     };
   }, []);
   
-  const handleGenerateDescription = useCallback(async () => {
-    if (!validateForm(formData)) {
-      toast.error('Preencha todos os campos obrigatórios antes de gerar a descrição');
-      return;
-    }
-    
-    try {
-      setShowAIDialog(true);
-    } catch (error) {
-      console.error('Erro ao gerar descrição:', error);
-      toast.error('Erro ao gerar descrição');
-    }
-  }, [formData]);
-  
   const handleProceedToGenerate = async (enhancedDescription: string, suggestedSolution: string) => {
     try {
       // Adicionar ao histórico da IA
@@ -417,7 +440,15 @@ const CriarChamado = () => {
         },
         description: enhancedDescription,
         solution: suggestedSolution,
-        type: 'generation' as const
+        type: 'generation' as const,
+        model: 'creative',
+        prompt: 'Geração automática de descrição',
+        isFavorite: false,
+        settings: {
+          tone: 'professional',
+          priority: 'medium',
+          customInstructions: ''
+        }
       };
       
       addToHistory(historyItem);
@@ -426,10 +457,11 @@ const CriarChamado = () => {
       const descricaoMelhorada = enhancedDescription;
       
       // Gerar descrição final
-      const sections = createCustomSections(formData);
-      const finalDescription = formatDescriptionSections(sections, descricaoMelhorada);
-      
-      setGeneratedDescription(finalDescription);
+        const generatedSections = createCustomSections(formData);
+        const finalDescription = generatedSections.map(section => `${section.title}: ${section.content}`).join('\n\n');
+        
+        setSections(generatedSections);
+        setGeneratedDescription(finalDescription);
       setAiEnhancedDescription(enhancedDescription);
       setAiSuggestedSolution(suggestedSolution);
       setIsGenerated(true);
@@ -471,12 +503,12 @@ const CriarChamado = () => {
       {
         title: 'Resumo do Problema',
         content: resumoFinal,
-        type: 'text'
+        key: 'resumo'
       },
       {
         title: 'Descrição Detalhada',
         content: '', // Será preenchido pela IA
-        type: 'text'
+        key: 'descricao'
       }
     ];
     
@@ -485,7 +517,7 @@ const CriarChamado = () => {
       sections.push({
         title: 'Processos Relacionados',
         content: formData.processos,
-        type: 'text'
+        key: 'processos'
       });
     }
     
@@ -494,7 +526,7 @@ const CriarChamado = () => {
       sections.push({
         title: 'Observações Adicionais',
         content: formData.notas,
-        type: 'text'
+        key: 'notas'
       });
     }
     
@@ -508,7 +540,7 @@ const CriarChamado = () => {
       sections.push({
         title: 'Dados do Usuário',
         content: dadosUsuario.join('\n'),
-        type: 'text'
+        key: 'dados-usuario'
       });
     }
     
@@ -520,40 +552,38 @@ const CriarChamado = () => {
       <PageHeader 
         title={isEditing ? "Editar Chamado" : "Criar Novo Chamado"}
         subtitle={isEditing ? "Modifique os dados do chamado" : "Preencha os dados para criar um novo chamado"}
-        icon={FileText}
-        actions={
-          <div className="flex items-center gap-2">
-            {autoSaveStatus && (
-              <Badge variant="outline" className="text-xs">
-                {autoSaveStatus}
-              </Badge>
-            )}
-            {lastSaved && (
-              <span className="text-xs text-muted-foreground">
-                Último salvamento: {lastSaved.toLocaleTimeString()}
-              </span>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowKeyboardHelp(true)}
-              className="gap-2"
-            >
-              <Keyboard className="h-4 w-4" />
-              Atalhos
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/dashboard')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </Button>
-          </div>
-        }
-      />
+      >
+        <div className="flex items-center gap-2">
+          {autoSaveStatus && (
+            <Badge variant="outline" className="text-xs">
+              {autoSaveStatus}
+            </Badge>
+          )}
+          {lastSaved && (
+            <span className="text-xs text-muted-foreground">
+              Último salvamento: {lastSaved.toLocaleTimeString()}
+            </span>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowKeyboardHelp(true)}
+            className="gap-2"
+          >
+            <Keyboard className="h-4 w-4" />
+            Atalhos
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+        </div>
+      </PageHeader>
       
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
@@ -605,6 +635,7 @@ const CriarChamado = () => {
                   onGenerateDescription={handleGenerateDescription}
                   onSaveChamado={handleSaveChamado}
                   onResetForm={resetForm}
+                  onOptimizeText={handleOptimizeText}
                   validationErrors={validationErrors}
                   resumoRef={resumoRef}
                   notasRef={notasRef}
@@ -623,8 +654,9 @@ const CriarChamado = () => {
                 </CardHeader>
                 <CardContent>
                   <GeneratedDescriptionSection
-                    description={generatedDescription}
-                    onEdit={(newDescription) => setGeneratedDescription(newDescription)}
+                    isGenerated={isGenerated}
+                    sections={sections}
+                    generatedDescription={generatedDescription}
                   />
                 </CardContent>
               </Card>
@@ -741,10 +773,12 @@ const CriarChamado = () => {
           {/* Sidebar Inteligente */}
           <div className="xl:col-span-1">
             <SmartSidebar
-              formData={formData}
-              onApplySuggestion={handleApplySuggestion}
-              onApplyTemplate={handleApplyTemplate}
-            />
+            formData={formData}
+            onApplySuggestion={handleApplySuggestion}
+            onShowTemplateSelector={() => setShowTemplateSelector(true)}
+            onShowAIHistory={() => setShowAIHistory(true)}
+            onShowAISettings={() => setShowAISettings(true)}
+          />
           </div>
         </div>
       </div>
@@ -764,9 +798,8 @@ const CriarChamado = () => {
       />
       
       <AIHistory
-        open={showAIHistory}
-        onOpenChange={setShowAIHistory}
         onSelectItem={handleSelectHistoryItem}
+        onApplyToForm={handleSelectHistoryItem}
       />
       
       <AIAdvancedSettings

@@ -64,7 +64,7 @@ const defaultInsights: AIInsight[] = [
   {
     id: 'welcome-1',
     type: 'recommendation',
-    title: 'Bem-vindo ao NAPJe!',
+    title: 'Bem-vindo ao PJe!',
     description: 'Comece criando seu primeiro chamado para organizar suas tarefas.',
     confidence: 0.95,
     priority: 'medium',
