@@ -360,30 +360,6 @@ const CriarChamado = () => {
     };
   }, []);
   
-  const handleSaveChamado = useCallback(async () => {
-    if (!validateForm(formData)) return;
-    
-    try {
-      // Salvar usuário se os dados estiverem preenchidos
-      if (formData.cpfUsuario && formData.nomeUsuario) {
-        await salvarUsuario(formData.cpfUsuario, formData.nomeUsuario, formData.perfilUsuario);
-      }
-      
-      // Salvar chamado
-      const result = await salvarChamado(formData);
-      
-      if (result.success) {
-        toast.success(isEditing ? 'Chamado atualizado com sucesso!' : 'Chamado salvo com sucesso!');
-        navigate('/dashboard');
-      } else {
-        toast.error(result.error || 'Erro ao salvar chamado');
-      }
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
-      toast.error('Erro inesperado ao salvar chamado');
-    }
-  }, [formData, salvarUsuario, salvarChamado, isEditing, navigate]);
-  
   const handleGenerateDescription = useCallback(async () => {
     if (!validateForm(formData)) {
       toast.error('Preencha todos os campos obrigatórios antes de gerar a descrição');
