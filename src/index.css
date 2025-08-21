@@ -1,0 +1,1069 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+
+/* Custom scrollbar styles */
+@layer components {
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(59, 130, 246, 0.3) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(59, 130, 246, 0.3);
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(59, 130, 246, 0.5);
+  }
+
+  /* Dark mode scrollbar */
+  .dark .custom-scrollbar {
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.7);
+  }
+
+  /* Animações personalizadas para notificações de eventos */
+  .animate-ring {
+    animation: ring 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .animate-slide-in-up {
+    animation: slideInUp 0.4s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 3s ease-in-out infinite;
+  }
+
+  .animate-bounce-slow {
+    animation: bounce-slow 2s ease-in-out infinite;
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+
+  .animate-fade-slow {
+    animation: fade-slow 2s ease-in-out infinite;
+  }
+}
+
+@keyframes ring {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  10%,
+  30%,
+  50%,
+  70% {
+    transform: rotate(-10deg);
+  }
+
+  20%,
+  40%,
+  60% {
+    transform: rotate(10deg);
+  }
+
+  80% {
+    transform: rotate(-5deg);
+  }
+
+  90% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.4), 0 0 10px rgba(59, 130, 246, 0.3);
+  }
+
+  to {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.6), 0 0 20px rgba(59, 130, 246, 0.4);
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px);
+  }
+
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-slow {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes bounce-slow {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-slow {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@layer base {
+  :root {
+    /* Paleta elegante com tons de papiro e pergaminho suaves */
+    --background: 48 35% 98%;
+    /* Papiro muito claro com toque dourado */
+    --foreground: 30 25% 12%;
+    /* Texto sépia profundo e elegante */
+
+    --card: 46 40% 96%;
+    /* Cartões em pergaminho cremoso */
+    --card-foreground: 30 25% 12%;
+
+    --popover: 48 35% 98%;
+    --popover-foreground: 30 25% 12%;
+
+    --primary: 35 75% 55%;
+    /* Dourado terroso elegante */
+    --primary-foreground: 48 35% 98%;
+    --primary-glow: 35 85% 70%;
+
+    --secondary: 45 45% 92%;
+    /* Bege dourado suave */
+    --secondary-foreground: 30 30% 18%;
+
+    --muted: 44 35% 94%;
+    /* Neutro cálido e acolhedor */
+    --muted-foreground: 30 20% 50%;
+
+    --accent: 40 60% 82%;
+    /* Âmbar claro para destaques */
+    --accent-foreground: 30 30% 18%;
+
+    --destructive: 0 75% 58%;
+    --destructive-foreground: 48 35% 98%;
+
+    --border: 44 30% 88%;
+    /* Bordas em tom pergaminho suave */
+    --input: 44 35% 91%;
+    --ring: 35 75% 55%;
+
+    --radius: 0.875rem;
+    /* Bordas mais arredondadas e modernas */
+
+    /* Gradientes elegantes com tons de papiro e pergaminho */
+    --gradient-primary: linear-gradient(135deg, hsl(35 75% 55%), hsl(40 70% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(45 45% 92%), hsl(40 50% 88%));
+    --gradient-bg: linear-gradient(135deg,
+        hsl(48 40% 99%) 0%,
+        hsl(46 35% 97%) 25%,
+        hsl(44 30% 95%) 50%,
+        hsl(46 35% 97%) 75%,
+        hsl(48 40% 99%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(46 40% 97%), hsl(44 35% 94%));
+    --gradient-accent: linear-gradient(135deg, hsl(40 60% 88% / 0.5), hsl(45 55% 92% / 0.4));
+
+    /* Gradientes pastel harmoniosos com tons de papiro */
+    --gradient-blue: linear-gradient(135deg, hsl(210 45% 92%), hsl(220 40% 94%));
+    --gradient-purple: linear-gradient(135deg, hsl(270 40% 92%), hsl(280 35% 94%));
+    --gradient-green: linear-gradient(135deg, hsl(140 35% 90%), hsl(120 30% 92%));
+    --gradient-pink: linear-gradient(135deg, hsl(340 45% 92%), hsl(320 40% 94%));
+    --gradient-orange: linear-gradient(135deg, hsl(25 55% 90%), hsl(35 50% 92%));
+    --gradient-teal: linear-gradient(135deg, hsl(173 40% 90%), hsl(180 35% 92%));
+
+    /* Sombras elegantes com tons quentes */
+    --shadow-soft: 0 2px 8px hsl(35 15% 25% / 0.08), 0 1px 3px hsl(35 15% 25% / 0.06);
+    --shadow-medium: 0 4px 12px hsl(35 15% 25% / 0.10), 0 2px 6px hsl(35 15% 25% / 0.08);
+    --shadow-large: 0 8px 25px hsl(35 15% 25% / 0.12), 0 4px 10px hsl(35 15% 25% / 0.08);
+    --shadow-xl: 0 20px 40px hsl(35 15% 25% / 0.15), 0 8px 16px hsl(35 15% 25% / 0.10);
+    --shadow-glow: 0 0 30px hsl(25 85% 45% / 0.20);
+
+    /* Cores de status com tons harmoniosos */
+    --success: 142 65% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 85% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 80% 48%;
+    --info-foreground: 0 0% 100%;
+
+    /* Tons especiais de papiro e pergaminho */
+    --parchment-light: hsl(48 40% 99%);
+    --parchment-medium: hsl(46 35% 96%);
+    --parchment-dark: hsl(44 30% 92%);
+    --sepia-light: hsl(40 35% 88%);
+    --sepia-medium: hsl(35 30% 72%);
+    --sepia-dark: hsl(30 25% 42%);
+
+    /* Variáveis do sidebar com tema papiro elegante */
+    --sidebar-background: 46 40% 97%;
+    --sidebar-foreground: 30 25% 12%;
+    --sidebar-primary: 35 75% 55%;
+    --sidebar-primary-foreground: 48 35% 98%;
+    --sidebar-accent: 44 35% 93%;
+    --sidebar-accent-foreground: 30 30% 18%;
+    --sidebar-border: 44 30% 88%;
+    --sidebar-ring: 35 75% 55%;
+  }
+
+  .dark {
+    /* Modo escuro sofisticado com tons azulados */
+    --background: 20 25% 8%;
+    /* Preto azulado elegante */
+    --foreground: 46 15% 95%;
+    /* Texto claro com leve tom cálido */
+
+    --card: 20 20% 10%;
+    /* Cartões escuros sofisticados */
+    --card-foreground: 46 15% 95%;
+
+    --popover: 20 20% 10%;
+    --popover-foreground: 46 15% 95%;
+
+    --primary: 210 100% 65%;
+    /* Azul vibrante para contraste */
+    --primary-foreground: 20 25% 8%;
+    --primary-glow: 210 100% 75%;
+
+    --secondary: 25 20% 15%;
+    /* Tom quente escuro */
+    --secondary-foreground: 46 15% 95%;
+
+    --muted: 25 15% 12%;
+    /* Neutro escuro com calor */
+    --muted-foreground: 46 10% 65%;
+
+    --accent: 210 80% 25%;
+    /* Azul escuro elegante */
+    --accent-foreground: 46 15% 95%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 46 15% 95%;
+
+    --border: 25 15% 18%;
+    /* Bordas escuras com tom quente */
+    --input: 25 15% 15%;
+    --ring: 210 100% 65%;
+
+    /* Gradientes para modo escuro */
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 65%), hsl(25 85% 45%));
+    --gradient-secondary: linear-gradient(135deg, hsl(25 20% 15%), hsl(210 25% 20%));
+    --gradient-bg: linear-gradient(135deg,
+        hsl(20 25% 8%) 0%,
+        hsl(25 20% 10%) 25%,
+        hsl(210 20% 12%) 50%,
+        hsl(25 20% 10%) 75%,
+        hsl(20 25% 8%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(20 20% 12%), hsl(25 15% 8%));
+    --gradient-accent: linear-gradient(135deg, hsl(210 80% 25% / 0.4), hsl(25 40% 20% / 0.3));
+
+    /* Gradientes pastel para modo escuro */
+    --gradient-blue: linear-gradient(135deg, hsl(210 40% 25%), hsl(220 35% 30%));
+    --gradient-purple: linear-gradient(135deg, hsl(270 35% 25%), hsl(280 30% 30%));
+    --gradient-green: linear-gradient(135deg, hsl(140 25% 25%), hsl(120 20% 30%));
+    --gradient-pink: linear-gradient(135deg, hsl(340 35% 25%), hsl(320 30% 30%));
+    --gradient-orange: linear-gradient(135deg, hsl(25 35% 25%), hsl(35 30% 30%));
+    --gradient-teal: linear-gradient(135deg, hsl(173 25% 25%), hsl(180 20% 30%));
+
+    /* Variáveis do sidebar para modo escuro */
+    --sidebar-background: 20 20% 10%;
+    --sidebar-foreground: 46 15% 95%;
+    --sidebar-primary: 210 100% 65%;
+    --sidebar-primary-foreground: 20 25% 8%;
+    --sidebar-accent: 25 15% 15%;
+    --sidebar-accent-foreground: 46 15% 95%;
+    --sidebar-border: 25 15% 18%;
+    --sidebar-ring: 210 100% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-gradient-bg text-foreground font-sans antialiased;
+    /* Textura elegante de papiro no fundo */
+    background-image:
+      radial-gradient(circle at 25% 25%, hsl(var(--parchment-light)) 0%, transparent 65%),
+      radial-gradient(circle at 75% 75%, hsl(var(--parchment-medium)) 0%, transparent 65%),
+      linear-gradient(135deg,
+        hsl(48 40% 99%) 0%,
+        hsl(46 35% 97%) 25%,
+        hsl(44 30% 95%) 50%,
+        hsl(46 35% 97%) 75%,
+        hsl(48 40% 99%) 100%);
+    background-attachment: fixed;
+    background-size: 900px 900px, 900px 900px, 100% 100%;
+    min-height: 100vh;
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(circle at 25% 25%, hsl(25 25% 12%) 0%, transparent 60%),
+      radial-gradient(circle at 75% 75%, hsl(210 30% 15%) 0%, transparent 60%),
+      linear-gradient(135deg,
+        hsl(20 25% 8%) 0%,
+        hsl(25 20% 10%) 25%,
+        hsl(210 20% 12%) 50%,
+        hsl(25 20% 10%) 75%,
+        hsl(20 25% 8%) 100%);
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-slow {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.6;
+    }
+  }
+
+  .animate-bounce-slow {
+    animation: bounce-slow 2.2s infinite;
+  }
+
+  @keyframes bounce-slow {
+
+    0%,
+    100% {
+      transform: translateY(0);
+      animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+
+    50% {
+      transform: translateY(-10px);
+      animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+
+  .animate-fade-slow {
+    animation: fade-slow 1.2s ease-in-out infinite alternate;
+  }
+
+  @keyframes fade-slow {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0.6;
+    }
+  }
+
+  /* Novas animações para o dashboard modernizado */
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out;
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-scale-fade-in {
+    animation: scale-fade-in 0.4s ease-out;
+  }
+
+  @keyframes scale-fade-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+
+    0%,
+    100% {
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.1);
+    }
+
+    50% {
+      box-shadow: 0 0 30px hsl(var(--primary) / 0.2);
+    }
+  }
+
+  /* Utilitários de texto */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .line-clamp-4 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+  }
+
+  /* Gradientes de hover modernos */
+  .hover-glow {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 10px 25px -5px hsl(var(--primary) / 0.25),
+      0 8px 10px -6px hsl(var(--primary) / 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* Melhorias de responsividade */
+  .container-responsive {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .container-responsive {
+      max-width: 640px;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .container-responsive {
+      max-width: 768px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-responsive {
+      max-width: 1024px;
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .container-responsive {
+      max-width: 1280px;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .container-responsive {
+      max-width: 1536px;
+    }
+  }
+
+  /* Melhorias para glassmorphism */
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .glass-effect {
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Estilos personalizados para o dashboard */
+@layer components {
+  .shadow-soft {
+    box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 0 40px rgba(59, 130, 246, 0.1);
+  }
+
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  }
+
+  .bg-gradient-secondary {
+    background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+  }
+
+  /* Animações personalizadas */
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-fade-slow {
+    animation: fadeInOut 4s ease-in-out infinite;
+  }
+
+  @keyframes fadeInOut {
+
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* Efeitos de hover personalizados */
+  .hover-lift {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Gradientes personalizados */
+  .gradient-blue-purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .gradient-green-blue {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  }
+
+  .gradient-orange-red {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+
+  .gradient-purple-pink {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+
+  /* Efeitos de glassmorphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.25);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.25);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Animações de entrada */
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .slide-in-right {
+    animation: slideInRight 0.5s ease-out;
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Efeitos de loading */
+  .loading-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Efeitos de borda animada */
+  .border-gradient {
+    position: relative;
+    background: white;
+    border-radius: 0.5rem;
+  }
+
+  .border-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 0.5rem;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+  }
+
+  /* Efeitos de texto */
+  .text-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Efeitos de card */
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Efeitos de botão */
+  .btn-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: all 0.3s ease;
+  }
+
+  .btn-gradient:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+  }
+
+  /* Efeitos de ícone */
+  .icon-glow {
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+
+  .icon-pulse {
+    animation: iconPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes iconPulse {
+
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.1);
+    }
+  }
+
+  /* Efeitos de scroll */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  /* Efeitos de transição */
+  .transition-all-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Efeitos de backdrop */
+  .backdrop-blur-custom {
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+  }
+
+  /* Efeitos de gradiente animado */
+  .gradient-animated {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* Efeitos de loading personalizado */
+  .loading-dots {
+    display: inline-block;
+  }
+
+  .loading-dots::after {
+    content: '';
+    animation: loadingDots 1.5s infinite;
+  }
+
+  @keyframes loadingDots {
+
+    0%,
+    20% {
+      content: '';
+    }
+
+    40% {
+      content: '.';
+    }
+
+    60% {
+      content: '..';
+    }
+
+    80%,
+    100% {
+      content: '...';
+    }
+  }
+
+  /* Efeitos de hover para cards */
+  .card-hover-effect {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover-effect:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Efeitos de texto animado */
+  .text-animate {
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary-glow)), hsl(var(--primary)));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: textShine 3s linear infinite;
+  }
+
+  @keyframes textShine {
+    to {
+      background-position: 200% center;
+    }
+  }
+
+  /* Efeitos de borda brilhante */
+  .border-glow {
+    position: relative;
+  }
+
+  .border-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--primary-glow)), hsl(var(--primary)));
+    border-radius: inherit;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    animation: borderGlow 2s linear infinite;
+  }
+
+  @keyframes borderGlow {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* Animações modernas adicionais */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-rotate-slow {
+    animation: rotate-slow 20s linear infinite;
+  }
+
+  @keyframes rotate-slow {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-gradient {
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* Efeitos de hover modernos */
+  .hover-lift-rotate {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-lift-rotate:hover {
+    transform: translateY(-4px) rotate(2deg);
+  }
+
+  .hover-glow-intense {
+    transition: all 0.3s ease;
+  }
+
+  .hover-glow-intense:hover {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.4);
+    transform: scale(1.05);
+  }
+
+  /* Efeitos de loading modernos */
+  .loading-dots-modern::after {
+    content: '';
+    display: inline-block;
+    width: 1em;
+    text-align: left;
+    animation: loadingDotsModern 2s infinite;
+  }
+
+  @keyframes loadingDotsModern {
+    0% {
+      content: '';
+    }
+
+    25% {
+      content: '●';
+    }
+
+    50% {
+      content: '●●';
+    }
+
+    75% {
+      content: '●●●';
+    }
+
+    100% {
+      content: '';
+    }
+  }
+}
