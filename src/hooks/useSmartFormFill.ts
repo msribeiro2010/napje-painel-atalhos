@@ -362,9 +362,10 @@ export const useSmartFormFill = () => {
     }
   }, [user]);
 
-  // Carregar dados iniciais
+  // Carregar dados iniciais (só se AI estiver habilitado)
   useEffect(() => {
-    if (user) {
+    const aiEnabled = import.meta.env.VITE_AI_FEATURES_ENABLED === 'true';
+    if (user && aiEnabled) {
       loadFormTemplates();
     }
   }, [user, loadFormTemplates]);

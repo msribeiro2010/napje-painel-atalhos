@@ -380,9 +380,10 @@ export const useAIInsights = () => {
     }
   }, [user]);
 
-  // Carregar insights automaticamente
+  // Carregar insights automaticamente (só se AI estiver habilitado)
   useEffect(() => {
-    if (user) {
+    const aiEnabled = import.meta.env.VITE_AI_FEATURES_ENABLED === 'true';
+    if (user && aiEnabled) {
       generateInsights();
       getDashboardAnalytics();
     }

@@ -410,9 +410,10 @@ export const useSmartNotifications = () => {
     setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
   }, []);
 
-  // Inicialização
+  // Inicialização (só se AI estiver habilitado)
   useEffect(() => {
-    if (user) {
+    const aiEnabled = import.meta.env.VITE_AI_FEATURES_ENABLED === 'true';
+    if (user && aiEnabled) {
       loadNotificationSettings();
       analyzeNotificationContext();
       generatePredictiveNotifications();
