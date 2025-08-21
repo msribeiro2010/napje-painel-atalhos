@@ -105,6 +105,13 @@ export const EnhancedAIDialog: React.FC<EnhancedAIDialogProps> = ({
   }, [open]);
 
   const generateWithModel = async (modelId: string) => {
+    // Verificar se as funcionalidades de IA estão habilitadas
+    const aiEnabled = import.meta.env.VITE_AI_FEATURES_ENABLED === 'true';
+    if (!aiEnabled) {
+      toast.error('🔧 Funcionalidades de IA desabilitadas. Configure VITE_AI_FEATURES_ENABLED=true no .env');
+      return;
+    }
+
     if (!formData.notas) {
       toast.error('Preencha a descrição do problema primeiro');
       return;

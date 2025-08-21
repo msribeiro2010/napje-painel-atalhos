@@ -25,6 +25,9 @@ export const VacationSuggestionsPanel = ({
   const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(null);
   const [aiSuggestions, setAiSuggestions] = useState<VacationSuggestion[]>([]);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
+  
+  // Verificar se as funcionalidades de IA estão habilitadas
+  const isAIEnabled = import.meta.env.VITE_AI_FEATURES_ENABLED === 'true';
   // Removido: const [cleared, setCleared] = useState(false);
 
   // Removido: Função para limpar sugestões
@@ -118,6 +121,10 @@ export const VacationSuggestionsPanel = ({
           <div className="flex items-center gap-2">
             <Button
               onClick={async () => {
+                if (!isAIEnabled) {
+                  alert('Funcionalidades de IA estão desabilitadas. Configure VITE_AI_FEATURES_ENABLED=true no arquivo .env e configure a chave da OpenAI no Supabase.');
+                  return;
+                }
                 try {
                   const aiResults = await generateAISuggestions(year);
                   setAiSuggestions(aiResults);
@@ -126,16 +133,16 @@ export const VacationSuggestionsPanel = ({
                   console.error('Erro ao gerar sugestões com IA:', error);
                 }
               }}
-              disabled={isAILoading}
+              disabled={isAILoading || !isAIEnabled}
               size="sm"
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30 disabled:opacity-50"
             >
               {isAILoading ? (
                 <Brain className="h-4 w-4 mr-1 animate-pulse" />
               ) : (
                 <Zap className="h-4 w-4 mr-1" />
               )}
-              {isAILoading ? 'Gerando...' : 'IA OpenAI'}
+              {isAILoading ? 'Gerando...' : isAIEnabled ? 'IA OpenAI' : 'IA Desabilitada'}
             </Button>
             <Badge variant="secondary" className="bg-white/20 text-white">
               {showAISuggestions ? aiSuggestions.length : suggestions.length} sugestões

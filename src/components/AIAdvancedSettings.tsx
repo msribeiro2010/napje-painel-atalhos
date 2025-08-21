@@ -103,6 +103,9 @@ export const AIAdvancedSettings: React.FC<AIAdvancedSettingsProps> = ({
   };
   const [settings, setSettings] = useState<AISettings>(defaultSettings);
   const [presets, setPresets] = useState<{ [key: string]: AISettings }>({});
+  
+  // Verificar se as funcionalidades de IA estão habilitadas
+  const isAIEnabled = import.meta.env.VITE_AI_FEATURES_ENABLED === 'true';
 
   // Carregar configurações salvas
   useEffect(() => {
@@ -226,12 +229,29 @@ export const AIAdvancedSettings: React.FC<AIAdvancedSettingsProps> = ({
         </div>
         
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-6">
-          {/* Presets */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Presets Salvos</CardTitle>
-            </CardHeader>
-            <CardContent>
+          {!isAIEnabled ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Brain className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold mb-2">Funcionalidades de IA Desabilitadas</h3>
+                <p className="text-gray-600 mb-4">
+                  Para usar as configurações avançadas de IA, você precisa:
+                </p>
+                <div className="text-left bg-gray-50 p-4 rounded-lg space-y-2">
+                  <p className="text-sm">1. Configurar <code className="bg-gray-200 px-1 rounded">VITE_AI_FEATURES_ENABLED=true</code> no arquivo .env</p>
+                  <p className="text-sm">2. Configurar a chave da OpenAI no Supabase</p>
+                  <p className="text-sm">3. Reiniciar a aplicação</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Presets */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Presets Salvos</CardTitle>
+                </CardHeader>
+                <CardContent>
               <div className="flex flex-wrap gap-2 mb-4">
                 {Object.keys(presets).map(presetName => (
                   <Badge 
@@ -512,6 +532,8 @@ export const AIAdvancedSettings: React.FC<AIAdvancedSettingsProps> = ({
               </p>
             </CardContent>
           </Card>
+            </>
+          )}
         </div>
 
         {/* Footer */}
