@@ -208,11 +208,6 @@ const CriarChamado = () => {
     }
   }, []);
   
-  const handleSelectHistoryItem = useCallback((item: any) => {
-    handleApplyHistoryToForm(item);
-    setShowAIHistory(false);
-  }, [handleApplyHistoryToForm]);
-  
   const handleApplyHistoryToForm = useCallback((item: { formData: Record<string, string>; description?: string; solution?: string }) => {
     try {
       const newFormData = {
@@ -243,6 +238,11 @@ const CriarChamado = () => {
       toast.error('Erro ao aplicar dados do histórico');
     }
   }, []);
+  
+  const handleSelectHistoryItem = useCallback((item: any) => {
+    handleApplyHistoryToForm(item);
+    setShowAIHistory(false);
+  }, [handleApplyHistoryToForm]);
   
   const handleApplySuggestion = useCallback((suggestion: any) => {
     const updatedFormData = { ...formData };
