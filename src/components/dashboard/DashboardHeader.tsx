@@ -51,7 +51,7 @@ export const DashboardHeader = ({ user, isBusinessDay, nextBusinessDay, onSearch
                 
                 <div className="flex flex-col justify-center min-h-[4rem]">
                   <div className="mb-2">
-                    <h1 className="text-3xl lg:text-4xl xl:text-5xl font-black bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 bg-clip-text text-transparent leading-tight drop-shadow-sm">
+                    <h1 className="text-2xl lg:text-3xl xl:text-4xl font-black bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 bg-clip-text text-transparent leading-tight drop-shadow-sm">
                       Central-PJe
                     </h1>
                   </div>

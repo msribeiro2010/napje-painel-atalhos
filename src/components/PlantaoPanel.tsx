@@ -206,24 +206,28 @@ export const PlantaoPanel: React.FC<PlantaoPanelProps> = ({ className }) => {
                   <div
                     key={plantao.id}
                     className={cn(
-                      'flex items-center justify-between p-2 rounded-lg border',
+                      'flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] bg-gradient-to-r',
                       isDismissed && 'opacity-50 bg-muted',
-                      plantao.isToday && 'bg-red-50 border-red-200',
-                      plantao.isTomorrow && 'bg-yellow-50 border-yellow-200'
+                      plantao.isToday && 'from-red-50 to-red-100 border-red-300 shadow-red-100',
+                      plantao.isTomorrow && 'from-yellow-50 to-yellow-100 border-yellow-300 shadow-yellow-100',
+                      !plantao.isToday && !plantao.isTomorrow && 'from-blue-50 to-indigo-50 border-blue-200 shadow-blue-100'
                     )}
                   >
                     <div className="flex items-center gap-2 flex-1">
-                      <Badge variant={getUrgencyColor(plantao.daysUntil)} className="flex items-center gap-1">
+                      <Badge 
+                        variant={getUrgencyColor(plantao.daysUntil)} 
+                        className="flex items-center gap-1 px-3 py-1.5 font-semibold text-xs shadow-md hover:shadow-lg transition-all duration-200 animate-pulse"
+                      >
                         {getUrgencyIcon(plantao.daysUntil)}
                         {plantao.daysUntil === 0 ? 'HOJE' : 
                          plantao.daysUntil === 1 ? 'AMANHÃ' : 
                          `${plantao.daysUntil} dias`}
                       </Badge>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">
+                      <div className="flex-1 ml-2">
+                        <p className="text-lg font-bold text-gray-800 leading-tight">
                           {format(parseISO(plantao.date), 'dd/MM', { locale: ptBR })}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-gray-600 font-medium capitalize">
                           {format(parseISO(plantao.date), 'EEEE', { locale: ptBR })}
                         </p>
                       </div>
@@ -233,10 +237,10 @@ export const PlantaoPanel: React.FC<PlantaoPanelProps> = ({ className }) => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0"
+                        className="h-8 w-8 p-0 rounded-full hover:bg-red-100 hover:text-red-600 transition-all duration-200 hover:scale-110 shadow-sm"
                         onClick={() => dismissPlantao(plantao.id)}
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-4 w-4" />
                       </Button>
                     )}
                   </div>
@@ -245,12 +249,14 @@ export const PlantaoPanel: React.FC<PlantaoPanelProps> = ({ className }) => {
             </div>
 
             {/* Estatísticas */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-              <span>Total: {stats.total} plantões</span>
+            <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-200">
+              <span className="text-sm font-semibold text-gray-700 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Total: {stats.total} plantões
+              </span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 text-xs"
+                className="h-8 text-sm font-medium hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-lg px-3"
                 onClick={() => window.location.href = '/calendario'}
               >
                 Ver Calendário
