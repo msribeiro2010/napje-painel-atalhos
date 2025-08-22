@@ -277,14 +277,6 @@ export const SmartSearchDialog = ({
                   <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground bg-muted/30 backdrop-blur-sm px-2 py-1 rounded-lg border border-border/20">
                     <span className="font-mono">⌘K</span>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClose}
-                    className="h-9 w-9 p-0 hover:bg-accent/80 hover:scale-105 rounded-xl transition-all duration-200 shadow-sm"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
             </div>
