@@ -13,7 +13,7 @@ import {
   Database, Briefcase, HelpCircle as QuestionCircle, MessageSquare as ChatBubbleIcon, AlertTriangle as ExclamationTriangle,
   Building2, CheckCircle, Bug, Network as Diagram3, ExternalLink as BoxArrowUpRight, Landmark as Bank,
   User, UserPlus, FileBarChart as FileEarmarkText, Globe as Globe2, CreditCard as Bank2, GripVertical, Heart,
-  Square, CheckSquare, ExternalLink
+  Square, CheckSquare, ExternalLink, Settings
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { useShortcutsPreferences } from '@/hooks/useShortcutsPreferences';
@@ -127,7 +127,7 @@ const ShortcutButton = ({
   onOpenUrl,
   multiSelectMode = false,
   isSelected = false,
-  onToggleSelection
+  onToggleSelection,
 }: { 
   icon: React.ComponentType<{ className?: string }>, 
   title: string, 
@@ -139,7 +139,9 @@ const ShortcutButton = ({
   multiSelectMode?: boolean,
   isSelected?: boolean,
   onToggleSelection?: (id: string) => void
-}) => (
+}) => {
+
+  return (
   <div className="relative group animate-fade-in h-full">
     <Button
       variant="outline"
@@ -218,8 +220,11 @@ const ShortcutButton = ({
         }`}
       />
     </Button>
+
+
   </div>
 );
+};
 
 // Componente SortableGroup
 interface SortableGroupProps {
@@ -343,6 +348,7 @@ const SortableGroup = ({
                     multiSelectMode={multiSelectMode}
                     isSelected={selectedButtons.includes(button.id)}
                     onToggleSelection={onToggleSelection}
+
                   />
                 </div>
               ))}
@@ -381,6 +387,8 @@ const SortableItem = ({
     transition,
     zIndex: isDragging ? 99 : undefined,
   };
+
+
 
   return (
     <div ref={setNodeRef} style={mergedStyle} className={(className || '') + ' group relative'} {...attributes} {...listeners}>
@@ -423,6 +431,7 @@ const SortableItem = ({
                        transition-colors duration-300 line-clamp-2 leading-tight w-full">
           {button.title}
         </span>
+
       </Button>
       
       {/* Checkbox para seleção múltipla */}
@@ -493,6 +502,8 @@ const Atalhos = () => {
   const [selectedButtons, setSelectedButtons] = useState<string[]>([]);
   const [openingUrls, setOpeningUrls] = useState(false);
   const [openingProgress, setOpeningProgress] = useState({ current: 0, total: 0 });
+  
+
   
   // Funções para seleção múltipla - definidas antes dos hooks
   const toggleButtonSelection = (buttonId: string) => {
@@ -579,6 +590,8 @@ const Atalhos = () => {
     }
   }, [preferences.favoriteButtons, preferencesLoading]);
 
+
+
   // Transformar dados do banco em formato esperado pelos componentes
   const groups: Group[] = useMemo(() => {
     if (!dbGroups || !dbShortcuts) return [];
@@ -598,7 +611,7 @@ const Atalhos = () => {
     }));
   }, [dbGroups, dbShortcuts]);
 
-  // Função para abrir URLs selecionadas - versão otimizada
+  // Função para abrir URLs selecionadas - versão simplificada
   const openSelectedUrls = async () => {
     console.log('=== INICIANDO ABERTURA DE URLs SELECIONADAS ===');
     console.log('Botões selecionados (IDs):', selectedButtons);
@@ -607,14 +620,26 @@ const Atalhos = () => {
     setOpeningUrls(true);
     setOpeningProgress({ current: 0, total: 0 });
     
-    // Buscar todos os botões selecionados
+    // Buscar todos os botões selecionados (grupos + favoritos)
     const allButtons: GroupButton[] = [];
+    const addedIds = new Set<string>(); // Para evitar duplicatas
+    
+    // Buscar nos grupos normais
     groups.forEach(group => {
       group.buttons.forEach(button => {
-        if (selectedButtons.includes(button.id)) {
+        if (selectedButtons.includes(button.id) && !addedIds.has(button.id)) {
           allButtons.push(button);
+          addedIds.add(button.id);
         }
       });
+    });
+    
+    // Buscar nos favoritos
+    favoriteButtons.forEach(button => {
+      if (selectedButtons.includes(button.id) && !addedIds.has(button.id)) {
+        allButtons.push(button);
+        addedIds.add(button.id);
+      }
     });
     
     console.log('Dados dos botões selecionados:', allButtons.map(b => ({ id: b.id, title: b.title, url: b.url })));
@@ -644,93 +669,68 @@ const Atalhos = () => {
     const failedUrls: string[] = [];
 
     try {
-      // Estratégia otimizada: abrir todas as URLs em lote primeiro
-      const openPromises = allButtons.map(async (button, index) => {
-        if (!button?.url) {
-          console.error(`❌ Botão ${index + 1} não tem URL válida:`, button);
-          failCount++;
-          return { success: false, url: '', title: button?.title || 'Desconhecido' };
-        }
-
-        console.log(`🔄 Abrindo URL ${index + 1}/${allButtons.length}: ${button.title} - ${button.url}`);
-        
-        return new Promise<{ success: boolean; url: string; title: string }>((resolve) => {
-          try {
-            // Método principal: window.open com configurações otimizadas
-            const newWindow = window.open(
-              button.url, 
-              `_blank_${Date.now()}_${index}`, // Nome único para cada janela
-              'noopener,noreferrer,width=1200,height=800'
-            );
-            
-            // Verificar se a janela foi aberta com sucesso
-            setTimeout(() => {
-              if (newWindow && !newWindow.closed) {
-                console.log(`✅ URL ${index + 1} aberta com sucesso:`, button.url);
-                resolve({ success: true, url: button.url, title: button.title });
-              } else {
-                console.warn(`⚠️ window.open pode ter sido bloqueado para URL ${index + 1}`);
-                // Método alternativo: criar link e simular clique
-                try {
-                  const link = document.createElement('a');
-                  link.href = button.url;
-                  link.target = '_blank';
-                  link.rel = 'noopener noreferrer';
-                  link.style.position = 'absolute';
-                  link.style.left = '-9999px';
-                  link.style.visibility = 'hidden';
-                  
-                  document.body.appendChild(link);
-                  
-                  // Simular clique do usuário
-                  const clickEvent = new MouseEvent('click', {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window
-                  });
-                  
-                  link.dispatchEvent(clickEvent);
-                  
-                  // Limpar após um tempo
-                  setTimeout(() => {
-                    if (document.body.contains(link)) {
-                      document.body.removeChild(link);
-                    }
-                  }, 100);
-                  
-                  console.log(`✅ URL ${index + 1} aberta via método alternativo:`, button.url);
-                  resolve({ success: true, url: button.url, title: button.title });
-                } catch (altError) {
-                  console.error(`❌ Método alternativo falhou para URL ${index + 1}:`, altError);
-                  resolve({ success: false, url: button.url, title: button.title });
-                }
-              }
-            }, 100); // Pequeno delay para verificar se a janela foi aberta
-            
-          } catch (error) {
-            console.error(`❌ Erro ao abrir URL ${index + 1}:`, error, button.url);
-            resolve({ success: false, url: button.url, title: button.title });
-          }
-        });
-      });
-
-      // Executar todas as aberturas com delay escalonado para evitar bloqueios
-      for (let i = 0; i < openPromises.length; i++) {
+      // Abrir todas as URLs em novas abas
+      for (let i = 0; i < allButtons.length; i++) {
+        const button = allButtons[i];
         setOpeningProgress({ current: i + 1, total: allButtons.length });
         
-        const result = await openPromises[i];
-        
-        if (result.success) {
-          successCount++;
-        } else {
+        if (!button?.url) {
+          console.error(`❌ Botão ${i + 1} não tem URL válida:`, button);
           failCount++;
-          failedUrls.push(`${result.title} (${result.url})`);
+          failedUrls.push(`${button?.title || 'Desconhecido'} (URL inválida)`);
+          continue;
+        }
+
+        console.log(`🔄 Abrindo URL ${i + 1}/${allButtons.length}: ${button.title} - ${button.url}`);
+        
+        try {
+          // Usar window.open com '_blank' para abrir em nova aba
+          const newTab = window.open(button.url, '_blank', 'noopener,noreferrer');
+          
+          if (newTab) {
+            console.log(`✅ URL ${i + 1} aberta com sucesso:`, button.url);
+            successCount++;
+          } else {
+            console.warn(`⚠️ window.open foi bloqueado para URL ${i + 1}`);
+            // Método alternativo: criar link e simular clique
+            const link = document.createElement('a');
+            link.href = button.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.style.position = 'absolute';
+            link.style.left = '-9999px';
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            
+            // Simular clique do usuário
+            const clickEvent = new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true,
+              view: window
+            });
+            
+            link.dispatchEvent(clickEvent);
+            
+            // Limpar após um tempo
+            setTimeout(() => {
+              if (document.body.contains(link)) {
+                document.body.removeChild(link);
+              }
+            }, 100);
+            
+            console.log(`✅ URL ${i + 1} aberta via método alternativo:`, button.url);
+            successCount++;
+          }
+        } catch (error) {
+          console.error(`❌ Erro ao abrir URL ${i + 1}:`, error, button.url);
+          failCount++;
+          failedUrls.push(`${button.title} (${button.url})`);
         }
         
-        // Delay progressivo entre aberturas para evitar bloqueio de pop-ups
-        if (i < openPromises.length - 1) {
-          const delay = Math.min(200 + (i * 50), 1000); // Delay crescente, máximo 1s
-          await new Promise(resolve => setTimeout(resolve, delay));
+        // Pequeno delay entre aberturas para evitar bloqueio de pop-ups
+        if (i < allButtons.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
 
@@ -783,6 +783,7 @@ const Atalhos = () => {
   };
 
 
+  // Função para abrir URL simples
   const openUrl = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -1135,6 +1136,7 @@ const Atalhos = () => {
                 )}
               </>
             )}
+
             <Button
               variant="outline"
               size="sm"
@@ -1218,6 +1220,7 @@ const Atalhos = () => {
                         multiSelectMode={multiSelectMode}
                         isSelected={selectedButtons.includes(button.id)}
                         onToggleSelection={toggleButtonSelection}
+
                       />
                     </div>
                   ))}
@@ -1262,16 +1265,17 @@ const Atalhos = () => {
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4">
                             {favoriteButtonsOrdered.map((button, index) => (
                               <SortableItem
-                                key={button.id}
-                                button={button}
-                                onToggleFavorite={toggleFavoriteButton}
-                                onOpenUrl={openUrl}
-                                className="animate-fade-in"
-                                style={{ animationDelay: `${index * 100}ms` }}
-                                multiSelectMode={multiSelectMode}
-                                isSelected={selectedButtons.includes(button.id)}
-                                onToggleSelection={toggleButtonSelection}
-                              />
+                              key={button.id}
+                              button={button}
+                              onToggleFavorite={toggleFavoriteButton}
+                              onOpenUrl={openUrl}
+                              className="animate-fade-in"
+                              style={{ animationDelay: `${index * 100}ms` }}
+                              multiSelectMode={multiSelectMode}
+                              isSelected={selectedButtons.includes(button.id)}
+                              onToggleSelection={toggleButtonSelection}
+
+                            />
                             ))}
                           </div>
                         </SortableContext>
@@ -1317,6 +1321,7 @@ const Atalhos = () => {
                           multiSelectMode={multiSelectMode}
                           selectedButtons={selectedButtons}
                           onToggleSelection={toggleButtonSelection}
+
                         />
                       ))}
                     </div>
@@ -1338,6 +1343,8 @@ const Atalhos = () => {
           groupId={addShortcutDialog.groupId}
           groupTitle={addShortcutDialog.groupTitle}
         />
+
+
 
         {/* Footer */}
         <footer className="mt-8 text-center text-sm bg-[#f8f5e4] dark:bg-[#181511] border-t border-[#e2d8b8] dark:border-t-[#3a3320] py-4 dark:text-[#bfae7c]">
