@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, FileText, Sparkles, Zap, User, Hash, Building, MessageSquare, Scale, Wand2 } from 'lucide-react';
+import { AlertCircle, FileText, Sparkles, Zap, User, Hash, Building, MessageSquare, Scale, Wand2, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { FormData } from '@/types/form';
@@ -29,12 +29,13 @@ interface FormSectionProps {
   onGenerateDescription: () => void;
   onOptimizeText?: () => void;
   onResetForm: () => void;
+  onClearForm?: () => void;
   validationErrors?: Record<string, string>;
   resumoRef?: React.RefObject<HTMLInputElement>;
   notasRef?: React.RefObject<HTMLTextAreaElement>;
 }
 
-export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onOptimizeText, onResetForm, validationErrors = {}, resumoRef, notasRef }: FormSectionProps) => {
+export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onOptimizeText, onResetForm, onClearForm, validationErrors = {}, resumoRef, notasRef }: FormSectionProps) => {
   const { 
     buscarSugestoesOrgaoJulgador, 
     buscarSugestoesPerfil, 
@@ -297,8 +298,22 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
           </div>
       </CollapsibleSection>
 
-      {/* Botão Gerar JIRA */}
-      <div className="flex justify-center mt-6">
+      {/* Botões de Ação */}
+      <div className="flex justify-center gap-4 mt-6">
+        <Button 
+          onClick={onClearForm || onResetForm}
+          size="lg"
+          variant="outline"
+          className="h-14 border-red-200 hover:border-red-300 text-red-700 hover:text-red-800 hover:bg-red-50 shadow-lg hover:shadow-xl transition-all duration-200 group"
+        >
+          <div className="flex items-center gap-3">
+            <Trash2 className="h-5 w-5 group-hover:scale-110 transition-all" />
+            <div className="text-left">
+              <div className="font-semibold">Limpar Dados</div>
+            </div>
+          </div>
+        </Button>
+        
         <Button 
           onClick={onGenerateDescription}
           size="lg"
@@ -308,7 +323,6 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
             <FileText className="h-5 w-5 group-hover:scale-110 transition-all" />
             <div className="text-left">
               <div className="font-semibold">Gerar JIRA</div>
-              <div className="text-xs text-green-100">Criar template final</div>
             </div>
           </div>
         </Button>

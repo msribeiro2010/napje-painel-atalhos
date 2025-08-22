@@ -347,17 +347,18 @@ const CriarChamado = () => {
   }, [formData]);
   
   const handleApplyTemplate = useCallback((template: any) => {
+    const templateContent = template.content || template;
     const newFormData = {
-      resumo: template.resumo || formData.resumo,
-      resumoCustom: template.resumoCustom || formData.resumoCustom,
-      grau: template.grau || formData.grau,
-      orgaoJulgador: template.orgaoJulgador || formData.orgaoJulgador,
-      perfilUsuario: template.perfilUsuario || formData.perfilUsuario,
-      cpfUsuario: template.cpfUsuario || formData.cpfUsuario,
-      nomeUsuario: template.nomeUsuario || formData.nomeUsuario,
-      processos: template.processos || formData.processos,
-      notas: template.notas || formData.notas,
-      chamadoOrigem: template.chamadoOrigem || formData.chamadoOrigem,
+      resumo: templateContent.resumo || formData.resumo,
+      resumoCustom: templateContent.resumoCustom || formData.resumoCustom,
+      grau: templateContent.grau || formData.grau,
+      orgaoJulgador: templateContent.orgaoJulgador || formData.orgaoJulgador,
+      perfilUsuario: templateContent.perfilUsuario || formData.perfilUsuario,
+      cpfUsuario: templateContent.cpfUsuario || formData.cpfUsuario,
+      nomeUsuario: templateContent.nomeUsuario || formData.nomeUsuario,
+      processos: templateContent.processos || formData.processos,
+      notas: templateContent.notas || formData.notas,
+      chamadoOrigem: templateContent.chamadoOrigem || formData.chamadoOrigem,
     };
     
     setFormData(newFormData);

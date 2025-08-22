@@ -598,7 +598,7 @@ const Atalhos = () => {
     }));
   }, [dbGroups, dbShortcuts]);
 
-  // Função para abrir URLs selecionadas - definida após groups
+  // Função para abrir URLs selecionadas - versão otimizada
   const openSelectedUrls = async () => {
     console.log('=== INICIANDO ABERTURA DE URLs SELECIONADAS ===');
     console.log('Botões selecionados (IDs):', selectedButtons);
@@ -619,73 +619,123 @@ const Atalhos = () => {
     
     console.log('Dados dos botões selecionados:', allButtons.map(b => ({ id: b.id, title: b.title, url: b.url })));
      
-     if (allButtons.length === 0) {
-       console.log('❌ Nenhum botão selecionado');
-       setOpeningUrls(false);
-       return;
-     }
+    if (allButtons.length === 0) {
+      console.log('❌ Nenhum botão selecionado');
+      setOpeningUrls(false);
+      return;
+    }
      
-     setOpeningProgress({ current: 0, total: allButtons.length });
+    setOpeningProgress({ current: 0, total: allButtons.length });
     
     // Verificar se há muitas abas para abrir
     if (allButtons.length > 10) {
       const confirmed = window.confirm(
-        `Você está prestes a abrir ${allButtons.length} abas. Deseja continuar?`
+        `Você está prestes a abrir ${allButtons.length} abas. Deseja continuar?\n\nNota: Alguns navegadores podem bloquear pop-ups. Se isso acontecer, permita pop-ups para este site.`
       );
       if (!confirmed) {
         console.log('❌ Usuário cancelou a abertura de múltiplas abas');
+        setOpeningUrls(false);
         return;
       }
     }
 
     let successCount = 0;
     let failCount = 0;
+    const failedUrls: string[] = [];
 
-    // Tentar abrir todas as URLs com diferentes estratégias
-    for (let i = 0; i < allButtons.length; i++) {
-      const button = allButtons[i];
-      
-      if (!button?.url) {
-        console.error(`❌ Botão ${i + 1} não tem URL válida:`, button);
-        failCount++;
-        continue;
-      }
+    try {
+      // Estratégia otimizada: abrir todas as URLs em lote primeiro
+      const openPromises = allButtons.map(async (button, index) => {
+        if (!button?.url) {
+          console.error(`❌ Botão ${index + 1} não tem URL válida:`, button);
+          failCount++;
+          return { success: false, url: '', title: button?.title || 'Desconhecido' };
+        }
 
-      console.log(`🔄 Tentando abrir URL ${i + 1}/${allButtons.length}: ${button.title} - ${button.url}`);
-       setOpeningProgress({ current: i + 1, total: allButtons.length });
-       
-       try {
-        // Estratégia 1: window.open
-        const newWindow = window.open(button.url, '_blank', 'noopener,noreferrer');
+        console.log(`🔄 Abrindo URL ${index + 1}/${allButtons.length}: ${button.title} - ${button.url}`);
         
-        if (newWindow && !newWindow.closed) {
-          console.log(`✅ URL ${i + 1} aberta com sucesso via window.open:`, button.url);
+        return new Promise<{ success: boolean; url: string; title: string }>((resolve) => {
+          try {
+            // Método principal: window.open com configurações otimizadas
+            const newWindow = window.open(
+              button.url, 
+              `_blank_${Date.now()}_${index}`, // Nome único para cada janela
+              'noopener,noreferrer,width=1200,height=800'
+            );
+            
+            // Verificar se a janela foi aberta com sucesso
+            setTimeout(() => {
+              if (newWindow && !newWindow.closed) {
+                console.log(`✅ URL ${index + 1} aberta com sucesso:`, button.url);
+                resolve({ success: true, url: button.url, title: button.title });
+              } else {
+                console.warn(`⚠️ window.open pode ter sido bloqueado para URL ${index + 1}`);
+                // Método alternativo: criar link e simular clique
+                try {
+                  const link = document.createElement('a');
+                  link.href = button.url;
+                  link.target = '_blank';
+                  link.rel = 'noopener noreferrer';
+                  link.style.position = 'absolute';
+                  link.style.left = '-9999px';
+                  link.style.visibility = 'hidden';
+                  
+                  document.body.appendChild(link);
+                  
+                  // Simular clique do usuário
+                  const clickEvent = new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window
+                  });
+                  
+                  link.dispatchEvent(clickEvent);
+                  
+                  // Limpar após um tempo
+                  setTimeout(() => {
+                    if (document.body.contains(link)) {
+                      document.body.removeChild(link);
+                    }
+                  }, 100);
+                  
+                  console.log(`✅ URL ${index + 1} aberta via método alternativo:`, button.url);
+                  resolve({ success: true, url: button.url, title: button.title });
+                } catch (altError) {
+                  console.error(`❌ Método alternativo falhou para URL ${index + 1}:`, altError);
+                  resolve({ success: false, url: button.url, title: button.title });
+                }
+              }
+            }, 100); // Pequeno delay para verificar se a janela foi aberta
+            
+          } catch (error) {
+            console.error(`❌ Erro ao abrir URL ${index + 1}:`, error, button.url);
+            resolve({ success: false, url: button.url, title: button.title });
+          }
+        });
+      });
+
+      // Executar todas as aberturas com delay escalonado para evitar bloqueios
+      for (let i = 0; i < openPromises.length; i++) {
+        setOpeningProgress({ current: i + 1, total: allButtons.length });
+        
+        const result = await openPromises[i];
+        
+        if (result.success) {
           successCount++;
         } else {
-          console.warn(`⚠️ window.open falhou para URL ${i + 1}, tentando método alternativo...`);
-          
-          // Estratégia 2: createElement + click
-          const link = document.createElement('a');
-          link.href = button.url;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.style.display = 'none';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          console.log(`✅ URL ${i + 1} aberta via método alternativo:`, button.url);
-          successCount++;
+          failCount++;
+          failedUrls.push(`${result.title} (${result.url})`);
         }
-      } catch (error) {
-        console.error(`❌ Erro ao abrir URL ${i + 1}:`, error, button.url);
-        failCount++;
+        
+        // Delay progressivo entre aberturas para evitar bloqueio de pop-ups
+        if (i < openPromises.length - 1) {
+          const delay = Math.min(200 + (i * 50), 1000); // Delay crescente, máximo 1s
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
 
-      // Pequeno atraso entre aberturas para evitar bloqueio
-      if (i < allButtons.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 150));
-      }
+    } catch (error) {
+      console.error('❌ Erro geral na abertura de URLs:', error);
     }
 
     console.log('=== RESULTADO FINAL ===');
@@ -693,12 +743,25 @@ const Atalhos = () => {
     console.log(`❌ URLs que falharam: ${failCount}`);
     console.log(`📊 Total processado: ${successCount + failCount}/${allButtons.length}`);
 
+    // Mostrar feedback ao usuário
+    if (failCount > 0) {
+      const message = `Abertura concluída!\n\n✅ ${successCount} URLs abertas com sucesso\n❌ ${failCount} URLs falharam\n\n${failCount > 0 ? 'URLs que falharam:\n' + failedUrls.slice(0, 5).join('\n') + (failedUrls.length > 5 ? '\n... e mais ' + (failedUrls.length - 5) + ' URLs' : '') : ''}`;
+      
+      if (failCount === allButtons.length) {
+        alert(`❌ Nenhuma URL pôde ser aberta.\n\nIsso pode acontecer se:\n• O navegador está bloqueando pop-ups\n• As URLs são inválidas\n• Há restrições de segurança\n\nTente permitir pop-ups para este site ou abrir as URLs individualmente.`);
+      } else {
+        alert(message);
+      }
+    } else if (successCount > 0) {
+      console.log(`🎉 Todas as ${successCount} URLs foram abertas com sucesso!`);
+    }
+
     // Limpar seleção
-     setSelectedButtons([]);
-     setMultiSelectMode(false);
-     setOpeningUrls(false);
-     setOpeningProgress({ current: 0, total: 0 });
-     console.log('🧹 Seleção limpa e modo multi-seleção desativado');
+    setSelectedButtons([]);
+    setMultiSelectMode(false);
+    setOpeningUrls(false);
+    setOpeningProgress({ current: 0, total: 0 });
+    console.log('🧹 Seleção limpa e modo multi-seleção desativado');
   };
 
   const sensors = useSensors(
