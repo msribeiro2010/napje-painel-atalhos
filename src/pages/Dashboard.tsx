@@ -18,7 +18,6 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { DashboardActions } from '@/components/dashboard/DashboardActions';
 import { RecentChamados } from '@/components/dashboard/RecentChamados';
 import { DashboardFooter } from '@/components/dashboard/DashboardFooter';
-import { EventsPanels } from '@/components/EventsPanels';
 import { ChatAssistant } from '@/components/ChatAssistant';
 // import { EventNotificationModal } from '@/components/EventNotificationModal';
 // import { EventNotificationToast } from '@/components/EventNotificationToast';
@@ -27,7 +26,7 @@ import { ChatAssistant } from '@/components/ChatAssistant';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
 import { usePostItNotes } from '@/hooks/usePostItNotes';
 import { usePlantaoNotifications } from '@/hooks/usePlantaoNotifications';
-import { useWorkStats } from '@/hooks/useWorkStats';
+
 
 import { ptBR } from 'date-fns/locale';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
@@ -50,8 +49,7 @@ const Dashboard = () => {
   // Hook para notificações de plantão
   usePlantaoNotifications();
   
-  // Hook para estatísticas de trabalho
-  const workStats = useWorkStats();
+
 
   const [postItOpen, setPostItOpen] = useState(false);
   const [smartSearchOpen, setSmartSearchOpen] = useState(false);
@@ -545,7 +543,6 @@ const Dashboard = () => {
           <ModernGridItem span={3}>
             <div className="space-y-8">
               {/* Eventos e Notificações */}
-              <EventsPanels />
               
               {/* Ações Rápidas Compactas */}
               <DashboardActions actions={actions} />
@@ -569,73 +566,7 @@ const Dashboard = () => {
               {/* Painel de Plantões */}
               <PlantaoPanel />
 
-              {/* Painel de Dias Presenciais */}
-              <ModernCard variant="glass">
-                <ModernCardHeader
-                  title="Dias Presenciais"
-                  description="Controle de presença no escritório"
-                  icon={<Building2 className="h-5 w-5 text-white" />}
-                  className="bg-gradient-to-r from-blue-200 via-blue-300 to-blue-400"
-                />
-                <ModernCardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-blue-600/80 backdrop-blur-sm rounded-xl border border-blue-500/30">
-                      <span className="text-sm text-white font-medium">Esta Semana</span>
-                      <span className="text-sm font-semibold text-white">{workStats.presencial.thisWeek} dias</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-blue-600/80 backdrop-blur-sm rounded-xl border border-blue-500/30">
-                      <span className="text-sm text-white font-medium">Este Mês</span>
-                      <span className="text-sm font-semibold text-white">{workStats.presencial.thisMonth} dias</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-blue-600/80 backdrop-blur-sm rounded-xl border border-blue-500/30">
-                      <span className="text-sm text-white font-medium">Próximo</span>
-                      <span className="text-sm font-semibold text-white">{workStats.presencial.nextEvent || 'Nenhum agendado'}</span>
-                    </div>
-                  </div>
-                  <ModernButton
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-4 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
-                    onClick={() => navigate('/calendario')}
-                  >
-                    Ver Calendário
-                  </ModernButton>
-                </ModernCardContent>
-              </ModernCard>
 
-              {/* Painel de Trabalho Remoto */}
-              <ModernCard variant="glass">
-                <ModernCardHeader
-                  title="Trabalho Remoto"
-                  description="Controle de dias em home office"
-                  icon={<Home className="h-5 w-5 text-white" />}
-                  className="bg-gradient-to-r from-green-200 via-green-300 to-green-400"
-                />
-                <ModernCardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-green-600/80 backdrop-blur-sm rounded-xl border border-green-500/30">
-                      <span className="text-sm text-white font-medium">Esta Semana</span>
-                      <span className="text-sm font-semibold text-white">{workStats.remoto.thisWeek} dias</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-green-600/80 backdrop-blur-sm rounded-xl border border-green-500/30">
-                      <span className="text-sm text-white font-medium">Este Mês</span>
-                      <span className="text-sm font-semibold text-white">{workStats.remoto.thisMonth} dias</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-green-600/80 backdrop-blur-sm rounded-xl border border-green-500/30">
-                      <span className="text-sm text-white font-medium">Próximo</span>
-                      <span className="text-sm font-semibold text-white">{workStats.remoto.nextEvent || 'Nenhum agendado'}</span>
-                    </div>
-                  </div>
-                  <ModernButton
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-4 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
-                    onClick={() => navigate('/calendario')}
-                  >
-                    Agendar Remoto
-                  </ModernButton>
-                </ModernCardContent>
-              </ModernCard>
 
               {/* Painel de Métricas - Movido para área administrativa */}
               {/* <ModernCard variant="glass">

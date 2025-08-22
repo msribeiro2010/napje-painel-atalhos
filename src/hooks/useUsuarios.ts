@@ -20,7 +20,7 @@ interface UsuarioCache {
   };
 }
 
-let usuariosCache: UsuarioCache = {};
+const usuariosCache: UsuarioCache = {};
 const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 horas
 const LOCAL_STORAGE_KEY = 'napje_usuarios_cache';
 const LOCAL_STORAGE_DURATION = 24 * 60 * 60 * 1000; // 24 horas

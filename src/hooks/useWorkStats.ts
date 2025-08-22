@@ -49,16 +49,25 @@ export const useWorkStats = (): WorkStats => {
         if (status === 'presencial') presencialThisMonth++;
         if (status === 'remoto') remotoThisMonth++;
       }
-      
-      // Encontrar próximos eventos (futuro ou hoje)
-      if ((isFuture(date) || isToday(date)) && !nextPresencialEvent && status === 'presencial') {
-        nextPresencialEvent = format(date, "dd 'de' MMMM", { locale: ptBR });
-      }
-      
-      if ((isFuture(date) || isToday(date)) && !nextRemotoEvent && status === 'remoto') {
-        nextRemotoEvent = format(date, "dd 'de' MMMM", { locale: ptBR });
-      }
     });
+
+    // Encontrar próximos eventos de forma ordenada
+    const futureEvents = Object.entries(marks)
+      .map(([dateStr, status]) => ({ date: new Date(dateStr), dateStr, status }))
+      .filter(({ date }) => isFuture(date) || isToday(date))
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    // Encontrar próximo evento presencial
+    const nextPresencial = futureEvents.find(({ status }) => status === 'presencial');
+    if (nextPresencial) {
+      nextPresencialEvent = format(nextPresencial.date, "dd 'de' MMMM", { locale: ptBR });
+    }
+
+    // Encontrar próximo evento remoto
+    const nextRemoto = futureEvents.find(({ status }) => status === 'remoto');
+    if (nextRemoto) {
+      nextRemotoEvent = format(nextRemoto.date, "dd 'de' MMMM", { locale: ptBR });
+    }
 
     return {
       presencial: {
