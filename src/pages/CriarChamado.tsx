@@ -1,36 +1,31 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, CheckCircle, AlertCircle, FileText, Sparkles, Clock, Zap, Bot, Settings, History, Layers, Wand2, Brain, Keyboard, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Save, CheckCircle, AlertCircle, FileText, Sparkles, Clock, Layers, Wand2, Keyboard, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormData, DescriptionSection } from '@/types/form';
 import { FormSection } from '@/components/FormSection';
 import { GeneratedDescriptionSection } from '@/components/GeneratedDescriptionSection';
-import { EnhancedAIDialog } from '@/components/EnhancedAIDialog';
 import { TemplateSelector } from '@/components/TemplateSelector';
-import { SimilarityAnalysis } from '@/components/SimilarityAnalysis';
-import { AIHistory, useAIHistory } from '@/components/AIHistory';
-import AIAdvancedSettings from '@/components/AIAdvancedSettings';
-import { SmartSidebar } from '@/components/SmartSidebar';
 import { SmartTemplates } from '@/components/SmartTemplates';
 import { useFormKeyboardShortcuts, KeyboardShortcutsHelp } from '@/hooks/useKeyboardShortcuts';
 import { validateForm, isFormValid } from '@/utils/form-validation';
 import { generateDescription, formatDescriptionSections, limparDescricaoProblema } from '@/utils/description-generator';
 import { useUsuarios } from '@/hooks/useUsuarios';
 import { useChamados } from '@/hooks/useChamados';
-import { useTextEnhancement } from '@/hooks/useTextEnhancement';
+
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const CriarChamado = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { salvarUsuario, buscarUsuarios, buscarUsuarioPorCPF, loading: usuariosLoading } = useUsuarios();
   const { salvarChamado, buscarChamadosRecentes, excluirChamado, buscarDadosUsuarioPorCPF, clearCache, loading: chamadosLoading, error: chamadosError } = useChamados();
-  const { enhanceText } = useTextEnhancement();
-  const { addToHistory } = useAIHistory();
+
   
   const editId = searchParams.get('editId');
   const isEditing = !!editId;
@@ -55,9 +50,7 @@ const CriarChamado = () => {
   const [generatedDescription, setGeneratedDescription] = useState('');
   const [isGenerated, setIsGenerated] = useState(false);
   const [sections, setSections] = useState<DescriptionSection[]>([]);
-  const [showAIDialog, setShowAIDialog] = useState(false);
-  const [aiEnhancedDescription, setAiEnhancedDescription] = useState('');
-  const [aiSuggestedSolution, setAiSuggestedSolution] = useState('');
+
   
   // Estados para validação e salvamento automático
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -66,8 +59,7 @@ const CriarChamado = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<string>('');
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
-  const [showAIHistory, setShowAIHistory] = useState(false);
-  const [showAISettings, setShowAISettings] = useState(false);
+  const [showSmartTemplates, setShowSmartTemplates] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
@@ -320,9 +312,7 @@ const CriarChamado = () => {
         setIsGenerated(true);
       }
       
-      if (item.solution) {
-        setAiSuggestedSolution(item.solution);
-      }
+
       
       toast.success('Dados do histórico aplicados com sucesso!');
     } catch (error) {
@@ -330,10 +320,7 @@ const CriarChamado = () => {
     }
   }, []);
   
-  const handleSelectHistoryItem = useCallback((item: any) => {
-    handleApplyHistoryToForm(item);
-    setShowAIHistory(false);
-  }, [handleApplyHistoryToForm]);
+
   
   const handleApplySuggestion = useCallback((suggestion: any) => {
     const updatedFormData = { ...formData };
@@ -354,17 +341,29 @@ const CriarChamado = () => {
       setIsGenerated(true);
     }
     
-    // Se houver solução sugerida, aplicar também
-    if (suggestion.solution) {
-      setAiSuggestedSolution(suggestion.solution);
-    }
+
     
     toast.success('Sugestão aplicada com sucesso!');
   }, [formData]);
   
   const handleApplyTemplate = useCallback((template: any) => {
-    handleSelectTemplate(template);
-  }, [handleSelectTemplate]);
+    const newFormData = {
+      resumo: template.resumo || formData.resumo,
+      resumoCustom: template.resumoCustom || formData.resumoCustom,
+      grau: template.grau || formData.grau,
+      orgaoJulgador: template.orgaoJulgador || formData.orgaoJulgador,
+      perfilUsuario: template.perfilUsuario || formData.perfilUsuario,
+      cpfUsuario: template.cpfUsuario || formData.cpfUsuario,
+      nomeUsuario: template.nomeUsuario || formData.nomeUsuario,
+      processos: template.processos || formData.processos,
+      notas: template.notas || formData.notas,
+      chamadoOrigem: template.chamadoOrigem || formData.chamadoOrigem,
+    };
+    
+    setFormData(newFormData);
+    setShowSmartTemplates(false);
+    toast.success(`Template "${template.title || template.nome}" aplicado com sucesso!`);
+  }, [formData]);
   
   const handleSaveChamado = useCallback(async () => {
     if (!validateForm(formData)) return;
@@ -400,32 +399,22 @@ const CriarChamado = () => {
     }
     
     try {
-      setShowAIDialog(true);
+      // Gerar seções customizadas
+      const generatedSections = createCustomSections(formData);
+      const finalDescription = generatedSections.map(section => `${section.title}: ${section.content}`).join('\n\n');
+      
+      setSections(generatedSections);
+      setGeneratedDescription(finalDescription);
+      setIsGenerated(true);
+      
+      toast.success('Descrição gerada com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar descrição:', error);
       toast.error('Erro ao gerar descrição');
     }
   }, [formData]);
 
-  const handleOptimizeText = useCallback(async () => {
-    if (!formData.notas || formData.notas.trim() === '') {
-      toast.error('Digite algum texto no campo de notas para otimizar');
-      return;
-    }
 
-    try {
-      const optimizedText = await enhanceText(formData.notas, 'descricao');
-      
-      if (optimizedText) {
-        setFormData(prev => ({ ...prev, notas: optimizedText }));
-        setIsDirty(true);
-        toast.success('Texto otimizado com sucesso!', { id: 'optimize-text' });
-      }
-    } catch (error) {
-      console.error('Erro ao otimizar texto:', error);
-      toast.error('Erro ao otimizar texto. Tente novamente.', { id: 'optimize-text' });
-    }
-  }, [formData.notas, enhanceText]);
   
   // Atalhos de teclado
   const handleSaveShortcut = useCallback(() => {
@@ -449,8 +438,6 @@ const CriarChamado = () => {
     onSave: handleSaveShortcut,
     onGenerateDescription: handleGenerateDescriptionShortcut,
     onShowTemplates: () => setShowTemplateSelector(!showTemplateSelector),
-    onShowAIHistory: () => setShowAIHistory(!showAIHistory),
-    onShowAISettings: () => setShowAISettings(!showAISettings),
     onShowKeyboardHelp: () => setShowKeyboardHelp(!showKeyboardHelp),
     onFocusResumo: handleFocusResumo,
     onFocusNotas: handleFocusNotas,
@@ -512,58 +499,7 @@ const CriarChamado = () => {
     };
   }, []);
   
-  const handleProceedToGenerate = async (enhancedDescription: string, suggestedSolution: string) => {
-    try {
-      // Adicionar ao histórico da IA
-      const historyItem = {
-        id: Date.now().toString(),
-        timestamp: new Date(),
-        formData: {
-          resumo: formData.resumo,
-          grau: formData.grau,
-          orgaoJulgador: formData.orgaoJulgador,
-          perfilUsuario: formData.perfilUsuario,
-          cpfUsuario: formData.cpfUsuario,
-          nomeUsuario: formData.nomeUsuario,
-          processos: formData.processos,
-          notas: formData.notas,
-          chamadoOrigem: formData.chamadoOrigem,
-        },
-        description: enhancedDescription,
-        solution: suggestedSolution,
-        type: 'generation' as const,
-        model: 'creative',
-        prompt: 'Geração automática de descrição',
-        isFavorite: false,
-        settings: {
-          tone: 'professional',
-          priority: 'medium',
-          customInstructions: ''
-        }
-      };
-      
-      addToHistory(historyItem);
-      
-      // Usar a descrição melhorada
-      const descricaoMelhorada = enhancedDescription;
-      
-      // Gerar descrição final
-        const generatedSections = createCustomSections(formData);
-        const finalDescription = generatedSections.map(section => `${section.title}: ${section.content}`).join('\n\n');
-        
-        setSections(generatedSections);
-        setGeneratedDescription(finalDescription);
-      setAiEnhancedDescription(enhancedDescription);
-      setAiSuggestedSolution(suggestedSolution);
-      setIsGenerated(true);
-      setShowAIDialog(false);
-      
-      toast.success('Descrição gerada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao processar descrição:', error);
-      toast.error('Erro ao processar descrição');
-    }
-  };
+
   
   const resetForm = () => {
     setFormData({
@@ -693,10 +629,10 @@ const CriarChamado = () => {
         </div>
       </PageHeader>
       
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          {/* Formulário Principal */}
-          <div className="xl:col-span-3 space-y-6">
+      <div className="container mx-auto px-4 py-6">
+          <div className="max-w-5xl mx-auto">
+            {/* Formulário Principal */}
+            <div className="space-y-6">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -715,23 +651,15 @@ const CriarChamado = () => {
                       Templates
                     </Button>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAIHistory(true)}
-                      className="gap-2"
-                    >
-                      <History className="h-4 w-4" />
-                      Histórico
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAISettings(true)}
-                      className="gap-2"
-                    >
-                      <Settings className="h-4 w-4" />
-                      IA
-                    </Button>
+                       variant="outline"
+                       size="sm"
+                       onClick={() => setShowSmartTemplates(true)}
+                       className="gap-2"
+                     >
+                       <Layers className="h-4 w-4" />
+                       Template JIRA
+                     </Button>
+
                   </div>
                 </div>
               </CardHeader>
@@ -743,7 +671,7 @@ const CriarChamado = () => {
                   onGenerateDescription={handleGenerateDescription}
                   onSaveChamado={handleSaveChamado}
                   onResetForm={resetForm}
-                  onOptimizeText={handleOptimizeText}
+
                   validationErrors={validationErrors}
                   resumoRef={resumoRef}
                   notasRef={notasRef}
@@ -771,34 +699,35 @@ const CriarChamado = () => {
             )}
             
             {/* Painel de Ações */}
-            <Card className="border-t-4 border-t-blue-500">
+            <Card className="border-t-4 border-t-blue-500 sticky bottom-4 bg-white/95 backdrop-blur-sm shadow-lg">
               <CardHeader className="pb-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Settings className="h-5 w-5 text-blue-600" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Save className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Ações do Chamado</h3>
+                      <p className="text-sm text-gray-600">Gere descrição automática ou salve o chamado</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Ações do Chamado</h3>
-                    <p className="text-sm text-gray-600">Gere descrição automática ou salve o chamado</p>
+                  {/* Status de Validação Compacto */}
+                  <div className="flex items-center gap-2">
+                    {isFormValid(formData) ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-sm text-green-700 font-medium hidden sm:inline">Pronto para salvar</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-5 w-5 text-amber-600" />
+                        <span className="text-sm text-amber-700 hidden sm:inline">Campos obrigatórios</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Status de Validação */}
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                  {isFormValid(formData) ? (
-                    <>
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm text-green-700 font-medium">Formulário válido - Pronto para prosseguir</span>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="h-4 w-4 text-amber-600" />
-                      <span className="text-sm text-amber-700">Preencha os campos obrigatórios para continuar</span>
-                    </>
-                  )}
-                </div>
-
                 {/* Botões de Ação Principal */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Button
@@ -865,55 +794,45 @@ const CriarChamado = () => {
                   </Button>
                   
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowAIHistory(true)}
-                    className="text-gray-600 hover:text-gray-800"
-                  >
-                    <History className="h-4 w-4 mr-2" />
-                    Histórico IA
-                  </Button>
+                     variant="ghost"
+                     size="sm"
+                     onClick={() => setShowSmartTemplates(true)}
+                     className="text-gray-600 hover:text-gray-800"
+                   >
+                     <Layers className="h-4 w-4 mr-2" />
+                     Template JIRA
+                   </Button>
+                  
+
                 </div>
               </CardContent>
             </Card>
+            </div>
           </div>
-          
-          {/* Sidebar Inteligente */}
-          <div className="xl:col-span-1">
-            <SmartSidebar
-            formData={formData}
-            onApplySuggestion={handleApplySuggestion}
-            onShowTemplateSelector={() => setShowTemplateSelector(true)}
-            onShowAIHistory={() => setShowAIHistory(true)}
-            onShowAISettings={() => setShowAISettings(true)}
-          />
-          </div>
-        </div>
       </div>
       
       {/* Diálogos */}
-      <EnhancedAIDialog
-        open={showAIDialog}
-        onOpenChange={setShowAIDialog}
-        formData={formData}
-        onProceed={handleProceedToGenerate}
-      />
-      
       <TemplateSelector
         open={showTemplateSelector}
         onOpenChange={setShowTemplateSelector}
         onSelectTemplate={handleSelectTemplate}
       />
       
-      <AIHistory
-        onSelectItem={handleSelectHistoryItem}
-        onApplyToForm={handleSelectHistoryItem}
-      />
-      
-      <AIAdvancedSettings
-        open={showAISettings}
-        onOpenChange={setShowAISettings}
-      />
+      <Dialog open={showSmartTemplates} onOpenChange={setShowSmartTemplates}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+             <DialogTitle className="flex items-center gap-2">
+               <Layers className="h-5 w-5" />
+               Template JIRA
+             </DialogTitle>
+           </DialogHeader>
+          <SmartTemplates
+            formData={formData}
+            onApplyTemplate={handleApplyTemplate}
+            onClose={() => setShowSmartTemplates(false)}
+          />
+        </DialogContent>
+      </Dialog>
       
       <KeyboardShortcutsHelp
         open={showKeyboardHelp}

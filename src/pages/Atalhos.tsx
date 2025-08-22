@@ -491,6 +491,8 @@ const Atalhos = () => {
   // Estados para seleção múltipla
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedButtons, setSelectedButtons] = useState<string[]>([]);
+  const [openingUrls, setOpeningUrls] = useState(false);
+  const [openingProgress, setOpeningProgress] = useState({ current: 0, total: 0 });
   
   // Funções para seleção múltipla - definidas antes dos hooks
   const toggleButtonSelection = (buttonId: string) => {
@@ -597,7 +599,14 @@ const Atalhos = () => {
   }, [dbGroups, dbShortcuts]);
 
   // Função para abrir URLs selecionadas - definida após groups
-  const openSelectedUrls = () => {
+  const openSelectedUrls = async () => {
+    console.log('=== INICIANDO ABERTURA DE URLs SELECIONADAS ===');
+    console.log('Botões selecionados (IDs):', selectedButtons);
+    console.log('Total de botões a abrir:', selectedButtons.length);
+    
+    setOpeningUrls(true);
+    setOpeningProgress({ current: 0, total: 0 });
+    
     // Buscar todos os botões selecionados
     const allButtons: GroupButton[] = [];
     groups.forEach(group => {
@@ -608,37 +617,88 @@ const Atalhos = () => {
       });
     });
     
-    if (allButtons.length === 0) {
-      return;
-    }
+    console.log('Dados dos botões selecionados:', allButtons.map(b => ({ id: b.id, title: b.title, url: b.url })));
+     
+     if (allButtons.length === 0) {
+       console.log('❌ Nenhum botão selecionado');
+       setOpeningUrls(false);
+       return;
+     }
+     
+     setOpeningProgress({ current: 0, total: allButtons.length });
     
     // Verificar se há muitas abas para abrir
     if (allButtons.length > 10) {
-      const confirmOpen = confirm(`Você está prestes a abrir ${allButtons.length} abas. Deseja continuar?`);
-      if (!confirmOpen) {
+      const confirmed = window.confirm(
+        `Você está prestes a abrir ${allButtons.length} abas. Deseja continuar?`
+      );
+      if (!confirmed) {
+        console.log('❌ Usuário cancelou a abertura de múltiplas abas');
         return;
       }
     }
-    
-    // Abrir todas as URLs selecionadas com pequeno delay para evitar bloqueio de pop-ups
-    allButtons.forEach((button, index) => {
-      setTimeout(() => {
-        try {
-          const newWindow = window.open(button.url, '_blank');
-          if (!newWindow) {
-            console.warn(`Falha ao abrir ${button.title} - Verifique se o bloqueador de pop-ups está ativo`);
-          }
-        } catch (error) {
-          console.error(`Erro ao abrir ${button.title}:`, error);
+
+    let successCount = 0;
+    let failCount = 0;
+
+    // Tentar abrir todas as URLs com diferentes estratégias
+    for (let i = 0; i < allButtons.length; i++) {
+      const button = allButtons[i];
+      
+      if (!button?.url) {
+        console.error(`❌ Botão ${i + 1} não tem URL válida:`, button);
+        failCount++;
+        continue;
+      }
+
+      console.log(`🔄 Tentando abrir URL ${i + 1}/${allButtons.length}: ${button.title} - ${button.url}`);
+       setOpeningProgress({ current: i + 1, total: allButtons.length });
+       
+       try {
+        // Estratégia 1: window.open
+        const newWindow = window.open(button.url, '_blank', 'noopener,noreferrer');
+        
+        if (newWindow && !newWindow.closed) {
+          console.log(`✅ URL ${i + 1} aberta com sucesso via window.open:`, button.url);
+          successCount++;
+        } else {
+          console.warn(`⚠️ window.open falhou para URL ${i + 1}, tentando método alternativo...`);
+          
+          // Estratégia 2: createElement + click
+          const link = document.createElement('a');
+          link.href = button.url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          console.log(`✅ URL ${i + 1} aberta via método alternativo:`, button.url);
+          successCount++;
         }
-      }, index * 100); // Delay de 100ms entre cada abertura
-    });
-    
-    // Limpar seleção após iniciar a abertura
-    setTimeout(() => {
-      setSelectedButtons([]);
-      setMultiSelectMode(false);
-    }, allButtons.length * 100 + 200);
+      } catch (error) {
+        console.error(`❌ Erro ao abrir URL ${i + 1}:`, error, button.url);
+        failCount++;
+      }
+
+      // Pequeno atraso entre aberturas para evitar bloqueio
+      if (i < allButtons.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+    }
+
+    console.log('=== RESULTADO FINAL ===');
+    console.log(`✅ URLs abertas com sucesso: ${successCount}`);
+    console.log(`❌ URLs que falharam: ${failCount}`);
+    console.log(`📊 Total processado: ${successCount + failCount}/${allButtons.length}`);
+
+    // Limpar seleção
+     setSelectedButtons([]);
+     setMultiSelectMode(false);
+     setOpeningUrls(false);
+     setOpeningProgress({ current: 0, total: 0 });
+     console.log('🧹 Seleção limpa e modo multi-seleção desativado');
   };
 
   const sensors = useSensors(
@@ -723,6 +783,44 @@ const Atalhos = () => {
     });
     return results;
   }, [groups, searchTerm]);
+
+  // Função para adicionar todos os resultados da busca aos favoritos
+  const addAllSearchResultsToFavorites = () => {
+    if (searchResults.length === 0) return;
+    
+    const newFavoriteIds = searchResults.map(button => button.id);
+    const alreadyFavorites = newFavoriteIds.filter(id => favorites.includes(id));
+    const toBeAdded = newFavoriteIds.filter(id => !favorites.includes(id));
+    const uniqueFavorites = [...new Set([...favorites, ...newFavoriteIds])];
+    
+    console.log('Adicionando todos os resultados da busca aos favoritos:', {
+      searchResultsCount: searchResults.length,
+      alreadyFavoritesCount: alreadyFavorites.length,
+      toBeAddedCount: toBeAdded.length,
+      previousFavoritesCount: favorites.length,
+      newFavoritesCount: uniqueFavorites.length
+    });
+    
+    if (toBeAdded.length === 0) {
+      // Todos os resultados já são favoritos
+      console.log('Todos os resultados da busca já são favoritos');
+      return;
+    }
+    
+    setFavorites(uniqueFavorites);
+    updateFavoriteButtonsOrder(uniqueFavorites);
+  };
+
+  // Calcular quantos resultados da busca já são favoritos
+  const searchResultsFavoriteStatus = useMemo(() => {
+    if (searchResults.length === 0) return { alreadyFavorites: 0, toBeAdded: 0, allAreFavorites: false };
+    
+    const alreadyFavorites = searchResults.filter(button => favorites.includes(button.id)).length;
+    const toBeAdded = searchResults.length - alreadyFavorites;
+    const allAreFavorites = toBeAdded === 0;
+    
+    return { alreadyFavorites, toBeAdded, allAreFavorites };
+  }, [searchResults, favorites]);
 
   // Criar array de botões favoritos
   const favoriteButtons = useMemo(() => {
@@ -953,11 +1051,23 @@ const Atalhos = () => {
                   <Button
                     variant="default"
                     size="sm"
-                    onClick={openSelectedUrls}
-                    className="h-8 px-3 text-xs bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => {
+                      console.log('Botão "Abrir Selecionados" clicado');
+                      console.log('Botões selecionados:', selectedButtons);
+                      openSelectedUrls();
+                    }}
+                    disabled={openingUrls}
+                    className={`h-8 px-3 text-xs text-white ${
+                      openingUrls 
+                        ? 'bg-blue-600 cursor-not-allowed' 
+                        : 'bg-green-600 hover:bg-green-700 animate-pulse'
+                    }`}
                   >
                     <ExternalLink className="h-4 w-4 mr-1" />
-                    Abrir {selectedButtons.length} Selecionado{selectedButtons.length > 1 ? 's' : ''}
+                    {openingUrls 
+                      ? `Abrindo ${openingProgress.current}/${openingProgress.total}...` 
+                      : `Abrir ${selectedButtons.length} Selecionado${selectedButtons.length > 1 ? 's' : ''}`
+                    }
                   </Button>
                 )}
               </>
@@ -982,16 +1092,48 @@ const Atalhos = () => {
           {searchTerm && searchResults.length > 0 && (
             <Card className="mb-8 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 dark:from-[#23201a] dark:via-[#2d2717] dark:to-[#181511] border-2 border-green-200 dark:border-[#3a3320] shadow-xl animate-fade-in">
               <CardHeader className="pb-4 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-[#2d2717] dark:to-[#28231a]">
-                <CardTitle className="flex items-center gap-3 text-green-900 dark:text-[#f8f5e4]">
-                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 dark:from-[#bfae7c] dark:to-[#7c6a3c] rounded-lg shadow-lg">
-                    <Search className="h-6 w-6 text-white dark:text-[#23201a]" />
+                <CardTitle className="flex items-center justify-between text-green-900 dark:text-[#f8f5e4]">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 dark:from-[#bfae7c] dark:to-[#7c6a3c] rounded-lg shadow-lg">
+                      <Search className="h-6 w-6 text-white dark:text-[#23201a]" />
+                    </div>
+                    <div>
+                      <span className="text-xl font-bold">Resultados da Busca</span>
+                      <p className="text-sm text-green-700 dark:text-[#bfae7c] font-normal">
+                         {searchResults.length} atalho{searchResults.length > 1 ? 's' : ''} encontrado{searchResults.length > 1 ? 's' : ''} para "{searchTerm}"
+                         {searchResultsFavoriteStatus.alreadyFavorites > 0 && (
+                           <span className="ml-2 text-pink-600 dark:text-[#bfae7c]">
+                             • {searchResultsFavoriteStatus.alreadyFavorites} já {searchResultsFavoriteStatus.alreadyFavorites === 1 ? 'é favorito' : 'são favoritos'}
+                           </span>
+                         )}
+                       </p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-xl font-bold">Resultados da Busca</span>
-                    <p className="text-sm text-green-700 dark:text-[#bfae7c] font-normal">
-                      {searchResults.length} atalho{searchResults.length > 1 ? 's' : ''} encontrado{searchResults.length > 1 ? 's' : ''} para "{searchTerm}"
-                    </p>
-                  </div>
+                  <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={addAllSearchResultsToFavorites}
+                     disabled={searchResultsFavoriteStatus.allAreFavorites}
+                     className={`transition-all duration-200 shadow-md hover:shadow-lg ${
+                       searchResultsFavoriteStatus.allAreFavorites
+                         ? 'bg-gray-100 dark:bg-[#2d2717] border-gray-300 dark:border-[#bfae7c]/20 text-gray-500 dark:text-[#bfae7c]/50 cursor-not-allowed'
+                         : 'bg-pink-50 dark:bg-[#2d2717] border-pink-200 dark:border-[#bfae7c]/30 text-pink-700 dark:text-[#bfae7c] hover:bg-pink-100 dark:hover:bg-[#28231a]'
+                     }`}
+                     title={searchResultsFavoriteStatus.allAreFavorites 
+                       ? 'Todos os resultados já são favoritos' 
+                       : `Adicionar ${searchResultsFavoriteStatus.toBeAdded} atalho${searchResultsFavoriteStatus.toBeAdded > 1 ? 's' : ''} aos favoritos`
+                     }
+                   >
+                     <Heart className={`h-4 w-4 mr-2 ${
+                       searchResultsFavoriteStatus.allAreFavorites 
+                         ? 'fill-gray-400 dark:fill-[#bfae7c]/50' 
+                         : 'fill-pink-400 dark:fill-[#bfae7c]'
+                     }`} />
+                     {searchResultsFavoriteStatus.allAreFavorites 
+                       ? 'Todos já são Favoritos'
+                       : `Adicionar ${searchResultsFavoriteStatus.toBeAdded} aos Favoritos`
+                     }
+                   </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">

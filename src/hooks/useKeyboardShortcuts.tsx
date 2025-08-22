@@ -82,8 +82,6 @@ export const useFormKeyboardShortcuts = ({
   onSave,
   onGenerateDescription,
   onShowTemplates,
-  onShowAIHistory,
-  onShowAISettings,
   onShowKeyboardHelp,
   onFocusResumo,
   onFocusNotas,
@@ -92,8 +90,6 @@ export const useFormKeyboardShortcuts = ({
   onSave: () => void;
   onGenerateDescription: () => void;
   onShowTemplates: () => void;
-  onShowAIHistory: () => void;
-  onShowAISettings: () => void;
   onShowKeyboardHelp: () => void;
   onFocusResumo: () => void;
   onFocusNotas: () => void;
@@ -121,20 +117,7 @@ export const useFormKeyboardShortcuts = ({
       description: 'Abrir templates',
       category: 'Templates'
     },
-    {
-      key: 'h',
-      ctrlKey: true,
-      action: onShowAIHistory,
-      description: 'Histórico da IA',
-      category: 'IA'
-    },
-    {
-      key: ',',
-      ctrlKey: true,
-      action: onShowAISettings,
-      description: 'Configurações da IA',
-      category: 'IA'
-    },
+
     {
       key: '1',
       ctrlKey: true,
