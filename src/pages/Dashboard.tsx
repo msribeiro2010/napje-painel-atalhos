@@ -590,7 +590,7 @@ const Dashboard = () => {
                 </ModernCardContent>
               </ModernCard> */}
 
-              {/* Notas Rápidas Modernizadas */}
+              {/* Notas Rápidas */}
               <ModernCard variant="glass" className="bg-gradient-to-br from-yellow-50/80 to-orange-50/80 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-200/30 dark:border-yellow-700/30">
                 <ModernCardHeader
                   title="Notas Rápidas"
@@ -606,7 +606,7 @@ const Dashboard = () => {
                       size="sm"
                       onClick={() => setPostItOpen(true)}
                       icon={<Plus className="h-4 w-4" />}
-                      className="h-9 px-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
                     >
                       Nova Nota
                     </ModernButton>
@@ -619,61 +619,46 @@ const Dashboard = () => {
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
                       </div>
                     ) : latestNote ? (
-                      /* Preview da nota mais recente - Modernizado */
-                      <div className="relative bg-gradient-to-br from-white/90 to-yellow-50/90 dark:from-gray-800/90 dark:to-yellow-900/30 rounded-2xl p-5 border border-yellow-300/40 dark:border-yellow-600/40 shadow-lg hover:shadow-xl transition-all duration-300 group">
-                        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-orange-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="relative flex items-start gap-4">
-                          <div className="p-2.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl shadow-md flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                      /* Preview da nota mais recente */
+                      <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-4 border border-yellow-200/50 dark:border-yellow-600/50 hover:shadow-md transition-shadow">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex-shrink-0">
                             <StickyNote className="h-4 w-4 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-2">
-                              <h4 className="text-sm font-semibold text-foreground">Nota Recente</h4>
-                              <div className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 text-xs rounded-full font-medium">
+                              <h4 className="text-sm font-medium text-foreground">Nota Recente</h4>
+                              <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 text-xs rounded-full">
                                 Ativa
-                              </div>
+                              </span>
                             </div>
-                            <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed mb-3">
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
                               {latestNote.content || 'Nota sem conteúdo'}
                             </p>
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full"></div>
-                                <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
-                                  {new Date(latestNote.created_at).toLocaleDateString('pt-BR')}
-                                </span>
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(latestNote.created_at).toLocaleTimeString('pt-BR', { 
-                                  hour: '2-digit', 
-                                  minute: '2-digit' 
-                                })}
-                              </span>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{new Date(latestNote.created_at).toLocaleDateString('pt-BR')}</span>
+                              <span>•</span>
+                              <span>{new Date(latestNote.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                           </div>
                         </div>
                       </div>
                     ) : (
-                      /* Estado vazio - Modernizado */
-                      <div className="text-center py-10">
-                        <div className="relative mx-auto mb-6">
-                          <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl flex items-center justify-center mx-auto shadow-xl">
-                            <StickyNote className="h-10 w-10 text-white" />
-                          </div>
-                          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                            <Plus className="h-3 w-3 text-white" />
-                          </div>
+                      /* Estado vazio */
+                      <div className="text-center py-8">
+                        <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <StickyNote className="h-8 w-8 text-white" />
                         </div>
-                        <h4 className="text-base font-semibold text-foreground mb-2">Organize suas ideias</h4>
-                        <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto leading-relaxed">
-                          Crie notas rápidas para lembretes importantes e mantenha tudo organizado em um só lugar
+                        <h4 className="text-sm font-medium text-foreground mb-2">Organize suas ideias</h4>
+                        <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
+                          Crie notas rápidas para lembretes importantes
                         </p>
                         <ModernButton 
                           variant="gradient" 
                           size="sm"
                           onClick={() => setPostItOpen(true)}
                           icon={<Plus className="h-4 w-4" />}
-                          className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
                         >
                           Criar Primeira Nota
                         </ModernButton>

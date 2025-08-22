@@ -118,9 +118,9 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
       >
         <div className="space-y-6">
           {/* Grid de Campos Principais */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Chamado Origem */}
-            <div className="md:col-span-2 space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="chamadoOrigem" className="text-sm font-medium">
                 Chamado Origem
               </Label>
@@ -250,6 +250,22 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
         </div>
       </CollapsibleSection>
 
+      {/* Seção de Usuário */}
+      <CollapsibleSection
+        title="Dados do Usuário"
+        description="Informações do usuário afetado pelo problema"
+        icon={<User />}
+        variant="secondary"
+        defaultExpanded={false}
+        badge="Opcional"
+      >
+          <UsuarioAutoComplete
+            formData={formData}
+            onInputChange={onInputChange}
+          onMultipleInputChange={onMultipleInputChange}
+        />
+      </CollapsibleSection>
+
       {/* Seção de Descrição */}
       <CollapsibleSection
         title="Descrição do Problema"
@@ -289,22 +305,6 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
               </p>
             )}
           </div>
-      </CollapsibleSection>
-
-      {/* Seção de Usuário */}
-      <CollapsibleSection
-        title="Dados do Usuário"
-        description="Informações do usuário afetado pelo problema"
-        icon={<User />}
-        variant="secondary"
-        defaultExpanded={false}
-        badge="Opcional"
-      >
-          <UsuarioAutoComplete
-            formData={formData}
-            onInputChange={onInputChange}
-          onMultipleInputChange={onMultipleInputChange}
-        />
       </CollapsibleSection>
 
       {/* Seção de Ações */}

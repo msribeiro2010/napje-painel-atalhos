@@ -304,19 +304,9 @@ export const SmartSearchDialog = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Digite sua busca... (ex: problema, usuário, backup)"
-              className="pl-12 pr-12 h-14 text-base bg-card/60 backdrop-blur-sm border-border/30 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl shadow-soft"
+              className="pl-12 pr-4 h-14 text-base bg-card/60 backdrop-blur-sm border-border/30 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl shadow-soft"
               autoFocus
             />
-            {query && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-accent rounded-lg"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
             {!query && (
               <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
                 <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
