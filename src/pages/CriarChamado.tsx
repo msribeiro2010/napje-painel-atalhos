@@ -527,6 +527,44 @@ const CriarChamado = () => {
     toast.success('Formulário limpo!');
   };
   
+  // Função para otimizar texto com IA
+  const handleOptimizeText = useCallback(async () => {
+    if (!formData.notas.trim()) {
+      toast.error('Adicione uma descrição do problema para otimizar');
+      return;
+    }
+
+    try {
+      // Contexto adicional com número do processo
+      const contexto = [];
+      if (formData.processos) {
+        contexto.push(`Processos relacionados: ${formData.processos}`);
+      }
+      if (formData.orgaoJulgador) {
+        contexto.push(`Órgão julgador: ${formData.orgaoJulgador}`);
+      }
+      if (formData.grau) {
+        contexto.push(`Grau: ${formData.grau}`);
+      }
+
+      const contextoTexto = contexto.length > 0 ? `\n\nContexto adicional:\n${contexto.join('\n')}` : '';
+      
+      // Simular otimização com IA (aqui você pode integrar com uma API real)
+      const textoOriginal = formData.notas;
+      const textoOtimizado = `${textoOriginal.trim()}${contextoTexto}`
+        .replace(/\b(IA|ia|Ia)\b/g, '') // Remove redundâncias de "IA"
+        .replace(/\s+/g, ' ') // Remove espaços extras
+        .trim();
+
+      setFormData(prev => ({ ...prev, notas: textoOtimizado }));
+      setIsDirty(true);
+      toast.success('Texto otimizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao otimizar texto:', error);
+      toast.error('Erro ao otimizar texto');
+    }
+  }, [formData.notas, formData.processos, formData.orgaoJulgador, formData.grau]);
+
   const createCustomSections = (formData: FormData): DescriptionSection[] => {
     const resumoFinal = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
     
@@ -538,7 +576,7 @@ const CriarChamado = () => {
       },
       {
         title: 'Descrição Detalhada',
-        content: '', // Será preenchido pela IA
+        content: formData.notas || '', // Usar notas como descrição detalhada
         key: 'descricao'
       }
     ];
@@ -552,27 +590,36 @@ const CriarChamado = () => {
       });
     }
     
-    // Adicionar seção de notas se houver
-    if (formData.notas) {
+    // Adicionar número do chamado de origem se houver
+    if (formData.chamadoOrigem) {
       sections.push({
-        title: 'Observações Adicionais',
-        content: formData.notas,
-        key: 'notas'
+        title: 'Número do Chamado de Origem (OJ)',
+        content: formData.chamadoOrigem,
+        key: 'chamado-origem'
       });
     }
     
     // Adicionar seção de dados do usuário
     const dadosUsuario = [];
-    if (formData.cpfUsuario) dadosUsuario.push(`CPF: ${formData.cpfUsuario}`);
-    if (formData.nomeUsuario) dadosUsuario.push(`Nome: ${formData.nomeUsuario}`);
-    if (formData.perfilUsuario) dadosUsuario.push(`Perfil: ${formData.perfilUsuario}`);
+    if (formData.nomeUsuario) dadosUsuario.push(formData.nomeUsuario);
+    if (formData.cpfUsuario) dadosUsuario.push(formData.cpfUsuario);
+    if (formData.perfilUsuario) dadosUsuario.push(formData.perfilUsuario);
+    if (formData.orgaoJulgador) dadosUsuario.push(formData.orgaoJulgador);
     
     if (dadosUsuario.length > 0) {
       sections.push({
         title: 'Dados do Usuário',
-        content: dadosUsuario.join('\n'),
+        content: dadosUsuario.join(' / '), // Formato Nome/CPF/Perfil/Orgao
         key: 'dados-usuario'
       });
+    }
+    
+    // Se for um template JIRA, substitui o placeholder do número do processo
+    if (sections.length > 1 && sections[1].content.includes('[Número do processo será incorporado automaticamente]') && formData.processos) {
+      sections[1].content = sections[1].content.replace(
+        '[Número do processo será incorporado automaticamente]',
+        formData.processos
+      );
     }
     
     return sections;
@@ -669,9 +716,9 @@ const CriarChamado = () => {
                   onInputChange={handleInputChange}
                   onMultipleInputChange={handleMultipleInputChange}
                   onGenerateDescription={handleGenerateDescription}
+                  onOptimizeText={handleOptimizeText}
                   onSaveChamado={handleSaveChamado}
                   onResetForm={resetForm}
-
                   validationErrors={validationErrors}
                   resumoRef={resumoRef}
                   notasRef={notasRef}
@@ -693,120 +740,18 @@ const CriarChamado = () => {
                     isGenerated={isGenerated}
                     sections={sections}
                     generatedDescription={generatedDescription}
+                    formData={formData}
+                    onSaveChamado={handleSaveChamado}
+                    onClose={() => {
+                      setIsGenerated(false);
+                      resetForm();
+                    }}
                   />
                 </CardContent>
               </Card>
             )}
             
-            {/* Painel de Ações */}
-            <Card className="border-t-4 border-t-blue-500 sticky bottom-4 bg-white/95 backdrop-blur-sm shadow-lg">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Save className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Ações do Chamado</h3>
-                      <p className="text-sm text-gray-600">Gere descrição automática ou salve o chamado</p>
-                    </div>
-                  </div>
-                  {/* Status de Validação Compacto */}
-                  <div className="flex items-center gap-2">
-                    {isFormValid(formData) ? (
-                      <>
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        <span className="text-sm text-green-700 font-medium hidden sm:inline">Pronto para salvar</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="h-5 w-5 text-amber-600" />
-                        <span className="text-sm text-amber-700 hidden sm:inline">Campos obrigatórios</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Botões de Ação Principal */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Button
-                    variant="outline"
-                    onClick={handleGenerateDescription}
-                    disabled={!isFormValid(formData) || isAutoSaving}
-                    className="h-14 border-2 border-purple-200 hover:bg-purple-50 hover:border-purple-300 dark:border-purple-700 dark:hover:bg-purple-950/30 dark:hover:border-purple-600 transition-all duration-200 group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-1 bg-purple-100 rounded group-hover:bg-purple-200 transition-colors">
-                        <Wand2 className="h-4 w-4 text-purple-600 group-hover:scale-110 transition-transform" />
-                      </div>
-                      <div className="text-left">
-                        <div className="font-semibold text-purple-700">Gerar com IA</div>
-                        <div className="text-xs text-purple-600">Criar descrição automática</div>
-                      </div>
-                    </div>
-                  </Button>
-                  
-                  <Button
-                    onClick={handleSaveChamado}
-                    disabled={!isFormValid(formData) || isAutoSaving}
-                    className="h-14 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-1 bg-blue-500/20 rounded group-hover:bg-blue-400/30 transition-colors">
-                        {isAutoSaving ? (
-                          <Clock className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Save className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                        )}
-                      </div>
-                      <div className="text-left">
-                        <div className="font-semibold">{isEditing ? 'Atualizar' : 'Salvar'} Chamado</div>
-                        <div className="text-xs text-blue-100">{isAutoSaving ? 'Salvando...' : 'Finalizar e salvar'}</div>
-                      </div>
-                    </div>
-                  </Button>
-                </div>
 
-                <Separator className="my-4" />
-
-                {/* Ações Secundárias */}
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={resetForm}
-                    disabled={isAutoSaving}
-                    className="text-gray-600 hover:text-gray-800"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Limpar Formulário
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowTemplateSelector(true)}
-                    className="text-gray-600 hover:text-gray-800"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Carregar Template
-                  </Button>
-                  
-                  <Button
-                     variant="ghost"
-                     size="sm"
-                     onClick={() => setShowSmartTemplates(true)}
-                     className="text-gray-600 hover:text-gray-800"
-                   >
-                     <Layers className="h-4 w-4 mr-2" />
-                     Template JIRA
-                   </Button>
-                  
-
-                </div>
-              </CardContent>
-            </Card>
             </div>
           </div>
       </div>

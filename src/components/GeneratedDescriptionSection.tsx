@@ -1,20 +1,29 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, FileText } from 'lucide-react';
+import { Check, Copy, FileText, Save, Loader2 } from 'lucide-react';
 import { DescriptionSection } from '@/types/form';
+import { FormData } from '@/types/form';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 interface GeneratedDescriptionSectionProps {
   isGenerated: boolean;
   sections: DescriptionSection[];
   generatedDescription: string;
+  formData: FormData;
+  onSaveChamado: (formData: FormData) => Promise<void>;
+  onClose?: () => void;
 }
 
 export const GeneratedDescriptionSection = ({ 
   isGenerated, 
   sections, 
-  generatedDescription 
+  generatedDescription,
+  formData,
+  onSaveChamado,
+  onClose
 }: GeneratedDescriptionSectionProps) => {
+  const [isSaving, setIsSaving] = useState(false);
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${label} copiado para a área de transferência!`);
@@ -23,6 +32,22 @@ export const GeneratedDescriptionSection = ({
   const copyFullDescription = () => {
     navigator.clipboard.writeText(generatedDescription);
     toast.success('Descrição completa copiada para a área de transferência!');
+  };
+
+  const handleSaveChamado = async () => {
+    try {
+      setIsSaving(true);
+      await onSaveChamado(formData);
+      toast.success('Chamado gravado com sucesso!');
+      if (onClose) {
+        onClose();
+      }
+    } catch (error) {
+      console.error('Erro ao gravar chamado:', error);
+      toast.error('Erro ao gravar chamado. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const renderSectionPairs = () => {
@@ -147,9 +172,17 @@ export const GeneratedDescriptionSection = ({
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={copyFullDescription} className="flex-1 bg-green-600 hover:bg-green-700">
-                <Copy className="h-4 w-4 mr-2" />
-                Copiar Descrição Completa
+              <Button 
+                onClick={handleSaveChamado} 
+                className="flex-1 bg-green-600 hover:bg-green-700"
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                {isSaving ? 'Gravando...' : 'Gravar Chamado'}
               </Button>
               <Button 
                 onClick={() => {

@@ -7,8 +7,7 @@ export interface Usuario {
   id: string;
   cpf: string;
   nome_completo: string;
-  perfil_usuario: string;
-  orgao_julgador: string;
+  perfil: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -150,7 +149,7 @@ export const useUsuarios = () => {
     try {
       const { data, error } = await supabase
         .from('usuarios')
-        .select('id, cpf, nome_completo, perfil_usuario, orgao_julgador, created_at, updated_at')
+        .select('id, cpf, nome_completo, perfil, created_at, updated_at')
         .or(`cpf.ilike.%${termo}%,nome_completo.ilike.%${termo}%`)
         .order('nome_completo')
         .limit(8); // Reduzido de 10 para 8
@@ -201,10 +200,10 @@ export const useUsuarios = () => {
       const cpfLimpo = cpf.replace(/\D/g, '');
       
       const { data, error } = await supabase
-      .from('usuarios')
-       .select('id, cpf, nome_completo, perfil_usuario, orgao_julgador, created_at, updated_at')
-       .eq('cpf', cpfLimpo)
-       .maybeSingle();
+        .from('usuarios')
+        .select('id, cpf, nome_completo, perfil, created_at, updated_at')
+        .eq('cpf', cpfLimpo)
+        .maybeSingle();
 
       if (error) throw error;
       return data;

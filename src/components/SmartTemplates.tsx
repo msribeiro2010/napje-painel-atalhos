@@ -45,10 +45,10 @@ interface SmartTemplatesProps {
 const mockTemplates: Template[] = [
   {
     id: '1',
-    title: 'Recurso Especial - Direito Processual',
-    description: 'Template para recursos especiais relacionados a questões processuais',
-    category: 'Recurso Especial',
-    tags: ['processual', 'recurso', 'stj'],
+    title: 'Template JIRA - Recurso Especial',
+    description: 'Template estruturado para JIRA - Recursos Especiais',
+    category: 'JIRA Template',
+    tags: ['jira', 'recurso', 'processual'],
     usage: 45,
     rating: 4.8,
     lastUsed: new Date('2024-01-15'),
@@ -56,15 +56,24 @@ const mockTemplates: Template[] = [
       resumo: 'Recurso Especial - Violação ao art. 489, § 1º, do CPC',
       grau: 'Recurso Especial',
       orgaoJulgador: 'Superior Tribunal de Justiça',
-      notas: 'Questão processual envolvendo fundamentação da decisão judicial conforme art. 489, § 1º, do CPC.'
+      notas: `**DESCRIÇÃO DETALHADA:**
+Questão processual envolvendo fundamentação da decisão judicial conforme art. 489, § 1º, do CPC. A decisão recorrida não apresentou fundamentação adequada, violando os requisitos legais estabelecidos no Código de Processo Civil.
+
+**NÚMERO DO CHAMADO DE ORIGEM (OJ):**
+A ser preenchido conforme necessário
+
+**CONTEXTO ADICIONAL:**
+- Processo: [Número do processo será incorporado automaticamente]
+- Órgão: Superior Tribunal de Justiça
+- Grau: Recurso Especial`
     }
   },
   {
     id: '2',
-    title: 'Agravo de Instrumento - Tutela de Urgência',
-    description: 'Template para agravos contra decisões sobre tutela de urgência',
-    category: 'Agravo',
-    tags: ['agravo', 'tutela', 'urgência'],
+    title: 'Template JIRA - Agravo de Instrumento',
+    description: 'Template estruturado para JIRA - Agravos de Instrumento',
+    category: 'JIRA Template',
+    tags: ['jira', 'agravo', 'tutela'],
     usage: 32,
     rating: 4.6,
     lastUsed: new Date('2024-01-10'),
@@ -72,15 +81,24 @@ const mockTemplates: Template[] = [
       resumo: 'Agravo de Instrumento - Indeferimento de tutela de urgência',
       grau: 'Agravo de Instrumento',
       orgaoJulgador: 'Tribunal de Justiça',
-      notas: 'Recurso contra decisão que indeferiu pedido de tutela de urgência, demonstrando presença dos requisitos legais.'
+      notas: `**DESCRIÇÃO DETALHADA:**
+Recurso contra decisão que indeferiu pedido de tutela de urgência. Demonstração da presença dos requisitos legais para concessão da medida: fumus boni iuris e periculum in mora.
+
+**NÚMERO DO CHAMADO DE ORIGEM (OJ):**
+A ser preenchido conforme necessário
+
+**CONTEXTO ADICIONAL:**
+- Processo: [Número do processo será incorporado automaticamente]
+- Órgão: Tribunal de Justiça
+- Grau: Agravo de Instrumento`
     }
   },
   {
     id: '3',
-    title: 'Apelação Cível - Direito Civil',
-    description: 'Template genérico para apelações em matéria cível',
-    category: 'Apelação',
-    tags: ['apelação', 'civil', 'sentença'],
+    title: 'Template JIRA - Apelação Cível',
+    description: 'Template estruturado para JIRA - Apelações Cíveis',
+    category: 'JIRA Template',
+    tags: ['jira', 'apelação', 'civil'],
     usage: 28,
     rating: 4.5,
     lastUsed: new Date('2024-01-08'),
@@ -88,7 +106,16 @@ const mockTemplates: Template[] = [
       resumo: 'Apelação Cível - Reforma de sentença',
       grau: 'Apelação',
       orgaoJulgador: 'Tribunal de Justiça',
-      notas: 'Recurso de apelação visando a reforma da sentença de primeiro grau.'
+      notas: `**DESCRIÇÃO DETALHADA:**
+Recurso de apelação visando a reforma da sentença de primeiro grau. Análise dos fundamentos da decisão e apresentação de argumentos para modificação do julgado.
+
+**NÚMERO DO CHAMADO DE ORIGEM (OJ):**
+A ser preenchido conforme necessário
+
+**CONTEXTO ADICIONAL:**
+- Processo: [Número do processo será incorporado automaticamente]
+- Órgão: Tribunal de Justiça
+- Grau: Apelação`
     }
   }
 ];
