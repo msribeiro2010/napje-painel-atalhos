@@ -717,7 +717,6 @@ const CriarChamado = () => {
                   onMultipleInputChange={handleMultipleInputChange}
                   onGenerateDescription={handleGenerateDescription}
                   onOptimizeText={handleOptimizeText}
-                  onSaveChamado={handleSaveChamado}
                   onResetForm={resetForm}
                   validationErrors={validationErrors}
                   resumoRef={resumoRef}

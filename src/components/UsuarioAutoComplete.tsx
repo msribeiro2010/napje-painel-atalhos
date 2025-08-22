@@ -141,7 +141,7 @@ export const UsuarioAutoComplete = ({ formData, onInputChange, onMultipleInputCh
     <div className="space-y-4 border-t pt-4 relative">
       <h4 className="font-medium text-gray-700 flex items-center">
         <User className="h-4 w-4 mr-2" />
-        Dados do Usuário (Opcional)
+        Dados do Usuário
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="relative">

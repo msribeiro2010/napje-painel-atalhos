@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, FileText, Save, Sparkles, Zap, User, Hash, Building, Settings, MessageSquare, Scale, Wand2 } from 'lucide-react';
+import { AlertCircle, FileText, Sparkles, Zap, User, Hash, Building, MessageSquare, Scale, Wand2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { FormData } from '@/types/form';
@@ -28,14 +28,13 @@ interface FormSectionProps {
   onMultipleInputChange?: (updates: Partial<FormData>) => void;
   onGenerateDescription: () => void;
   onOptimizeText?: () => void;
-  onSaveChamado?: () => void;
   onResetForm: () => void;
   validationErrors?: Record<string, string>;
   resumoRef?: React.RefObject<HTMLInputElement>;
   notasRef?: React.RefObject<HTMLTextAreaElement>;
 }
 
-export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onOptimizeText, onSaveChamado, onResetForm, validationErrors = {}, resumoRef, notasRef }: FormSectionProps) => {
+export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onOptimizeText, onResetForm, validationErrors = {}, resumoRef, notasRef }: FormSectionProps) => {
   const { 
     buscarSugestoesOrgaoJulgador, 
     buscarSugestoesPerfil, 
@@ -251,20 +250,11 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
       </CollapsibleSection>
 
       {/* Seção de Usuário */}
-      <CollapsibleSection
-        title="Dados do Usuário"
-        description="Informações do usuário afetado pelo problema"
-        icon={<User />}
-        variant="secondary"
-        defaultExpanded={false}
-        badge="Opcional"
-      >
-          <UsuarioAutoComplete
-            formData={formData}
-            onInputChange={onInputChange}
-          onMultipleInputChange={onMultipleInputChange}
-        />
-      </CollapsibleSection>
+      <UsuarioAutoComplete
+        formData={formData}
+        onInputChange={onInputChange}
+        onMultipleInputChange={onMultipleInputChange}
+      />
 
       {/* Seção de Descrição */}
       <CollapsibleSection
@@ -307,46 +297,22 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
           </div>
       </CollapsibleSection>
 
-      {/* Seção de Ações */}
-      <CollapsibleSection
-        title="Ações do Chamado"
-        description="Salvar ou gerar descrição automaticamente com IA"
-        icon={<Settings />}
-        variant="warning"
-        defaultExpanded={true}
-        className="mt-6"
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Button 
-            onClick={onSaveChamado}
-            variant="outline"
-            size="lg"
-            className="h-14 border-2 border-blue-200 hover:bg-blue-50 hover:border-blue-300 dark:border-blue-700 dark:hover:bg-blue-950/30 dark:hover:border-blue-600 transition-all duration-200 group"
-          >
-            <div className="flex items-center gap-3">
-              <Save className="h-5 w-5 group-hover:scale-110 transition-transform" />
-              <div className="text-left">
-                <div className="font-semibold">Salvar Chamado</div>
-                <div className="text-xs text-muted-foreground">Salvar progresso atual</div>
-              </div>
+      {/* Botão Gerar JIRA */}
+      <div className="flex justify-center mt-6">
+        <Button 
+          onClick={onGenerateDescription}
+          size="lg"
+          className="h-14 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group"
+        >
+          <div className="flex items-center gap-3">
+            <FileText className="h-5 w-5 group-hover:scale-110 transition-all" />
+            <div className="text-left">
+              <div className="font-semibold">Gerar JIRA</div>
+              <div className="text-xs text-green-100">Criar template final</div>
             </div>
-          </Button>
-          
-          <Button 
-            onClick={onGenerateDescription}
-            size="lg"
-            className="h-14 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group"
-          >
-            <div className="flex items-center gap-3">
-              <FileText className="h-5 w-5 group-hover:scale-110 transition-all" />
-              <div className="text-left">
-                <div className="font-semibold">Gerar Chamado</div>
-                <div className="text-xs text-green-100">Criar template final</div>
-              </div>
-            </div>
-          </Button>
-        </div>
-      </CollapsibleSection>
+          </div>
+        </Button>
+      </div>
     </div>
   );
 };
