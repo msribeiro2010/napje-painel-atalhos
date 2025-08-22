@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, CheckCircle, AlertCircle, FileText, Sparkles, Clock, Layers, Wand2, Keyboard, RefreshCw } from 'lucide-react';
+import { Save, CheckCircle, AlertCircle, FileText, Sparkles, Clock, Layers, Wand2, Keyboard, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormData, DescriptionSection } from '@/types/form';
 import { FormSection } from '@/components/FormSection';
@@ -632,47 +632,43 @@ const CriarChamado = () => {
         title={isEditing ? "Editar Chamado" : "Criar Novo Chamado"}
         subtitle={isEditing ? "Modifique os dados do chamado" : "Preencha os dados para criar um novo chamado"}
       >
-        <div className="flex items-center gap-2">
-          {autoSaveStatus && (
-            <Badge 
-              variant={autoSaveStatus.includes('Erro') ? 'destructive' : autoSaveStatus.includes('Salvando') ? 'secondary' : 'default'} 
-              className="text-xs flex items-center gap-1"
-            >
-              {autoSaveStatus.includes('Salvando') && <Clock className="h-3 w-3 animate-spin" />}
-              {autoSaveStatus.includes('Salvo') && <CheckCircle className="h-3 w-3" />}
-              {autoSaveStatus.includes('Erro') && <AlertCircle className="h-3 w-3" />}
-              {autoSaveStatus}
-            </Badge>
-          )}
-          {hasUnsavedChanges && !autoSaveStatus && (
-            <Badge variant="outline" className="text-xs flex items-center gap-1 text-amber-600 border-amber-300">
-              <Clock className="h-3 w-3" />
-              Alterações não salvas
-            </Badge>
-          )}
-          {lastSaved && (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <CheckCircle className="h-3 w-3 text-green-500" />
-              Último salvamento: {lastSaved.toLocaleTimeString()}
-            </span>
-          )}
+        <div className="flex items-center gap-3">
+          {/* Status de salvamento */}
+          <div className="flex items-center gap-2">
+            {autoSaveStatus && (
+              <Badge 
+                variant={autoSaveStatus.includes('Erro') ? 'destructive' : autoSaveStatus.includes('Salvando') ? 'secondary' : 'default'} 
+                className="text-xs flex items-center gap-1 shadow-sm"
+              >
+                {autoSaveStatus.includes('Salvando') && <Clock className="h-3 w-3 animate-spin" />}
+                {autoSaveStatus.includes('Salvo') && <CheckCircle className="h-3 w-3" />}
+                {autoSaveStatus.includes('Erro') && <AlertCircle className="h-3 w-3" />}
+                {autoSaveStatus}
+              </Badge>
+            )}
+            {hasUnsavedChanges && !autoSaveStatus && (
+              <Badge variant="outline" className="text-xs flex items-center gap-1 text-amber-600 border-amber-300 shadow-sm">
+                <Clock className="h-3 w-3" />
+                Alterações não salvas
+              </Badge>
+            )}
+            {lastSaved && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <CheckCircle className="h-3 w-3 text-green-500" />
+                Último salvamento: {lastSaved.toLocaleTimeString()}
+              </span>
+            )}
+          </div>
+          
+          {/* Botão de atalhos */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowKeyboardHelp(true)}
-            className="gap-2"
+            className="gap-2 hover:bg-gradient-accent hover:shadow-md transition-all duration-200"
           >
             <Keyboard className="h-4 w-4" />
             Atalhos
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
           </Button>
         </div>
       </PageHeader>
