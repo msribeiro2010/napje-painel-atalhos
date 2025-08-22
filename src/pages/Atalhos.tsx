@@ -611,7 +611,7 @@ const Atalhos = () => {
     }));
   }, [dbGroups, dbShortcuts]);
 
-  // Função para abrir URLs selecionadas - versão simplificada
+  // Função para abrir URLs selecionadas - versão otimizada
   const openSelectedUrls = async () => {
     console.log('=== INICIANDO ABERTURA DE URLs SELECIONADAS ===');
     console.log('Botões selecionados (IDs):', selectedButtons);
@@ -668,8 +668,74 @@ const Atalhos = () => {
     let failCount = 0;
     const failedUrls: string[] = [];
 
+    // Função auxiliar para tentar abrir uma URL com múltiplos métodos
+    const tryOpenUrl = async (url: string, title: string): Promise<boolean> => {
+      try {
+        // Método 1: window.open padrão
+        const newTab = window.open(url, '_blank', 'noopener,noreferrer');
+        
+        if (newTab && !newTab.closed) {
+          // Aguardar um pouco para verificar se a aba foi realmente aberta
+          await new Promise(resolve => setTimeout(resolve, 50));
+          if (!newTab.closed) {
+            return true;
+          }
+        }
+        
+        console.warn(`⚠️ window.open foi bloqueado, tentando método alternativo...`);
+        
+        // Método 2: Criar link e simular clique com interação do usuário
+        return new Promise((resolve) => {
+          const link = document.createElement('a');
+          link.href = url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.style.position = 'absolute';
+          link.style.left = '-9999px';
+          link.style.visibility = 'hidden';
+          link.style.pointerEvents = 'auto';
+          
+          document.body.appendChild(link);
+          
+          // Simular clique com evento mais robusto
+          const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            detail: 1,
+            button: 0,
+            buttons: 1
+          });
+          
+          // Tentar múltiplas formas de ativação
+          try {
+            link.click(); // Método direto
+            link.dispatchEvent(clickEvent); // Evento simulado
+          } catch (e) {
+            console.warn('Erro ao simular clique:', e);
+          }
+          
+          // Limpar após um tempo maior
+          setTimeout(() => {
+            try {
+              if (document.body.contains(link)) {
+                document.body.removeChild(link);
+              }
+            } catch (e) {
+              console.warn('Erro ao remover link:', e);
+            }
+            resolve(true); // Assumir sucesso para método alternativo
+          }, 200);
+        });
+        
+      } catch (error) {
+        console.error(`❌ Erro ao abrir URL:`, error);
+        return false;
+      }
+    };
+
     try {
-      // Abrir todas as URLs em novas abas
+      // Abrir todas as URLs sequencialmente com delay maior
       for (let i = 0; i < allButtons.length; i++) {
         const button = allButtons[i];
         setOpeningProgress({ current: i + 1, total: allButtons.length });
@@ -683,54 +749,20 @@ const Atalhos = () => {
 
         console.log(`🔄 Abrindo URL ${i + 1}/${allButtons.length}: ${button.title} - ${button.url}`);
         
-        try {
-          // Usar window.open com '_blank' para abrir em nova aba
-          const newTab = window.open(button.url, '_blank', 'noopener,noreferrer');
-          
-          if (newTab) {
-            console.log(`✅ URL ${i + 1} aberta com sucesso:`, button.url);
-            successCount++;
-          } else {
-            console.warn(`⚠️ window.open foi bloqueado para URL ${i + 1}`);
-            // Método alternativo: criar link e simular clique
-            const link = document.createElement('a');
-            link.href = button.url;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.style.position = 'absolute';
-            link.style.left = '-9999px';
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            
-            // Simular clique do usuário
-            const clickEvent = new MouseEvent('click', {
-              bubbles: true,
-              cancelable: true,
-              view: window
-            });
-            
-            link.dispatchEvent(clickEvent);
-            
-            // Limpar após um tempo
-            setTimeout(() => {
-              if (document.body.contains(link)) {
-                document.body.removeChild(link);
-              }
-            }, 100);
-            
-            console.log(`✅ URL ${i + 1} aberta via método alternativo:`, button.url);
-            successCount++;
-          }
-        } catch (error) {
-          console.error(`❌ Erro ao abrir URL ${i + 1}:`, error, button.url);
+        const success = await tryOpenUrl(button.url, button.title);
+        
+        if (success) {
+          console.log(`✅ URL ${i + 1} aberta com sucesso:`, button.url);
+          successCount++;
+        } else {
+          console.error(`❌ Falha ao abrir URL ${i + 1}:`, button.url);
           failCount++;
           failedUrls.push(`${button.title} (${button.url})`);
         }
         
-        // Pequeno delay entre aberturas para evitar bloqueio de pop-ups
+        // Delay maior entre aberturas para evitar bloqueio de pop-ups (500ms)
         if (i < allButtons.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
 
