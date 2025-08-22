@@ -38,7 +38,7 @@ export const DashboardHeader = ({ user, isBusinessDay, nextBusinessDay, onSearch
               <div className="flex items-start gap-5">
                 <a href="https://trt15.jus.br/" target="_blank" rel="noopener noreferrer" className="group flex-shrink-0">
                   <div className="relative">
-                    <div className="p-4 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 rounded-3xl shadow-2xl group-hover:shadow-3xl transition-all duration-500 group-hover:scale-105 group-hover:rotate-3">
+                    <div className="p-4 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-500 rounded-3xl shadow-2xl group-hover:shadow-3xl transition-all duration-500 group-hover:scale-105 group-hover:rotate-3">
                       <img 
                         src="/lovable-uploads/622691d5-a295-40f0-ad0d-cb958024c4ba.png" 
                         alt="Brasão TRT15" 
