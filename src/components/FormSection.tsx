@@ -119,11 +119,25 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
         <div className="space-y-6">
           {/* Grid de Campos Principais */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Resumo */}
+            {/* Chamado Origem */}
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="chamadoOrigem" className="text-sm font-medium">
+                Chamado Origem
+              </Label>
+              <InputComSugestoes
+                id="chamadoOrigem"
+                value={formData.chamadoOrigem}
+                onChange={(value) => onInputChange('chamadoOrigem', value)}
+                sugestoes={sugestoesChamadoOrigem}
+                placeholder="Número do chamado de origem"
+              />
+            </div>
+
+            {/* Assunto */}
             <div className="md:col-span-2 space-y-2">
               <Label htmlFor="resumo" className="text-sm font-medium flex items-center gap-2">
                 <Hash className="h-4 w-4" />
-                Resumo *
+                Assunto *
               </Label>
               <InputComSugestoes
                 ref={resumoRef}
@@ -131,7 +145,7 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
                 value={formData.resumo}
                 onChange={(value) => onInputChange('resumo', value)}
                 sugestoes={sugestoesResumo}
-                placeholder="Selecione ou digite o resumo do problema"
+                placeholder="Selecione ou digite o assunto do problema"
                 className={validationErrors.resumo ? 'border-red-500' : ''}
               />
               {validationErrors.resumo && (
@@ -142,17 +156,17 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
               )}
             </div>
 
-            {/* Resumo Personalizado - só aparece se resumo for 'Outro (personalizado)' */}
+            {/* Assunto Personalizado - só aparece se resumo for 'Outro (personalizado)' */}
             {formData.resumo === 'Outro (personalizado)' && (
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="resumoCustom" className="text-sm font-medium">
-                  Resumo Personalizado *
+                  Assunto Personalizado *
                 </Label>
                 <Input
                   id="resumoCustom"
                   value={formData.resumoCustom}
                   onChange={(e) => onInputChange('resumoCustom', e.target.value)}
-                  placeholder="Digite o resumo personalizado"
+                  placeholder="Digite o assunto personalizado"
                   className={validationErrors.resumoCustom ? 'border-red-500' : ''}
                 />
                 {validationErrors.resumoCustom && (
@@ -190,32 +204,18 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
               )}
             </div>
 
-            {/* Chamado Origem */}
+            {/* Número(s) do(s) Processo(s) */}
             <div className="space-y-2">
-              <Label htmlFor="chamadoOrigem" className="text-sm font-medium">
-                Chamado Origem
+              <Label htmlFor="processos" className="text-sm font-medium">
+                Número(s) do(s) Processo(s)
               </Label>
-              <InputComSugestoes
-                id="chamadoOrigem"
-                value={formData.chamadoOrigem}
-                onChange={(value) => onInputChange('chamadoOrigem', value)}
-                sugestoes={sugestoesChamadoOrigem}
-                placeholder="Número do chamado de origem"
+              <Input
+                id="processos"
+                value={formData.processos}
+                onChange={(e) => handleProcessoChange(e.target.value)}
+                placeholder="Ex: 1234567-89.2023.8.02.0001"
               />
             </div>
-          </div>
-
-          {/* Número(s) do(s) Processo(s) */}
-          <div className="space-y-2">
-            <Label htmlFor="processos" className="text-sm font-medium">
-              Número(s) do(s) Processo(s)
-            </Label>
-            <Input
-              id="processos"
-              value={formData.processos}
-              onChange={(e) => handleProcessoChange(e.target.value)}
-              placeholder="Ex: 1234567-89.2023.8.02.0001"
-            />
           </div>
 
           {/* Órgão Julgador - condicional baseado no grau */}

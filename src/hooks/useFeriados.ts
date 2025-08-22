@@ -7,18 +7,88 @@ type Feriado = Tables<"feriados">;
 type NovoFeriado = TablesInsert<"feriados">;
 type AtualizarFeriado = TablesUpdate<"feriados">;
 
+// Cache agressivo para feriados
+interface FeriadoCache {
+  data: Feriado[];
+  timestamp: number;
+}
+
+let feriadosCache: FeriadoCache | null = null;
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 horas (feriados mudam raramente)
+const LOCAL_STORAGE_KEY = 'napje_feriados_cache';
+const LOCAL_STORAGE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 dias
+
+// Funções para localStorage
+const saveToLocalStorage = (data: Feriado[]) => {
+  try {
+    const cacheData = {
+      data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cacheData));
+  } catch (error) {
+    console.warn('Erro ao salvar feriados no localStorage:', error);
+  }
+};
+
+const loadFromLocalStorage = (): Feriado[] | null => {
+  try {
+    const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!cached) return null;
+    
+    const { data, timestamp } = JSON.parse(cached);
+    const isExpired = Date.now() - timestamp > LOCAL_STORAGE_DURATION;
+    
+    if (isExpired) {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.warn('Erro ao carregar feriados do localStorage:', error);
+    return null;
+  }
+};
+
 export const useFeriados = () => {
   return useQuery({
     queryKey: ["feriados"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("feriados")
-        .select("*")
-        .order("data", { ascending: true });
+      // Verifica cache em memória primeiro
+      if (feriadosCache && Date.now() - feriadosCache.timestamp < CACHE_DURATION) {
+        return feriadosCache.data;
+      }
+
+      // Verifica localStorage
+      const cachedData = loadFromLocalStorage();
+      if (cachedData) {
+        feriadosCache = {
+          data: cachedData,
+          timestamp: Date.now()
+        };
+        return cachedData;
+      }
+
+      // Busca do servidor apenas se não houver cache válido
+       const { data, error } = await supabase
+         .from("feriados" as any)
+         .select("id, data, nome, tipo, estado, cidade")
+         .order("data", { ascending: true });
 
       if (error) throw error;
+      
+      // Atualiza ambos os caches
+      feriadosCache = {
+        data: data || [],
+        timestamp: Date.now()
+      };
+      saveToLocalStorage(data || []);
+      
       return data;
     },
+    staleTime: CACHE_DURATION, // Considera os dados frescos por 24h
+    gcTime: CACHE_DURATION * 2, // Mantém no cache do React Query por 48h
   });
 };
 
@@ -42,6 +112,9 @@ export const useCreateFeriado = () => {
       return data;
     },
     onSuccess: () => {
+      // Limpa todos os caches
+      feriadosCache = null;
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
       queryClient.invalidateQueries({ queryKey: ["feriados"] });
       toast({
         title: "Sucesso",
@@ -74,6 +147,9 @@ export const useUpdateFeriado = () => {
       return data;
     },
     onSuccess: () => {
+      // Limpa todos os caches
+      feriadosCache = null;
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
       queryClient.invalidateQueries({ queryKey: ["feriados"] });
       toast({
         title: "Sucesso",
@@ -103,6 +179,9 @@ export const useDeleteFeriado = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Limpa todos os caches
+      feriadosCache = null;
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
       queryClient.invalidateQueries({ queryKey: ["feriados"] });
       toast({
         title: "Sucesso",

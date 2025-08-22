@@ -1,13 +1,66 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { limparCPF } from '@/utils/cpf-utils';
 
 export interface Usuario {
   id: string;
   cpf: string;
   nome_completo: string;
-  perfil: string | null;
+  perfil_usuario: string;
+  orgao_julgador: string;
+  created_at: string;
+  updated_at: string;
 }
+
+// Cache agressivo para usuários
+interface UsuarioCache {
+  [key: string]: {
+    data: Usuario[];
+    timestamp: number;
+  };
+}
+
+let usuariosCache: UsuarioCache = {};
+const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 horas
+const LOCAL_STORAGE_KEY = 'napje_usuarios_cache';
+const LOCAL_STORAGE_DURATION = 24 * 60 * 60 * 1000; // 24 horas
+
+// Funções para localStorage
+const saveToLocalStorage = (key: string, data: Usuario[]) => {
+  try {
+    const allCache = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+    allCache[key] = {
+      data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(allCache));
+  } catch (error) {
+    console.warn('Erro ao salvar usuários no localStorage:', error);
+  }
+};
+
+const loadFromLocalStorage = (key: string): Usuario[] | null => {
+  try {
+    const allCache = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+    const cached = allCache[key];
+    
+    if (!cached) return null;
+    
+    const isExpired = Date.now() - cached.timestamp > LOCAL_STORAGE_DURATION;
+    
+    if (isExpired) {
+      delete allCache[key];
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(allCache));
+      return null;
+    }
+    
+    return cached.data;
+  } catch (error) {
+    console.warn('Erro ao carregar usuários do localStorage:', error);
+    return null;
+  }
+};
 
 export const useUsuarios = () => {
   const [loading, setLoading] = useState(false);
@@ -68,21 +121,75 @@ export const useUsuarios = () => {
   };
 
   const buscarUsuarios = async (termo: string): Promise<Usuario[]> => {
-    if (!termo || termo.length < 3) return [];
+    if (!termo || termo.length < 3) {
+      return [];
+    }
+
+    const cacheKey = termo.toLowerCase().trim();
+    
+    // Verificar cache em memória
+    const cached = usuariosCache[cacheKey];
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log('📦 Usando usuários do cache em memória');
+      return cached.data;
+    }
+
+    // Verificar localStorage
+    const localData = loadFromLocalStorage(cacheKey);
+    if (localData) {
+      console.log('📦 Usando usuários do localStorage');
+      usuariosCache[cacheKey] = {
+        data: localData,
+        timestamp: Date.now()
+      };
+      return localData;
+    }
+
+    setLoading(true);
 
     try {
       const { data, error } = await supabase
         .from('usuarios')
-        .select('id, cpf, nome_completo, perfil')
+        .select('id, cpf, nome_completo, perfil_usuario, orgao_julgador, created_at, updated_at')
         .or(`cpf.ilike.%${termo}%,nome_completo.ilike.%${termo}%`)
         .order('nome_completo')
-        .limit(10);
+        .limit(8); // Reduzido de 10 para 8
 
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        console.error('Erro ao buscar usuários:', error);
+        // Retornar dados do localStorage se disponível
+        if (localData) {
+          return localData;
+        }
+        throw error;
+      }
+
+      const usuarios = data || [];
+      
+      // Atualizar cache em memória
+      usuariosCache[cacheKey] = {
+        data: usuarios,
+        timestamp: Date.now()
+      };
+
+      // Salvar no localStorage
+      saveToLocalStorage(cacheKey, usuarios);
+
+      console.log(`✅ ${usuarios.length} usuários encontrados e armazenados em cache`);
+      return usuarios;
     } catch (err) {
       console.error('Erro ao buscar usuários:', err);
+      
+      // Tentar retornar dados do localStorage como último recurso
+      if (localData) {
+        console.log('📦 Usando usuários do localStorage como fallback após erro');
+        return localData;
+      }
+      
+      toast.error('Erro ao buscar usuários. Verifique sua conexão.');
       return [];
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,10 +201,10 @@ export const useUsuarios = () => {
       const cpfLimpo = cpf.replace(/\D/g, '');
       
       const { data, error } = await supabase
-        .from('usuarios')
-        .select('id, cpf, nome_completo, perfil')
-        .eq('cpf', cpfLimpo)
-        .maybeSingle();
+      .from('usuarios')
+       .select('id, cpf, nome_completo, perfil_usuario, orgao_julgador, created_at, updated_at')
+       .eq('cpf', cpfLimpo)
+       .maybeSingle();
 
       if (error) throw error;
       return data;

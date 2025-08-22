@@ -2,12 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, Plus, StickyNote, Scale, Calendar, Brain, Zap, RefreshCw, Lightbulb } from 'lucide-react';
+import { BookOpen, Plus, StickyNote, Scale, Calendar, Zap } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ModernButton } from '@/components/ui/modern-button';
-import { Badge } from '@/components/ui/badge';
+
 import { ModernLayout } from '@/components/layout/ModernLayout';
 import { ModernCard, ModernCardContent, ModernCardHeader } from '@/components/ui/modern-card';
 import { ModernGrid, ModernGridItem } from '@/components/layout/ModernGrid';
@@ -32,7 +32,7 @@ import { ptBR } from 'date-fns/locale';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
 import { SmartSearchDialog } from '@/components/SmartSearchDialog';
-import { AIInsightsPanel } from '@/components/AIInsightsPanel';
+
 import { SearchResult } from '@/hooks/useSmartSearch';
 import { toast } from '@/hooks/use-toast';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -560,52 +560,7 @@ const Dashboard = () => {
           {/* Coluna Lateral - Painéis Verticais */}
           <ModernGridItem span={1}>
             <div className="space-y-6 sticky top-6">
-              {/* Painel de Insights de IA */}
-              <ModernCard variant="glass" glow={true}>
-                <ModernCardHeader
-                  title="Insights de IA"
-                  description="Recomendações inteligentes"
-                  icon={<Brain className="h-5 w-5 text-white" />}
-                  action={
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-                <ModernCardContent>
-                  <div className="space-y-4">
-                    <div className="bg-card/60 backdrop-blur-sm rounded-xl p-4 border border-border/20">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 bg-gradient-blue rounded-lg">
-                          <Lightbulb className="h-4 w-4 text-white" />
-                        </div>
-                        <span className="font-medium text-foreground">Bem-vindo ao PJe!</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                        Comece criando seu primeiro chamado para organizar suas tarefas e acompanhar o progresso dos seus projetos.
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-2">
-                          <Badge variant="outline" className="text-xs">medium</Badge>
-                          <Badge variant="outline" className="text-xs">productivity</Badge>
-                        </div>
-                        <span className="text-xs text-muted-foreground">95% confiança</span>
-                      </div>
-                    </div>
-                    <ModernButton 
-                      variant="gradient" 
-                      className="w-full"
-                      onClick={() => navigate('/criar-chamado')}
-                    >
-                      Criar Chamado →
-                    </ModernButton>
-                  </div>
-                </ModernCardContent>
-              </ModernCard>
+              {/* Seção de Insights de IA removida para interface mais limpa */}
 
               {/* Painel de Plantões */}
               <PlantaoPanel />

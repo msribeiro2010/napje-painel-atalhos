@@ -28,6 +28,63 @@ export interface SearchResult {
   };
 }
 
+// Cache agressivo para pesquisas
+interface SearchCache {
+  [key: string]: {
+    data: SearchResult[];
+    timestamp: number;
+  };
+}
+
+let searchCache: SearchCache = {};
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutos
+const LOCAL_STORAGE_KEY = 'napje_search_cache';
+const LOCAL_STORAGE_DURATION = 2 * 60 * 60 * 1000; // 2 horas
+
+// Funções para localStorage
+const saveToLocalStorage = (key: string, data: SearchResult[]) => {
+  try {
+    const allCache = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+    allCache[key] = {
+      data,
+      timestamp: Date.now()
+    };
+    // Limitar o tamanho do cache (máximo 50 pesquisas)
+    const keys = Object.keys(allCache);
+    if (keys.length > 50) {
+      const oldestKey = keys.reduce((oldest, current) => 
+        allCache[current].timestamp < allCache[oldest].timestamp ? current : oldest
+      );
+      delete allCache[oldestKey];
+    }
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(allCache));
+  } catch (error) {
+    console.warn('Erro ao salvar pesquisa no localStorage:', error);
+  }
+};
+
+const loadFromLocalStorage = (key: string): SearchResult[] | null => {
+  try {
+    const allCache = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+    const cached = allCache[key];
+    
+    if (!cached) return null;
+    
+    const isExpired = Date.now() - cached.timestamp > LOCAL_STORAGE_DURATION;
+    
+    if (isExpired) {
+      delete allCache[key];
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(allCache));
+      return null;
+    }
+    
+    return cached.data;
+  } catch (error) {
+    console.warn('Erro ao carregar pesquisa do localStorage:', error);
+    return null;
+  }
+};
+
 export const useSmartSearch = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -121,7 +178,7 @@ export const useSmartSearch = () => {
         `)
         .or(`resumo.ilike.%${query}%,notas.ilike.%${query}%,grau.ilike.%${query}%`)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(15);
 
       if (error) {
         console.error('❌ Erro ao buscar chamados:', error);
@@ -536,6 +593,31 @@ export const useSmartSearch = () => {
     }
 
     const { types = ['chamado', 'conhecimento'], limit = 20 } = options || {};
+    
+    // Criar chave de cache baseada na query e opções
+    const cacheKey = `${query.toLowerCase().trim()}_${types.join(',')}_${limit}`;
+    
+    // Verificar cache em memória primeiro
+    const memoryCache = searchCache[cacheKey];
+    if (memoryCache && Date.now() - memoryCache.timestamp < CACHE_DURATION) {
+      console.log('🎯 Cache hit (memória):', cacheKey);
+      setResults(memoryCache.data);
+      return memoryCache.data;
+    }
+    
+    // Verificar cache no localStorage
+    const localCache = loadFromLocalStorage(cacheKey);
+    if (localCache) {
+      console.log('🎯 Cache hit (localStorage):', cacheKey);
+      // Atualizar cache em memória
+      searchCache[cacheKey] = {
+        data: localCache,
+        timestamp: Date.now()
+      };
+      setResults(localCache);
+      return localCache;
+    }
+    
     setIsLoading(true);
     setError(null);
 
@@ -604,6 +686,21 @@ export const useSmartSearch = () => {
       }
 
       setResults(sortedResults);
+      
+      // Salvar no cache (memória e localStorage)
+      searchCache[cacheKey] = {
+        data: sortedResults,
+        timestamp: Date.now()
+      };
+      saveToLocalStorage(cacheKey, sortedResults);
+      
+      // Limpar cache antigo da memória
+      const now = Date.now();
+      Object.keys(searchCache).forEach(key => {
+        if (now - searchCache[key].timestamp > CACHE_DURATION) {
+          delete searchCache[key];
+        }
+      });
 
       // Adicionar ao histórico apenas se houve busca real
       if (query.trim().length > 0) {
@@ -711,6 +808,12 @@ export const useSmartSearch = () => {
     setSearchHistory([]);
     localStorage.removeItem('smart_search_history');
   }, []);
+  
+  const clearSearchCache = useCallback(() => {
+    console.log('🗑️ Limpando cache de pesquisa');
+    searchCache = {};
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+  }, []);
 
   const semanticSearch = useCallback((query: string) => {
     return hybridSearch(query, { types: ['chamado', 'conhecimento'] });
@@ -737,6 +840,7 @@ export const useSmartSearch = () => {
     searchEntity,
     getSmartSuggestions,
     clearResults,
-    clearSearchHistory
+    clearSearchHistory,
+    clearSearchCache
   };
 };

@@ -3,16 +3,52 @@ import { supabase } from '@/integrations/supabase/client';
 import { FormData } from '@/types/form';
 import { toast } from 'sonner';
 import { limparCPF } from '@/utils/cpf-utils';
+import { useUsageTracking } from './useUsageTracking';
 
-// Cache simples para chamados recentes
+// Cache agressivo para reduzir egress do Supabase
 interface CacheEntry {
   data: Chamado[];
   timestamp: number;
   limit: number;
 }
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 let chamadosCache: CacheEntry | null = null;
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hora
+const LOCAL_STORAGE_KEY = 'napje_chamados_cache';
+const LOCAL_STORAGE_DURATION = 24 * 60 * 60 * 1000; // 24 horas
+
+// Funções para localStorage
+const saveToLocalStorage = (data: Chamado[]) => {
+  try {
+    const cacheData = {
+      data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cacheData));
+  } catch (error) {
+    console.warn('Erro ao salvar no localStorage:', error);
+  }
+};
+
+const loadFromLocalStorage = (): Chamado[] | null => {
+  try {
+    const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!cached) return null;
+    
+    const { data, timestamp } = JSON.parse(cached);
+    const isExpired = Date.now() - timestamp > LOCAL_STORAGE_DURATION;
+    
+    if (isExpired) {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.warn('Erro ao carregar do localStorage:', error);
+    return null;
+  }
+};
 
 export interface Chamado {
   id: string;
@@ -32,6 +68,7 @@ export interface Chamado {
 export const useChamados = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { trackRequest, trackCacheHit, estimateDataSize } = useUsageTracking();
 
   // Função para limpar cache
   const clearCache = useCallback(() => {
@@ -75,6 +112,7 @@ export const useChamados = () => {
       
       // Limpar cache após salvar novo chamado
       clearCache();
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
       
       toast.success('Chamado salvo com sucesso!');
       return data;
@@ -93,10 +131,25 @@ export const useChamados = () => {
     try {
       setError(null);
       
-      // Verificar cache primeiro
+      // Verificar cache em memória primeiro
       if (isCacheValid(limite)) {
-        console.log('📦 Usando dados do cache');
+        console.log('📦 Usando dados do cache em memória');
+        trackCacheHit();
         return chamadosCache!.data.slice(0, limite);
+      }
+
+      // Verificar localStorage como fallback
+      const localData = loadFromLocalStorage();
+      if (localData && localData.length >= limite) {
+        console.log('📦 Usando dados do localStorage');
+        // Atualizar cache em memória
+        chamadosCache = {
+          data: localData,
+          timestamp: Date.now(),
+          limit: localData.length
+        };
+        trackCacheHit();
+        return localData.slice(0, limite);
       }
 
       setLoading(true);
@@ -106,22 +159,29 @@ export const useChamados = () => {
         .from('chamados')
         .select(`
           id,
+          numero_processo,
           titulo,
           descricao,
-          created_at,
-          numero_processo,
-          grau,
-          orgao_julgador,
           perfil_usuario_afetado,
           nome_usuario_afetado,
           cpf_usuario_afetado,
+          orgao_julgador,
+          grau,
           chamado_origem,
-          status
+          status,
+          created_at
         `)
         .order('created_at', { ascending: false })
-        .limit(Math.max(limite, 20)); // Buscar pelo menos 20 para cache
+        .limit(Math.max(limite, 30)); // Reduzido de 50 para 30
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar chamados:', error);
+        // Retornar dados do localStorage se disponível
+        if (localData) {
+          return localData.slice(0, limite);
+        }
+        throw error;
+      }
       
       // Mapear os dados para o formato esperado
       const chamadosFormatados = (data || []).map(chamado => ({
@@ -139,12 +199,18 @@ export const useChamados = () => {
         status: chamado.status || 'Aberto'
       }));
       
-      // Atualizar cache
+      // Atualizar cache em memória
       chamadosCache = {
         data: chamadosFormatados,
         timestamp: Date.now(),
-        limit: Math.max(limite, 20)
+        limit: chamadosFormatados.length
       };
+      
+      // Salvar no localStorage
+      saveToLocalStorage(chamadosFormatados);
+      
+      // Rastrear requisição
+      trackRequest(estimateDataSize(chamadosFormatados));
       
       console.log(`✅ ${chamadosFormatados.length} chamados carregados e armazenados em cache`);
       return chamadosFormatados.slice(0, limite);
@@ -152,6 +218,14 @@ export const useChamados = () => {
       const errorMessage = err?.message || 'Erro desconhecido ao buscar chamados';
       console.error('❌ Erro ao buscar chamados:', err);
       setError(errorMessage);
+      
+      // Tentar retornar dados do localStorage como último recurso
+      const localData = loadFromLocalStorage();
+      if (localData) {
+        console.log('📦 Usando dados do localStorage como fallback após erro');
+        return localData.slice(0, limite);
+      }
+      
       toast.error('Erro ao carregar chamados. Verifique sua conexão.');
       return [];
     } finally {
@@ -173,6 +247,7 @@ export const useChamados = () => {
       
       // Limpar cache após exclusão
       clearCache();
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
       
       toast.success('Chamado excluído com sucesso');
       return true;

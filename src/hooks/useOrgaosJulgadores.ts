@@ -11,6 +11,52 @@ export interface OrgaoJulgador {
   updated_at?: string;
 }
 
+// Cache agressivo para órgãos julgadores
+interface OrgaoCache {
+  [key: string]: {
+    data: OrgaoJulgador[];
+    timestamp: number;
+  };
+}
+
+let orgaosCache: OrgaoCache = {};
+const CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 horas (órgãos mudam raramente)
+const LOCAL_STORAGE_KEY = 'napje_orgaos_cache';
+const LOCAL_STORAGE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 dias
+
+// Funções para localStorage
+const saveToLocalStorage = (data: OrgaoJulgador[], grau: string) => {
+  try {
+    const cacheData = {
+      data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(`${LOCAL_STORAGE_KEY}_${grau}`, JSON.stringify(cacheData));
+  } catch (error) {
+    console.warn('Erro ao salvar órgãos no localStorage:', error);
+  }
+};
+
+const loadFromLocalStorage = (grau: string): OrgaoJulgador[] | null => {
+  try {
+    const cached = localStorage.getItem(`${LOCAL_STORAGE_KEY}_${grau}`);
+    if (!cached) return null;
+    
+    const { data, timestamp } = JSON.parse(cached);
+    const isExpired = Date.now() - timestamp > LOCAL_STORAGE_DURATION;
+    
+    if (isExpired) {
+      localStorage.removeItem(`${LOCAL_STORAGE_KEY}_${grau}`);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.warn('Erro ao carregar órgãos do localStorage:', error);
+    return null;
+  }
+};
+
 export interface CreateOrgaoJulgador {
   codigo: string;
   nome: string;
@@ -21,7 +67,7 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
   const queryClient = useQueryClient();
   const tableName = grau === '1grau' ? 'orgaos_julgadores_1grau' : 'orgaos_julgadores_2grau';
 
-  // Query para buscar órgãos julgadores
+  // Query para buscar órgãos julgadores com cache agressivo
   const {
     data: orgaos = [],
     isLoading,
@@ -29,13 +75,34 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
   } = useQuery({
     queryKey: ['orgaos-julgadores', grau],
     queryFn: async () => {
+      // Verificar cache em memória primeiro
+       const cacheKey = grau;
+       if (orgaosCache[cacheKey] && Date.now() - orgaosCache[cacheKey].timestamp < CACHE_DURATION) {
+         console.log(`🚀 Cache hit para órgãos ${grau}`);
+         return orgaosCache[cacheKey].data;
+       }
+       
+       // Verificar localStorage
+       const cachedData = loadFromLocalStorage(grau);
+       if (cachedData) {
+         console.log(`💾 Dados carregados do localStorage para ${grau}`);
+         // Atualizar cache em memória
+         orgaosCache[cacheKey] = {
+           data: cachedData,
+           timestamp: Date.now()
+         };
+         return cachedData;
+       }
+      
       try {
         const { data, error } = await supabase
-          .from(tableName)
-          .select('*')
-          .order('codigo', { ascending: true });
+           .from(tableName)
+           .select('id, codigo, nome')
+           .order('nome', { ascending: true });
 
         if (error) throw error;
+        
+        let finalData: OrgaoJulgador[];
         
         // Se não há dados no banco, usar dados estáticos como fallback
         if (!data || data.length === 0) {
@@ -46,18 +113,25 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
             ? orgaosJulgadores.filter(org => parseInt(org.codigo) < 200)
             : orgaosJulgadores.filter(org => parseInt(org.codigo) >= 200);
           
-          const orgaosFallback = orgaosFiltrados.map((orgao, index) => ({
+          finalData = orgaosFiltrados.map((orgao, index) => ({
             id: `fallback-${grau}-${index}`,
             codigo: orgao.codigo,
             nome: orgao.nome,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }));
-          
-          return orgaosFallback as OrgaoJulgador[];
+        } else {
+          finalData = data as OrgaoJulgador[];
         }
         
-        return data as OrgaoJulgador[];
+        // Salvar nos caches
+         orgaosCache[cacheKey] = {
+           data: finalData,
+           timestamp: Date.now()
+         };
+         saveToLocalStorage(finalData, grau);
+        
+        return finalData;
       } catch (err) {
         console.error(`Erro ao carregar órgãos julgadores ${grau} do banco, usando fallback:`, err);
         
@@ -76,7 +150,11 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
         
         return orgaosFallback as OrgaoJulgador[];
       }
-    }
+    },
+    staleTime: CACHE_DURATION, // Dados considerados frescos por 12 horas
+    gcTime: CACHE_DURATION * 2, // Manter no cache do React Query por 24 horas
+    refetchOnWindowFocus: false, // Não refetch ao focar na janela
+    refetchOnMount: false // Não refetch ao montar se já tem dados
   });
 
   // Mutation para criar órgão julgador
@@ -92,6 +170,9 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
       return data;
     },
     onSuccess: () => {
+      // Limpar caches ao criar
+       orgaosCache = {};
+       localStorage.removeItem(`${LOCAL_STORAGE_KEY}_${grau}`);
       queryClient.invalidateQueries({ queryKey: ['orgaos-julgadores', grau] });
       toast({
         title: "Sucesso!",
@@ -121,6 +202,9 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
       return data;
     },
     onSuccess: () => {
+      // Limpar caches ao atualizar
+       orgaosCache = {};
+       localStorage.removeItem(`${LOCAL_STORAGE_KEY}_${grau}`);
       queryClient.invalidateQueries({ queryKey: ['orgaos-julgadores', grau] });
       toast({
         title: "Sucesso!",
@@ -147,6 +231,9 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Limpar caches ao deletar
+       orgaosCache = {};
+       localStorage.removeItem(`${LOCAL_STORAGE_KEY}_${grau}`);
       queryClient.invalidateQueries({ queryKey: ['orgaos-julgadores', grau] });
       toast({
         title: "Sucesso!",
