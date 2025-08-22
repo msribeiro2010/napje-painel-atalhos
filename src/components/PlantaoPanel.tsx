@@ -74,8 +74,8 @@ export const PlantaoPanel: React.FC<PlantaoPanelProps> = ({ className }) => {
   return (
     <Card className={cn('w-full', className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <Calendar className="h-4 w-4" />
+        <CardTitle className="text-lg font-semibold flex items-center gap-2 text-foreground">
+          <Calendar className="h-5 w-5" />
           Plantões
           {stats.urgent > 0 && (
             <Badge variant="destructive" className="ml-2">

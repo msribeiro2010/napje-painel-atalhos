@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, Plus, StickyNote, Scale, Calendar, Zap } from 'lucide-react';
+import { BookOpen, Plus, StickyNote, Scale, Calendar, Zap, Building2, Home } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ import { ChatAssistant } from '@/components/ChatAssistant';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
 import { usePostItNotes } from '@/hooks/usePostItNotes';
 import { usePlantaoNotifications } from '@/hooks/usePlantaoNotifications';
+import { useWorkStats } from '@/hooks/useWorkStats';
 
 import { ptBR } from 'date-fns/locale';
 import type { ChamadoComPerfil, DashboardAction } from '@/types/dashboard';
@@ -48,6 +49,9 @@ const Dashboard = () => {
   
   // Hook para notificações de plantão
   usePlantaoNotifications();
+  
+  // Hook para estatísticas de trabalho
+  const workStats = useWorkStats();
 
   const [postItOpen, setPostItOpen] = useState(false);
   const [smartSearchOpen, setSmartSearchOpen] = useState(false);
@@ -565,6 +569,74 @@ const Dashboard = () => {
               {/* Painel de Plantões */}
               <PlantaoPanel />
 
+              {/* Painel de Dias Presenciais */}
+              <ModernCard variant="glass">
+                <ModernCardHeader
+                  title="Dias Presenciais"
+                  description="Controle de presença no escritório"
+                  icon={<Building2 className="h-5 w-5 text-white" />}
+                  className="bg-gradient-to-r from-blue-200 via-blue-300 to-blue-400"
+                />
+                <ModernCardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-blue-600/80 backdrop-blur-sm rounded-xl border border-blue-500/30">
+                      <span className="text-sm text-white font-medium">Esta Semana</span>
+                      <span className="text-sm font-semibold text-white">{workStats.presencial.thisWeek} dias</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-blue-600/80 backdrop-blur-sm rounded-xl border border-blue-500/30">
+                      <span className="text-sm text-white font-medium">Este Mês</span>
+                      <span className="text-sm font-semibold text-white">{workStats.presencial.thisMonth} dias</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-blue-600/80 backdrop-blur-sm rounded-xl border border-blue-500/30">
+                      <span className="text-sm text-white font-medium">Próximo</span>
+                      <span className="text-sm font-semibold text-white">{workStats.presencial.nextEvent || 'Nenhum agendado'}</span>
+                    </div>
+                  </div>
+                  <ModernButton
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-4 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+                    onClick={() => navigate('/calendario')}
+                  >
+                    Ver Calendário
+                  </ModernButton>
+                </ModernCardContent>
+              </ModernCard>
+
+              {/* Painel de Trabalho Remoto */}
+              <ModernCard variant="glass">
+                <ModernCardHeader
+                  title="Trabalho Remoto"
+                  description="Controle de dias em home office"
+                  icon={<Home className="h-5 w-5 text-white" />}
+                  className="bg-gradient-to-r from-green-200 via-green-300 to-green-400"
+                />
+                <ModernCardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-green-600/80 backdrop-blur-sm rounded-xl border border-green-500/30">
+                      <span className="text-sm text-white font-medium">Esta Semana</span>
+                      <span className="text-sm font-semibold text-white">{workStats.remoto.thisWeek} dias</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-green-600/80 backdrop-blur-sm rounded-xl border border-green-500/30">
+                      <span className="text-sm text-white font-medium">Este Mês</span>
+                      <span className="text-sm font-semibold text-white">{workStats.remoto.thisMonth} dias</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-green-600/80 backdrop-blur-sm rounded-xl border border-green-500/30">
+                      <span className="text-sm text-white font-medium">Próximo</span>
+                      <span className="text-sm font-semibold text-white">{workStats.remoto.nextEvent || 'Nenhum agendado'}</span>
+                    </div>
+                  </div>
+                  <ModernButton
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-4 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+                    onClick={() => navigate('/calendario')}
+                  >
+                    Agendar Remoto
+                  </ModernButton>
+                </ModernCardContent>
+              </ModernCard>
+
               {/* Painel de Métricas - Movido para área administrativa */}
               {/* <ModernCard variant="glass">
                 <ModernCardHeader
@@ -590,118 +662,7 @@ const Dashboard = () => {
                 </ModernCardContent>
               </ModernCard> */}
 
-              {/* Notas Rápidas */}
-              <ModernCard variant="glass" className="bg-gradient-to-br from-yellow-50/80 to-orange-50/80 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-200/30 dark:border-yellow-700/30">
-                <ModernCardHeader
-                  title="Notas Rápidas"
-                  description="Lembretes e anotações inteligentes"
-                  icon={
-                    <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl shadow-lg">
-                      <StickyNote className="h-5 w-5 text-white" />
-                    </div>
-                  }
-                  action={
-                    <ModernButton
-                      variant="gradient"
-                      size="sm"
-                      onClick={() => setPostItOpen(true)}
-                      icon={<Plus className="h-4 w-4" />}
-                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
-                    >
-                      Nova Nota
-                    </ModernButton>
-                  }
-                />
-                <ModernCardContent>
-                  <div className="space-y-4">
-                    {notesLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-                      </div>
-                    ) : latestNote ? (
-                      /* Preview da nota mais recente */
-                      <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-4 border border-yellow-200/50 dark:border-yellow-600/50 hover:shadow-md transition-shadow">
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex-shrink-0">
-                            <StickyNote className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h4 className="text-sm font-medium text-foreground">Nota Recente</h4>
-                              <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 text-xs rounded-full">
-                                Ativa
-                              </span>
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                              {latestNote.content || 'Nota sem conteúdo'}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>{new Date(latestNote.created_at).toLocaleDateString('pt-BR')}</span>
-                              <span>•</span>
-                              <span>{new Date(latestNote.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Estado vazio */
-                      <div className="text-center py-8">
-                        <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                          <StickyNote className="h-8 w-8 text-white" />
-                        </div>
-                        <h4 className="text-sm font-medium text-foreground mb-2">Organize suas ideias</h4>
-                        <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
-                          Crie notas rápidas para lembretes importantes
-                        </p>
-                        <ModernButton 
-                          variant="gradient" 
-                          size="sm"
-                          onClick={() => setPostItOpen(true)}
-                          icon={<Plus className="h-4 w-4" />}
-                          className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
-                        >
-                          Criar Primeira Nota
-                        </ModernButton>
-                      </div>
-                    )}
-                    
-                    {/* Estatísticas Modernizadas - apenas se houver notas */}
-                    {postItNotes.length > 0 && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="relative group">
-                          <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-red-400/20 rounded-2xl blur-sm group-hover:blur-none transition-all duration-300"></div>
-                          <div className="relative text-center p-4 bg-gradient-to-br from-white/90 to-orange-50/90 dark:from-gray-800/90 dark:to-orange-900/30 backdrop-blur-sm rounded-2xl border border-orange-200/40 dark:border-orange-600/40 shadow-lg hover:shadow-xl transition-all duration-300">
-                            <div className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-1">{notesStats.total}</div>
-                            <div className="text-xs text-muted-foreground font-medium">Notas Ativas</div>
-                          </div>
-                        </div>
-                        <div className="relative group">
-                          <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-emerald-400/20 rounded-2xl blur-sm group-hover:blur-none transition-all duration-300"></div>
-                          <div className="relative text-center p-4 bg-gradient-to-br from-white/90 to-green-50/90 dark:from-gray-800/90 dark:to-green-900/30 backdrop-blur-sm rounded-2xl border border-green-200/40 dark:border-green-600/40 shadow-lg hover:shadow-xl transition-all duration-300">
-                            <div className="text-2xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent mb-1">{notesStats.today}</div>
-                            <div className="text-xs text-muted-foreground font-medium">Criadas Hoje</div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Botão para gerenciar - Modernizado */}
-                    {postItNotes.length > 0 && (
-                      <ModernButton 
-                        variant="gradient" 
-                        className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 group"
-                        onClick={() => setPostItOpen(true)}
-                        icon={<StickyNote className="h-4 w-4 group-hover:rotate-12 transition-transform duration-300" />}
-                      >
-                        <span className="flex items-center gap-2">
-                          Gerenciar Notas
-                          <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-pulse"></div>
-                        </span>
-                      </ModernButton>
-                    )}
-                  </div>
-                </ModernCardContent>
-              </ModernCard>
+
 
               {/* Painel de Status - Movido para área administrativa */}
               {/* <ModernCard variant="glass">
