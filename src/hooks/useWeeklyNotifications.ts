@@ -6,15 +6,15 @@ interface NotificationItem {
   id: string;
   titulo: string;
   categoria?: string;
-  mensagem_notificacao?: string;
-  notificacao_semanal: boolean;
 }
 
 interface WeeklyNotificationSettings {
   enabled: boolean;
   lastNotificationDate: string | null;
-  notificationDay: number;
+  notificationDay: number; // Mantido para compatibilidade
+  notificationDays: number[]; // Novo: array de dias
   notificationTime: string;
+  isWeekdayRange: boolean; // Novo: indica se é período seg-sex
 }
 
 export const useWeeklyNotifications = () => {
@@ -22,8 +22,10 @@ export const useWeeklyNotifications = () => {
   const [settings, setSettings] = useState<WeeklyNotificationSettings>({
     enabled: true,
     lastNotificationDate: null,
-    notificationDay: 1,
-    notificationTime: '09:00'
+    notificationDay: 1, // Mantido para compatibilidade
+    notificationDays: [1], // Segunda-feira por padrão
+    notificationTime: '09:00',
+    isWeekdayRange: false
   });
   const [notificationItems, setNotificationItems] = useState<NotificationItem[]>([]);
 
@@ -44,20 +46,39 @@ export const useWeeklyNotifications = () => {
     localStorage.setItem('weekly-notification-settings', JSON.stringify(settings));
   }, [settings]);
 
-  // Buscar itens com notificação ativada
+  // Buscar itens da base de conhecimento (sem filtro de notificação)
   const fetchNotificationItems = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('base_conhecimento')
-        .select('id, titulo, categoria, mensagem_notificacao, notificacao_semanal')
-        .eq('notificacao_semanal', true)
-        .order('created_at', { ascending: false });
+        .select('id, titulo, categoria')
+        .order('created_at', { ascending: false })
+        .limit(10); // Limitar para evitar muitos itens
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) throw error;
       
       setNotificationItems(data || []);
     } catch (error) {
       console.error('Erro ao buscar itens:', error);
+      
+      // Tratamento específico para erros de conectividade
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('TypeError: Failed to fetch')) {
+          console.warn('Problema de conectividade com Supabase - definindo itens como vazio');
+        } else if (error.message.includes('Timeout')) {
+          console.warn('Timeout na busca de itens - definindo como vazio');
+        }
+      }
+      
+      // Definir como vazio em caso de erro para evitar travamento
+      setNotificationItems([]);
     }
   }, []);
 
@@ -69,12 +90,17 @@ export const useWeeklyNotifications = () => {
     const today = now.getDay();
     const currentTime = now.toTimeString().slice(0, 5);
     
-    if (today !== settings.notificationDay) return false;
+    // Verificar se hoje é um dos dias configurados
+    const activeDays = settings.isWeekdayRange 
+      ? [1, 2, 3, 4, 5] // Segunda a Sexta
+      : (settings.notificationDays?.length > 0 ? settings.notificationDays : [settings.notificationDay]);
+    
+    if (!activeDays.includes(today)) return false;
     if (currentTime < settings.notificationTime) return false;
 
     const todayString = now.toISOString().split('T')[0];
     return settings.lastNotificationDate !== todayString;
-  }, [settings.enabled, settings.notificationDay, settings.notificationTime, settings.lastNotificationDate, notificationItems.length]);
+  }, [settings.enabled, settings.notificationDay, settings.notificationDays, settings.notificationTime, settings.lastNotificationDate, settings.isWeekdayRange, notificationItems.length]);
 
   // Mostrar notificações
   const showWeeklyNotifications = useCallback(() => {
@@ -82,8 +108,7 @@ export const useWeeklyNotifications = () => {
 
     notificationItems.forEach((item, index) => {
        setTimeout(() => {
-          const message = item.mensagem_notificacao || 
-            `📋 Lembrete: ${item.titulo} - Verifique os procedimentos relacionados a ${item.categoria || 'este item'}.`;
+          const message = `📋 Lembrete: ${item.titulo} - Verifique os procedimentos relacionados a ${item.categoria || 'este item'}.`;
           
           toast({
             title: "🔔 Notificação Semanal",
@@ -111,8 +136,7 @@ export const useWeeklyNotifications = () => {
 
     notificationItems.forEach((item, index) => {
        setTimeout(() => {
-          const message = item.mensagem_notificacao || 
-            `Lembrete: ${item.titulo} - Verifique os procedimentos necessários`;
+          const message = `Lembrete: ${item.titulo} - Verifique os procedimentos necessários`;
           
           toast({
             title: "📅 Lembrete Semanal (Teste)",
@@ -131,6 +155,30 @@ export const useWeeklyNotifications = () => {
   const getDayName = (dayNumber: number): string => {
     const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     return days[dayNumber] || 'Desconhecido';
+  };
+
+  const getActiveDaysText = (): string => {
+    if (settings.isWeekdayRange) {
+      return 'Segunda a Sexta-feira';
+    }
+    
+    const activeDays = settings.notificationDays?.length > 0 
+      ? settings.notificationDays 
+      : [settings.notificationDay];
+    
+    if (activeDays.length === 1) {
+      return getDayName(activeDays[0]);
+    }
+    
+    // Ordenar os dias e converter para nomes
+    const sortedDays = [...activeDays].sort((a, b) => a - b);
+    const dayNames = sortedDays.map(getDayName);
+    
+    if (dayNames.length === 2) {
+      return dayNames.join(' e ');
+    }
+    
+    return dayNames.slice(0, -1).join(', ') + ' e ' + dayNames[dayNames.length - 1];
   };
 
   // Verificação automática
@@ -162,6 +210,7 @@ export const useWeeklyNotifications = () => {
     notificationItems,
     fetchNotificationItems,
     forceNotification,
-    getDayName
+    getDayName,
+    getActiveDaysText
   };
 };

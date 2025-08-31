@@ -11,6 +11,14 @@ export interface CalendarEvent {
 }
 
 export const useCalendarEvents = (currentMonth: Date) => {
+  if (!currentMonth) {
+    return useQuery({
+      queryKey: ["calendar-events", "invalid"],
+      queryFn: () => Promise.resolve([]),
+      enabled: false
+    });
+  }
+  
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const monthStartStr = format(monthStart, 'yyyy-MM-dd');
@@ -21,12 +29,20 @@ export const useCalendarEvents = (currentMonth: Date) => {
     queryFn: async (): Promise<CalendarEvent[]> => {
       const events: CalendarEvent[] = [];
 
-      // Buscar feriados do mês
-      const { data: feriados, error: feriadosError } = await supabase
-        .from("feriados")
-        .select("*")
-        .gte("data", monthStartStr)
-        .lte("data", monthEndStr);
+      try {
+        // Timeout de 10 segundos para evitar travamento
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+        );
+
+        // Buscar feriados do mês
+        const feriadosPromise = supabase
+          .from("feriados")
+          .select("*")
+          .gte("data", monthStartStr)
+          .lte("data", monthEndStr);
+
+        const { data: feriados, error: feriadosError } = await Promise.race([feriadosPromise, timeoutPromise]) as any;
 
       if (feriadosError) {
         console.error('Erro ao buscar feriados:', feriadosError);
@@ -42,16 +58,18 @@ export const useCalendarEvents = (currentMonth: Date) => {
         });
       }
 
-      // Buscar aniversariantes - comparando apenas mês e dia
-      const { data: aniversariantes, error: aniversariantesError } = await supabase
-        .from("aniversariantes")
-        .select("*");
+        // Buscar aniversariantes - comparando apenas mês e dia
+        const aniversariantesPromise = supabase
+          .from("aniversariantes")
+          .select("*");
+
+        const { data: aniversariantes, error: aniversariantesError } = await Promise.race([aniversariantesPromise, timeoutPromise]) as any;
 
       if (aniversariantesError) {
         console.error('Erro ao buscar aniversariantes:', aniversariantesError);
       } else {
-        const currentYear = currentMonth.getFullYear();
-        const currentMonthNum = currentMonth.getMonth() + 1;
+        const currentYear = currentMonth?.getFullYear() || new Date().getFullYear();
+        const currentMonthNum = (currentMonth?.getMonth() || new Date().getMonth()) + 1;
         
         aniversariantes?.forEach(aniversariante => {
           // Validate that data_nascimento exists
@@ -86,7 +104,21 @@ export const useCalendarEvents = (currentMonth: Date) => {
         });
       }
 
-      return events;
+        return events;
+      } catch (err: any) {
+        console.error('Erro ao buscar eventos do calendário:', err);
+        
+        // Tratamento específico para erros de conectividade e timeout
+        if (err instanceof Error) {
+          if (err.message.includes('Failed to fetch') || err.message.includes('TypeError: Failed to fetch')) {
+            console.warn('Problema de conectividade - retornando lista vazia');
+          } else if (err.message.includes('Timeout')) {
+            console.warn('Timeout na busca de eventos - retornando lista vazia');
+          }
+        }
+        
+        return [];
+      }
     },
   });
 };

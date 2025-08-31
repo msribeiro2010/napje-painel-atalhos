@@ -80,7 +80,11 @@ export const SmartEventNotifications = ({ compact = false }: SmartEventNotificat
   // Toast para eventos urgentes
   useEffect(() => {
     if (!loading && hasUpcomingEvents && !hasShownUrgentToast) {
-      const urgentEvents = [...events.feriados, ...events.aniversariantes].filter(e => e.daysUntil <= 1);
+      // Verificar se os arrays estão disponíveis
+      const safeFeriados = events.feriados || [];
+      const safeAniversariantes = events.aniversariantes || [];
+      
+      const urgentEvents = [...safeFeriados, ...safeAniversariantes].filter(e => e.daysUntil <= 1);
       
       if (urgentEvents.length > 0) {
         const todayEvents = urgentEvents.filter(e => e.daysUntil === 0);
@@ -110,15 +114,18 @@ export const SmartEventNotifications = ({ compact = false }: SmartEventNotificat
   }
 
   // Combinar e ordenar todos os eventos por proximidade
+  const safeFeriados = events.feriados || [];
+  const safeAniversariantes = events.aniversariantes || [];
+  
   const allEvents = [
-    ...events.feriados.map(f => ({
+    ...safeFeriados.map(f => ({
       type: 'feriado' as const,
       title: f.descricao,
       subtitle: f.tipo,
       daysUntil: f.daysUntil,
       id: `feriado-${f.id}`
     })),
-    ...events.aniversariantes.map(a => ({
+    ...safeAniversariantes.map(a => ({
       type: 'aniversario' as const,
       title: a.nome,
       subtitle: `${a.idade} anos`,

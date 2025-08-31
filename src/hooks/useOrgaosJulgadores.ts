@@ -95,10 +95,17 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
        }
       
       try {
-        const { data, error } = await supabase
-           .from(tableName)
-           .select('id, codigo, nome')
-           .order('nome', { ascending: true });
+        // Timeout de 10 segundos para evitar travamento
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+        );
+
+        const queryPromise = supabase
+          .from(tableName)
+          .select('id, codigo, nome')
+          .order('nome', { ascending: true });
+
+        const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
         if (error) throw error;
         
@@ -132,8 +139,19 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
          saveToLocalStorage(finalData, grau);
         
         return finalData;
-      } catch (err) {
-        console.error(`Erro ao carregar órgãos julgadores ${grau} do banco, usando fallback:`, err);
+      } catch (err: any) {
+        console.error(`Erro ao carregar órgãos julgadores ${grau} do banco:`, err);
+        
+        // Em caso de erro de conectividade ou timeout, tenta carregar do localStorage
+        if (err?.message?.includes('Failed to fetch') || 
+            err?.message?.includes('Timeout') ||
+            err?.name === 'TypeError') {
+          const fallbackData = loadFromLocalStorage(grau);
+          if (fallbackData) {
+            console.log(`Carregando órgãos ${grau} do cache local devido a problemas de conectividade`);
+            return fallbackData;
+          }
+        }
         
         // Em caso de erro, usar dados estáticos como fallback
         const orgaosFiltrados = grau === '1grau' 
@@ -160,11 +178,18 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
   // Mutation para criar órgão julgador
   const createOrgao = useMutation({
     mutationFn: async (orgao: CreateOrgaoJulgador) => {
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const insertPromise = supabase
         .from(tableName)
         .insert([orgao])
         .select()
         .single();
+
+      const { data, error } = await Promise.race([insertPromise, timeoutPromise]) as any;
 
       if (error) throw error;
       return data;
@@ -180,23 +205,45 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao criar órgão julgador.",
-        variant: "destructive",
-      });
+      // Tratamento específico para erros de conectividade e timeout
+      if (error?.message?.includes('Failed to fetch') || error?.message?.includes('TypeError: Failed to fetch')) {
+        toast({
+          title: "Erro de Conectividade",
+          description: "Problema de conexão com o servidor. Tente novamente.",
+          variant: "destructive",
+        });
+      } else if (error?.message?.includes('Timeout')) {
+        toast({
+          title: "Timeout",
+          description: "A operação demorou muito para responder. Tente novamente.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: error.message || "Erro ao criar órgão julgador.",
+          variant: "destructive",
+        });
+      }
     }
   });
 
   // Mutation para atualizar órgão julgador
   const updateOrgao = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<OrgaoJulgador> & { id: string }) => {
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const updatePromise = supabase
         .from(tableName)
         .update(updates)
         .eq('id', id)
         .select()
         .single();
+
+      const { data, error } = await Promise.race([updatePromise, timeoutPromise]) as any;
 
       if (error) throw error;
       return data;
@@ -212,21 +259,43 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao atualizar órgão julgador.",
-        variant: "destructive",
-      });
+      // Tratamento específico para erros de conectividade e timeout
+      if (error?.message?.includes('Failed to fetch') || error?.message?.includes('TypeError: Failed to fetch')) {
+        toast({
+          title: "Erro de Conectividade",
+          description: "Problema de conexão com o servidor. Tente novamente.",
+          variant: "destructive",
+        });
+      } else if (error?.message?.includes('Timeout')) {
+        toast({
+          title: "Timeout",
+          description: "A operação demorou muito para responder. Tente novamente.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: error.message || "Erro ao atualizar órgão julgador.",
+          variant: "destructive",
+        });
+      }
     }
   });
 
   // Mutation para deletar órgão julgador
   const deleteOrgao = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const deletePromise = supabase
         .from(tableName)
         .delete()
         .eq('id', id);
+
+      const { error } = await Promise.race([deletePromise, timeoutPromise]) as any;
 
       if (error) throw error;
     },
@@ -241,11 +310,26 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao excluir órgão julgador.",
-        variant: "destructive",
-      });
+      // Tratamento específico para erros de conectividade e timeout
+      if (error?.message?.includes('Failed to fetch') || error?.message?.includes('TypeError: Failed to fetch')) {
+        toast({
+          title: "Erro de Conectividade",
+          description: "Problema de conexão com o servidor. Tente novamente.",
+          variant: "destructive",
+        });
+      } else if (error?.message?.includes('Timeout')) {
+        toast({
+          title: "Timeout",
+          description: "A operação demorou muito para responder. Tente novamente.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: error.message || "Erro ao excluir órgão julgador.",
+          variant: "destructive",
+        });
+      }
     }
   });
 

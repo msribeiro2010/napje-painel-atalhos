@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Save, CheckCircle, AlertCircle, FileText, Sparkles, Clock, Layers, Wand2, Keyboard, RefreshCw } from 'lucide-react';
+import { ModernButton } from '@/components/ui/modern-button';
+import { Save, CheckCircle, AlertCircle, FileText, Sparkles, Clock, Layers, Wand2, Keyboard, RefreshCw, Plus, Zap, Target, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormData, DescriptionSection } from '@/types/form';
 import { FormSection } from '@/components/FormSection';
@@ -13,8 +14,11 @@ import { validateForm, isFormValid } from '@/utils/form-validation';
 import { generateDescription, formatDescriptionSections, limparDescricaoProblema } from '@/utils/description-generator';
 import { useUsuarios } from '@/hooks/useUsuarios';
 import { useChamados } from '@/hooks/useChamados';
+import { useTextEnhancement } from '@/hooks/useTextEnhancement';
 
 import { PageHeader } from '@/components/PageHeader';
+import { ModernCard, ModernCardHeader, ModernCardContent } from '@/components/ui/modern-card';
+import { ModernGrid, ModernGridItem } from '@/components/layout/ModernGrid';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -528,6 +532,8 @@ const CriarChamado = () => {
     toast.success('Formulário limpo!');
   };
   
+  const { enhanceText, isEnhancing } = useTextEnhancement();
+
   // Função para otimizar texto com IA
   const handleOptimizeText = useCallback(async () => {
     if (!formData.notas.trim()) {
@@ -536,53 +542,85 @@ const CriarChamado = () => {
     }
 
     try {
-      // Contexto adicional com número do processo
-      const contexto = [];
-      if (formData.processos) {
-        contexto.push(`Processos relacionados: ${formData.processos}`);
+      // Criar contexto inteligente para a IA
+      let contextualPrompt = `Melhore a seguinte descrição de problema técnico do sistema PJe (Processo Judicial Eletrônico).
+
+`;
+      
+      // Adicionar contexto do usuário se disponível
+      if (formData.nomeUsuario) {
+        contextualPrompt += `O usuário ${formData.nomeUsuario} relata que `;
+      } else {
+        contextualPrompt += `O usuário relata que `;
       }
+      
+      // Adicionar contexto do processo se disponível
+      if (formData.processos) {
+        contextualPrompt += `ao trabalhar com o processo ${formData.processos}, `;
+      }
+      
+      // Adicionar contexto do órgão e grau se disponível
+      const contextoAdicional = [];
       if (formData.orgaoJulgador) {
-        contexto.push(`Órgão julgador: ${formData.orgaoJulgador}`);
+        contextoAdicional.push(`no ${formData.orgaoJulgador}`);
       }
       if (formData.grau) {
-        contexto.push(`Grau: ${formData.grau}`);
+        contextoAdicional.push(`${formData.grau} grau`);
       }
-
-      const contextoTexto = contexto.length > 0 ? `\n\nContexto adicional:\n${contexto.join('\n')}` : '';
       
-      // Simular otimização com IA (aqui você pode integrar com uma API real)
-      const textoOriginal = formData.notas;
-      const textoOtimizado = `${textoOriginal.trim()}${contextoTexto}`
-        .replace(/\b(IA|ia|Ia)\b/g, '') // Remove redundâncias de "IA"
-        .replace(/\s+/g, ' ') // Remove espaços extras
-        .trim();
+      if (contextoAdicional.length > 0) {
+        contextualPrompt += `${contextoAdicional.join(' - ')}, `;
+      }
+      
+      contextualPrompt += `está enfrentando o seguinte problema:\n\n"${formData.notas}"\n\n`;
+      
+      contextualPrompt += `INSTRUÇÕES PARA MELHORIA:\n`;
+      contextualPrompt += `- Transforme em uma descrição técnica clara e profissional\n`;
+      contextualPrompt += `- Mantenha todas as informações contextuais (nome, processo, órgão)\n`;
+      contextualPrompt += `- Use linguagem formal adequada para chamados de TI\n`;
+      contextualPrompt += `- Seja específico sobre o problema relatado\n`;
+      contextualPrompt += `- NÃO invente detalhes que não foram mencionados\n`;
+      contextualPrompt += `- Estruture o texto de forma clara e objetiva\n\n`;
+      contextualPrompt += `Retorne APENAS a descrição melhorada, sem explicações adicionais.`;
 
-      setFormData(prev => ({ ...prev, notas: textoOtimizado }));
-      setIsDirty(true);
-      toast.success('Texto otimizado com sucesso!');
+      const textoOtimizado = await enhanceText(contextualPrompt, 'descricao');
+      
+      if (textoOtimizado) {
+        setFormData(prev => ({ ...prev, notas: textoOtimizado }));
+        setIsDirty(true);
+        toast.success('✨ Texto otimizado com IA!');
+      }
     } catch (error) {
       console.error('Erro ao otimizar texto:', error);
-      toast.error('Erro ao otimizar texto');
+      toast.error('Erro ao otimizar texto com IA');
     }
-  }, [formData.notas, formData.processos, formData.orgaoJulgador, formData.grau]);
+  }, [formData.notas, formData.nomeUsuario, formData.processos, formData.orgaoJulgador, formData.grau, enhanceText]);
 
   const createCustomSections = (formData: FormData): DescriptionSection[] => {
     const resumoFinal = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
     
+    // Criar conteúdo do resumo incluindo o número do processo se disponível
+    let resumoContent = resumoFinal;
+    if (formData.processos) {
+      resumoContent = `${resumoFinal} – ${formData.processos}`;
+    }
+    
     const sections: DescriptionSection[] = [
       {
         title: 'Resumo do Problema',
-        content: resumoFinal,
-        key: 'resumo'
+        content: resumoContent,
+        key: 'resumo',
+        fullWidth: true
       },
       {
         title: 'Descrição Detalhada',
         content: formData.notas || '', // Usar notas como descrição detalhada
-        key: 'descricao'
+        key: 'descricao',
+        fullWidth: true
       }
     ];
     
-    // Adicionar seção de processos se houver
+    // Adicionar seção de processos se houver (separada)
     if (formData.processos) {
       sections.push({
         title: 'Processos Relacionados',
@@ -627,87 +665,95 @@ const CriarChamado = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <PageHeader 
-        title={isEditing ? "Editar Chamado" : "Criar Novo Chamado"}
-        subtitle={isEditing ? "Modifique os dados do chamado" : "Preencha os dados para criar um novo chamado"}
-      >
-        <div className="flex items-center gap-3">
-          {/* Status de salvamento */}
-          <div className="flex items-center gap-2">
-            {autoSaveStatus && (
-              <Badge 
-                variant={autoSaveStatus.includes('Erro') ? 'destructive' : autoSaveStatus.includes('Salvando') ? 'secondary' : 'default'} 
-                className="text-xs flex items-center gap-1 shadow-sm"
-              >
-                {autoSaveStatus.includes('Salvando') && <Clock className="h-3 w-3 animate-spin" />}
-                {autoSaveStatus.includes('Salvo') && <CheckCircle className="h-3 w-3" />}
-                {autoSaveStatus.includes('Erro') && <AlertCircle className="h-3 w-3" />}
-                {autoSaveStatus}
-              </Badge>
-            )}
-            {hasUnsavedChanges && !autoSaveStatus && (
-              <Badge variant="outline" className="text-xs flex items-center gap-1 text-amber-600 border-amber-300 shadow-sm">
-                <Clock className="h-3 w-3" />
-                Alterações não salvas
-              </Badge>
-            )}
-            {lastSaved && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <CheckCircle className="h-3 w-3 text-green-500" />
-                Último salvamento: {lastSaved.toLocaleTimeString()}
-              </span>
-            )}
-          </div>
-          
-          {/* Botão de atalhos */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowKeyboardHelp(true)}
-            className="gap-2 hover:bg-gradient-accent hover:shadow-md transition-all duration-200"
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50">
+      {/* Cabeçalho Moderno */}
+      <div className="relative overflow-hidden">
+        {/* Background decorativo */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/5 to-indigo-600/10"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.1),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(147,51,234,0.1),transparent_50%)]"></div>
+        
+        <div className="relative">
+          <PageHeader 
+            title={isEditing ? "Editar Chamado" : "Criar Novo Chamado"}
+            subtitle={isEditing ? "Modifique os dados do chamado" : "Preencha os dados para criar um novo chamado"}
           >
-            <Keyboard className="h-4 w-4" />
-            Atalhos
-          </Button>
+            <div className="flex items-center gap-3">
+              {/* Status de salvamento modernizado */}
+              <div className="flex items-center gap-3">
+                {autoSaveStatus && (
+                  <Badge 
+                    variant={autoSaveStatus.includes('Erro') ? 'destructive' : autoSaveStatus.includes('Salvando') ? 'secondary' : 'default'} 
+                    className="text-xs flex items-center gap-2 shadow-lg backdrop-blur-sm border-0 px-3 py-1.5"
+                  >
+                    {autoSaveStatus.includes('Salvando') && <Clock className="h-3 w-3 animate-spin" />}
+                    {autoSaveStatus.includes('Salvo') && <CheckCircle className="h-3 w-3" />}
+                    {autoSaveStatus.includes('Erro') && <AlertCircle className="h-3 w-3" />}
+                    {autoSaveStatus}
+                  </Badge>
+                )}
+                {hasUnsavedChanges && !autoSaveStatus && (
+                  <Badge variant="outline" className="text-xs flex items-center gap-2 text-amber-600 border-amber-300/50 shadow-lg backdrop-blur-sm px-3 py-1.5">
+                    <Clock className="h-3 w-3" />
+                    Alterações não salvas
+                  </Badge>
+                )}
+                {lastSaved && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border/20 shadow-sm">
+                    <CheckCircle className="h-3 w-3 text-green-500" />
+                    <span>Último salvamento: {lastSaved.toLocaleTimeString()}</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Botão de atalhos modernizado */}
+              <ModernButton
+                variant="glass"
+                size="sm"
+                onClick={() => setShowKeyboardHelp(true)}
+                icon={<Keyboard className="h-4 w-4" />}
+                className="shadow-lg backdrop-blur-sm"
+              >
+                Atalhos
+              </ModernButton>
+            </div>
+          </PageHeader>
         </div>
-      </PageHeader>
+      </div>
       
       <div className="container mx-auto px-4 py-6">
           <div className="max-w-5xl mx-auto">
             {/* Formulário Principal */}
-            <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-blue-600" />
-                    <h2 className="text-lg font-semibold">Dados do Chamado</h2>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
+            <div className="space-y-8">
+            <ModernCard variant="glass" className="overflow-hidden">
+              <ModernCardHeader
+                title="Dados do Chamado"
+                description="Preencha as informações necessárias para criar o chamado"
+                icon={<FileText className="h-5 w-5 text-white" />}
+                action={
+                  <div className="flex items-center gap-3">
+                    {/* Botões de template modernizados */}
+                    <ModernButton
                       variant="outline"
                       size="sm"
                       onClick={() => setShowTemplateSelector(true)}
-                      className="gap-2"
+                      icon={<Layers className="h-4 w-4" />}
+                      className="shadow-sm hover:shadow-md transition-all duration-200"
                     >
-                      <Layers className="h-4 w-4" />
                       Templates
-                    </Button>
-                    <Button
-                       variant="outline"
-                       size="sm"
-                       onClick={() => setShowSmartTemplates(true)}
-                       className="gap-2"
-                     >
-                       <Layers className="h-4 w-4" />
-                       Template JIRA
-                     </Button>
-
+                    </ModernButton>
+                    <ModernButton
+                      variant="gradient"
+                      size="sm"
+                      onClick={() => setShowSmartTemplates(true)}
+                      icon={<Brain className="h-4 w-4" />}
+                      className="shadow-sm hover:shadow-lg transition-all duration-200"
+                    >
+                      IA Templates
+                    </ModernButton>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
+                }
+              />
+              <ModernCardContent className="p-6">
                 <FormSection
                   formData={formData}
                   onInputChange={handleInputChange}
@@ -718,20 +764,20 @@ const CriarChamado = () => {
                   validationErrors={validationErrors}
                   resumoRef={resumoRef}
                   notasRef={notasRef}
+                  isOptimizing={isEnhancing}
                 />
-              </CardContent>
-            </Card>
+              </ModernCardContent>
+            </ModernCard>
             
             {/* Seção de Descrição Gerada */}
             {isGenerated && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-purple-600" />
-                    <h2 className="text-lg font-semibold">Descrição Gerada</h2>
-                  </div>
-                </CardHeader>
-                <CardContent>
+              <ModernCard variant="glass">
+                <ModernCardHeader
+                  title="Descrição Gerada"
+                  description="Visualize e edite a descrição gerada para o chamado"
+                  icon={<Sparkles className="h-5 w-5 text-white" />}
+                />
+                <ModernCardContent className="p-6">
                   <GeneratedDescriptionSection
                     isGenerated={isGenerated}
                     sections={sections}
@@ -743,8 +789,46 @@ const CriarChamado = () => {
                       resetForm();
                     }}
                   />
-                </CardContent>
-              </Card>
+                </ModernCardContent>
+              </ModernCard>
+            )}
+            
+            {/* Botões de Ação Modernizados */}
+            {!isGenerated && (
+              <ModernCard variant="glass">
+                <ModernCardContent className="p-6">
+                  <ModernGrid>
+                    <ModernGridItem span={12}>
+                      <div className="flex justify-end gap-4">
+                        <ModernButton
+                          variant="outline"
+                          onClick={() => navigate('/dashboard')}
+                          disabled={chamadosLoading}
+                          className="px-6 py-2"
+                        >
+                          Cancelar
+                        </ModernButton>
+                        <ModernButton
+                          variant="gradient"
+                          onClick={handleGenerateDescription}
+                          disabled={chamadosLoading || !isFormValid(formData)}
+                          icon={chamadosLoading ? 
+                            <RefreshCw className="h-4 w-4 animate-spin" /> : 
+                            <Sparkles className="h-4 w-4" />
+                          }
+                          className="px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-200"
+                          loading={chamadosLoading}
+                        >
+                          {chamadosLoading ? 
+                            'Gerando...' : 
+                            'Gerar Descrição'
+                          }
+                        </ModernButton>
+                      </div>
+                    </ModernGridItem>
+                  </ModernGrid>
+                </ModernCardContent>
+              </ModernCard>
             )}
             
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Plus, Settings, TestTube, Edit, Trash2, Calendar, Clock, CheckCircle, XCircle, Sparkles } from 'lucide-react';
+import { Bell, Plus, Settings, TestTube, Edit, Trash2, Calendar, Clock, CheckCircle, XCircle, Sparkles, Eye, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -9,75 +9,160 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useWeeklyNotificationsManager, WeeklyNotification, WeeklyNotificationFormData } from '@/hooks/useWeeklyNotificationsManager';
 import { WeeklyNotificationDialog } from './WeeklyNotificationDialog';
+import { WeeklyPlanningModal } from './WeeklyPlanningModal';
+import { useWeeklyPlanningData } from '@/hooks/useWeeklyPlanningData';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 
 export const WeeklyNotificationsManager = () => {
   const {
     notifications,
-    isLoading,
     settings,
-    saveSettings,
-    saveNotification,
+    isLoading,
+    createNotification,
+    updateNotification,
     deleteNotification,
+    updateSettings,
     testNotification
   } = useWeeklyNotificationsManager();
+
+  const { weeklyData, isLoading: planningLoading } = useWeeklyPlanningData();
+  const [isPlanningModalOpen, setIsPlanningModalOpen] = useState(false);
   
+
   const [isMainDialogOpen, setIsMainDialogOpen] = useState(false);
   const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
   const [editingNotification, setEditingNotification] = useState<WeeklyNotification | null>(null);
   const [formData, setFormData] = useState<WeeklyNotificationFormData>({
     titulo: '',
     mensagem: '',
-    ativo: true,
-    dayofweek: 1,
-    time: '09:00'
+    diasSemana: [],
+    horario: '09:00',
+    ativo: true
   });
 
-  const dayOptions = [
-    { value: 1, label: 'Segunda-feira' },
-    { value: 2, label: 'Terça-feira' },
-    { value: 3, label: 'Quarta-feira' },
-    { value: 4, label: 'Quinta-feira' },
-    { value: 5, label: 'Sexta-feira' },
-  ];
+  const activeNotifications = (notifications || []).filter(n => n.ativo);
 
-  const activeNotifications = notifications.filter(n => n.ativo);
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando notificações...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show service unavailable message if no notifications and not loading
+  if (!isLoading && (!notifications || notifications.length === 0)) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Notificações Semanais</h2>
+            <p className="text-muted-foreground">
+              Configure notificações para serem exibidas em dias específicos da semana
+            </p>
+          </div>
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Notificação
+          </Button>
+        </div>
+
+        <div className="text-center py-12">
+          <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
+            <Bell className="h-12 w-12 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">Nenhuma notificação encontrada</h3>
+          <p className="text-muted-foreground mb-4">
+            O serviço pode estar temporariamente indisponível ou você ainda não criou nenhuma notificação.
+          </p>
+          <Button 
+             variant="outline" 
+             onClick={fetchNotifications}
+             className="mr-2"
+           >
+             <RefreshCw className="mr-2 h-4 w-4" />
+             Tentar Novamente
+           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const resetForm = () => {
+    setFormData({
+      titulo: '',
+      mensagem: '',
+      diasSemana: [],
+      horario: '09:00',
+      ativo: true
+    });
+    setEditingNotification(null);
+  };
+
+  const handleCreate = () => {
+    resetForm();
+    setIsNotificationDialogOpen(true);
+  };
 
   const handleEdit = (notification: WeeklyNotification) => {
     setEditingNotification(notification);
     setFormData({
       titulo: notification.titulo,
       mensagem: notification.mensagem,
-      ativo: notification.ativo || false,
-      dayofweek: notification.dayofweek || 1, // Default to Monday
-      time: notification.time || '09:00'
+      diasSemana: notification.diasSemana,
+      horario: notification.horario,
+      ativo: notification.ativo
     });
     setIsNotificationDialogOpen(true);
   };
 
-  const handleSubmit = async () => {
-    console.log('handleSubmit called with formData:', formData);
-    console.log('editingNotification:', editingNotification);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
+    if (!formData.titulo.trim() || !formData.mensagem.trim() || formData.diasSemana.length === 0) {
+      return;
+    }
+
     try {
-      const success = await saveNotification(formData, editingNotification?.id);
-      console.log('saveNotification result:', success);
-      
-      if (success) {
-        setIsNotificationDialogOpen(false);
-        setEditingNotification(null);
-        setFormData({ titulo: '', mensagem: '', ativo: true, dayofweek: 1, time: '09:00' });
+      if (editingNotification) {
+        await updateNotification(editingNotification.id, {
+          titulo: formData.titulo.trim(),
+          mensagem: formData.mensagem.trim(),
+          diasSemana: formData.diasSemana,
+          horario: formData.horario,
+          ativo: formData.ativo
+        });
+      } else {
+        await createNotification({
+          titulo: formData.titulo.trim(),
+          mensagem: formData.mensagem.trim(),
+          diasSemana: formData.diasSemana,
+          horario: formData.horario,
+          ativo: formData.ativo
+        });
       }
+      
+      setIsNotificationDialogOpen(false);
+      resetForm();
     } catch (error) {
-      console.error('Error in handleSubmit:', error);
+      console.error('Erro ao salvar notificação:', error);
     }
   };
 
   const handleCancel = () => {
     setIsNotificationDialogOpen(false);
-    setEditingNotification(null);
-    setFormData({ titulo: '', mensagem: '', ativo: true, dayofweek: 1, time: '09:00' });
+    resetForm();
+  };
+
+  const handleToggleNotification = async (notification: WeeklyNotification) => {
+    await updateNotification(notification.id, {
+      ...notification,
+      ativo: !notification.ativo
+    });
   };
 
   const handleDelete = async (id: string) => {
@@ -86,281 +171,284 @@ export const WeeklyNotificationsManager = () => {
 
   return (
     <>
-      <Dialog open={isMainDialogOpen} onOpenChange={setIsMainDialogOpen}>
-        <DialogTrigger asChild>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className={cn(
-              "flex items-center gap-2 transition-all duration-200 hover:shadow-md",
-              "dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200",
-              settings.enabled && activeNotifications.length > 0 && "border-blue-200 bg-blue-50 hover:bg-blue-100 dark:border-blue-400 dark:bg-blue-900/30 dark:hover:bg-blue-800/40"
-            )}
-          >
-            <div className="relative">
-              <Bell className="h-4 w-4" />
-              {settings.enabled && activeNotifications.length > 0 && (
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+      <div className="flex items-center gap-2">
+        <Dialog open={isMainDialogOpen} onOpenChange={setIsMainDialogOpen}>
+          <DialogTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className={cn(
+                "flex items-center gap-2 transition-all duration-200 hover:shadow-md hover:bg-blue-50 dark:hover:bg-blue-950",
+                "dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200",
+                settings.enabled && activeNotifications.length > 0 && "border-blue-200 bg-blue-50 hover:bg-blue-100 dark:border-blue-400 dark:bg-blue-900/30 dark:hover:bg-blue-800/40"
               )}
-            </div>
-            Notificações Semanais
-            {settings.enabled && activeNotifications.length > 0 && (
-              <Badge variant="secondary" className="ml-1 bg-blue-100 text-blue-700 dark:bg-blue-800/50 dark:text-blue-300 dark:border-blue-600">
-                {activeNotifications.length}
-              </Badge>
-            )}
-          </Button>
-        </DialogTrigger>
+            >
+              <div className="relative">
+                <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                {settings.enabled && activeNotifications.length > 0 && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                )}
+              </div>
+              <span className="font-medium">Notificações Semanais</span>
+              {settings.enabled && activeNotifications.length > 0 && (
+                <Badge variant="secondary" className="ml-1 bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:text-white dark:border-green-500">
+                  {activeNotifications.length}
+                </Badge>
+              )}
+            </Button>
+          </DialogTrigger>
+        </Dialog>
         
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
-          <DialogHeader className="space-y-4 pb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-                  <Bell className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Notificações Semanais
-                  </DialogTitle>
-                  <DialogDescription className="text-base mt-1 dark:text-gray-300">
-                    Configure lembretes automáticos para procedimentos importantes
-                  </DialogDescription>
-                </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsPlanningModalOpen(true)}
+          className="flex items-center gap-2 transition-all duration-200 hover:shadow-md hover:bg-green-50 dark:hover:bg-green-950 border-green-200 hover:border-green-300 dark:border-green-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200"
+          disabled={planningLoading}
+        >
+          {planningLoading ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600" />
+          ) : (
+            <Eye className="h-4 w-4 text-green-600 dark:text-green-400" />
+          )}
+          <span className="font-medium">
+            {planningLoading ? 'Carregando...' : 'Planejamento Semanal'}
+          </span>
+        </Button>
+      </div>
+      
+      <Dialog open={isMainDialogOpen} onOpenChange={setIsMainDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-4 pb-6 border-b border-gray-200 dark:border-gray-700">
+            <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              Gerenciar Notificações Semanais
+            </DialogTitle>
+            <DialogDescription className="text-base text-gray-600 dark:text-gray-300">
+              Configure suas notificações semanais para receber lembretes importantes.
+            </DialogDescription>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span className="text-gray-600 dark:text-gray-300">
+                  {activeNotifications.length} ativa{activeNotifications.length !== 1 ? 's' : ''}
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                {settings.enabled ? (
-                  <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-600">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Ativo
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary" className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600">
-                    <XCircle className="h-3 w-3 mr-1" />
-                    Inativo
-                  </Badge>
-                )}
-                <Badge variant="outline" className="text-sm dark:border-gray-600 dark:text-gray-300">
-                  {notifications.length} {notifications.length === 1 ? 'notificação' : 'notificações'}
-                </Badge>
+                <XCircle className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-600 dark:text-gray-300">
+                  {notifications.length - activeNotifications.length} inativa{notifications.length - activeNotifications.length !== 1 ? 's' : ''}
+                </span>
               </div>
             </div>
           </DialogHeader>
-          
+
           <div className="space-y-6">
-            {/* Configurações Gerais */}
-            <Card className="border-2 border-dashed border-gray-200 hover:border-blue-300 transition-colors duration-200 dark:border-gray-700 dark:hover:border-blue-500 dark:bg-gray-800">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-lg dark:from-blue-900/20 dark:to-purple-900/20">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <div className="p-1.5 bg-white rounded-md shadow-sm dark:bg-gray-700">
-                    <Settings className="h-4 w-4 text-blue-600" />
-                  </div>
-                  Configurações Gerais
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border dark:bg-gray-800 dark:border-gray-600">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "p-2 rounded-full transition-colors duration-200",
-                      settings.enabled ? "bg-green-100" : "bg-gray-100"
-                    )}>
-                      {settings.enabled ? (
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-gray-400" />
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor="enable-notifications" className="text-base font-medium cursor-pointer dark:text-gray-200">
-                        Ativar Notificações Semanais
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1 dark:text-gray-400">
-                        Receba lembretes automáticos sobre procedimentos importantes
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    id="enable-notifications"
-                    checked={settings.enabled}
-                    onCheckedChange={(checked) => saveSettings({ ...settings, enabled: checked })}
-                    className="data-[state=checked]:bg-green-500"
-                  />
+            {/* Configurações Globais */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                  <Settings className="h-5 w-5 text-white" />
                 </div>
-                
-                {settings.enabled && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
-                    <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
-                      <Bell className="h-4 w-4" />
-                      <span className="font-medium">
-                        Sistema de notificações ativo. Configure os horários individuais ao criar cada notificação.
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                <div>
+                  <h3 className="font-semibold text-lg">Configurações Globais</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                    Ativar ou desativar todas as notificações semanais
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={settings.enabled}
+                  onCheckedChange={(checked) => updateSettings({ enabled: checked })}
+                  disabled={isLoading}
+                />
+                <Label className="text-sm font-medium">
+                  {settings.enabled ? 'Ativado' : 'Desativado'}
+                </Label>
+              </div>
+            </div>
+
+            {settings.enabled && (
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-green-700 dark:text-green-300">
+                    Sistema de notificações ativo
+                  </p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                    As notificações serão enviadas conforme configurado
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Lista de Notificações */}
-            <Card className="border-2 border-dashed border-gray-200 hover:border-purple-300 transition-colors duration-200 dark:border-gray-700 dark:hover:border-purple-500 dark:bg-gray-800">
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-lg dark:from-purple-900/20 dark:to-pink-900/20">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <div className="p-1.5 bg-white rounded-md shadow-sm dark:bg-gray-700">
-                      <Bell className="h-4 w-4 text-purple-600" />
-                    </div>
-                    Suas Notificações
-                    <Badge variant="outline" className="ml-2 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300">
-                      {notifications.length}
-                    </Badge>
-                  </CardTitle>
-                  <Button 
-                    onClick={() => setIsNotificationDialogOpen(true)}
-                    size="sm"
-                    className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Nova Notificação
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                {isLoading ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                    <p className="text-muted-foreground dark:text-gray-400">Carregando notificações...</p>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg shadow-lg">
+                    <Calendar className="h-5 w-5 text-white" />
                   </div>
-                ) : notifications.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="p-4 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center dark:from-purple-900/30 dark:to-pink-900/30">
-                      <Bell className="h-10 w-10 text-purple-500" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2 dark:text-gray-200">Nenhuma notificação ainda</h3>
-                    <p className="text-muted-foreground mb-6 max-w-md mx-auto dark:text-gray-400">
-                      Crie sua primeira notificação semanal para receber lembretes automáticos sobre procedimentos importantes.
+                  <div>
+                    <h3 className="font-semibold text-lg">Suas Notificações</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {notifications.length > 0 
+                        ? `${notifications.length} notificação${notifications.length > 1 ? 'ões' : ''} configurada${notifications.length > 1 ? 's' : ''}`
+                        : 'Nenhuma notificação configurada'
+                      }
                     </p>
-                    <Button 
-                      onClick={() => setIsNotificationDialogOpen(true)}
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Criar primeira notificação
-                    </Button>
                   </div>
-                ) : (
-                  <div className={cn(
-                    "grid gap-4",
-                    notifications.length === 1 ? "grid-cols-1" :
-                    notifications.length === 2 ? "grid-cols-1 lg:grid-cols-2" :
-                    "grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
-                  )}>
-                    {notifications.map((notification, index) => (
-                      <div 
-                        key={notification.id} 
-                        className={cn(
-                          "group relative p-5 border-2 rounded-xl transition-all duration-200 hover:shadow-lg",
-                          notification.ativo 
-                            ? "border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 hover:border-green-300 dark:border-green-700 dark:from-green-900/20 dark:to-emerald-900/20 dark:hover:border-green-600" 
-                            : "border-gray-200 bg-gradient-to-br from-gray-50 to-slate-50 hover:border-gray-300 dark:border-gray-700 dark:from-gray-800 dark:to-slate-800 dark:hover:border-gray-600"
-                        )}
-                        style={{
-                          animationDelay: `${index * 100}ms`
-                        }}
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className={cn(
-                            "p-2 rounded-lg",
-                            notification.ativo ? "bg-green-100" : "bg-gray-100"
-                          )}>
-                            {notification.ativo ? (
-                              <CheckCircle className="h-5 w-5 text-green-600" />
-                            ) : (
-                              <XCircle className="h-5 w-5 text-gray-400" />
-                            )}
-                          </div>
-                          <Badge 
-                            variant={notification.ativo ? "default" : "secondary"}
-                            className={cn(
-                              "transition-all duration-200",
-                              notification.ativo 
-                                ? "bg-green-100 text-green-700 border-green-200 hover:bg-green-200" 
-                                : "bg-gray-100 text-gray-600 border-gray-200"
-                            )}
-                          >
-                            {notification.ativo ? "Ativo" : "Inativo"}
-                          </Badge>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <h4 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-purple-700 transition-colors">
-                            {notification.titulo}
-                          </h4>
-                          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                            {notification.mensagem}
-                          </p>
-                        </div>
-                        
-                        {/* Mostrar agendamento da notificação */}
-                        <div className="mb-3 p-2 bg-blue-50 rounded-md border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
-                          <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300">
-                            <Calendar className="h-3 w-3" />
-                            <span>{dayOptions.find(d => d.value === notification.dayofweek)?.label || 'Dia não definido'}</span>
-                            <Clock className="h-3 w-3 ml-2" />
-                            <span>{notification.time || '09:00'}</span>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                          <div className="text-xs text-muted-foreground">
-                            Criado em {new Date(notification.created_at).toLocaleDateString('pt-BR')}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(notification)}
-                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                            >
-                              <Edit className="h-3.5 w-3.5" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 hover:bg-red-50 hover:border-red-300 transition-colors"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tem certeza que deseja excluir a notificação "{notification.titulo}"? Esta ação não pode ser desfeita.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction 
-                                    onClick={() => handleDelete(notification.id)}
-                                    className="bg-red-500 hover:bg-red-600"
-                                  >
-                                    Excluir
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+                <Button
+                  onClick={handleCreate}
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                  disabled={isLoading}
+                >
+                  <Plus className="h-4 w-4" />
+                  Nova Notificação
+                </Button>
+              </div>
 
-            {/* Ações */}
+              {notifications.length === 0 ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center max-w-md">
+                    <div className="mx-auto mb-6">
+                      <Card className="border-2 border-dashed border-gray-200 hover:border-purple-300 transition-colors duration-200 dark:border-gray-700 dark:hover:border-purple-500">
+                        <CardContent className="text-center py-16">
+                          <div className="mx-auto mb-4 p-3 bg-purple-100 dark:bg-purple-900 rounded-full w-fit">
+                            <Bell className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Nenhuma notificação configurada</h3>
+                          <p className="text-gray-600 mb-8 max-w-md mx-auto dark:text-gray-300">
+                            Crie sua primeira notificação semanal para receber lembretes importantes em dias específicos da semana.
+                          </p>
+                          <Button
+                            onClick={handleCreate}
+                            className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Criar Primeira Notificação
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {(notifications || []).map((notification) => {
+                    const isActive = notification.ativo;
+                    const dayNames = {
+                      'segunda': 'Seg',
+                      'terca': 'Ter', 
+                      'quarta': 'Qua',
+                      'quinta': 'Qui',
+                      'sexta': 'Sex',
+                      'sabado': 'Sáb',
+                      'domingo': 'Dom'
+                    };
+
+                    return (
+                      <Card key={notification.id} className={cn(
+                        "transition-all duration-200 hover:shadow-md",
+                        isActive ? "border-green-200 bg-green-50/50 dark:border-green-700 dark:bg-green-900/20" : "border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/50"
+                      )}>
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-4 flex-1">
+                              <div className={cn(
+                                "p-2 rounded-lg",
+                                isActive ? "bg-green-100 dark:bg-green-900" : "bg-gray-100 dark:bg-gray-700"
+                              )}>
+                                <Bell className={cn(
+                                  "h-5 w-5",
+                                  isActive ? "text-green-600 dark:text-green-400" : "text-gray-400"
+                                )} />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h4 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+                                    {notification.titulo}
+                                  </h4>
+                                  <Badge variant={isActive ? "default" : "secondary"} className={cn(
+                                    isActive ? "bg-green-500 hover:bg-green-600 text-white" : "bg-gray-400 text-white"
+                                  )}>
+                                    {isActive ? 'Ativa' : 'Inativa'}
+                                  </Badge>
+                                </div>
+                                <p className="text-gray-600 dark:text-gray-300 mb-3 leading-relaxed">
+                                  {notification.mensagem}
+                                </p>
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Clock className="h-4 w-4 text-purple-500" />
+                                  <span className="font-medium text-purple-700 dark:text-purple-300">
+                                    {notification.horario}
+                                  </span>
+                                  <span className="text-gray-400 mx-2">•</span>
+                                  <span className="font-medium text-purple-700 dark:text-purple-300">
+                                    {(notification.diasSemana || []).map(dia => dayNames[dia as keyof typeof dayNames]).join(', ')}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2 ml-4">
+                              <Switch
+                                checked={isActive}
+                                onCheckedChange={() => handleToggleNotification(notification)}
+                                disabled={isLoading}
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(notification)}
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Tem certeza que deseja excluir a notificação "{notification.titulo}"? Esta ação não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDelete(notification.id)}
+                                      className="bg-red-600 hover:bg-red-700 text-white"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Seção de Teste */}
             <div className="flex justify-between items-center pt-4 border-t">
               <div className="text-sm text-muted-foreground">
                 {settings.enabled ? (
@@ -402,6 +490,14 @@ export const WeeklyNotificationsManager = () => {
         onSubmit={handleSubmit}
         onCancel={handleCancel}
       />
+      
+      {weeklyData && (
+        <WeeklyPlanningModal
+          isOpen={isPlanningModalOpen}
+          onClose={() => setIsPlanningModalOpen(false)}
+          weeklyData={weeklyData}
+        />
+      )}
     </>
   );
 };

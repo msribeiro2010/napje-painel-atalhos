@@ -65,26 +65,30 @@ export const EventsPanels = ({ className = "" }: EventsPanelsProps) => {
   
   // Filtrar e organizar eventos
   const today = new Date();
-  const upcomingEvents = customEvents
+  
+  // Verificar se customEvents está disponível
+  const safeCustomEvents = customEvents || [];
+  
+  const upcomingEvents = safeCustomEvents
     .filter(event => isAfter(parseISO(event.date), startOfDay(today)))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
-  const todayEvents = customEvents.filter(event => isToday(parseISO(event.date)));
-  const tomorrowEvents = customEvents.filter(event => isTomorrow(parseISO(event.date)));
+  const todayEvents = safeCustomEvents.filter(event => isToday(parseISO(event.date)));
+  const tomorrowEvents = safeCustomEvents.filter(event => isTomorrow(parseISO(event.date)));
   const nextThreeEvents = upcomingEvents.slice(0, 3);
   
   // Estatísticas - contar apenas eventos futuros (incluindo hoje)
-  const totalEvents = customEvents.filter(event => {
+  const totalEvents = safeCustomEvents.filter(event => {
     const eventDate = parseISO(event.date);
     return isAfter(eventDate, startOfDay(today)) || isToday(eventDate);
   }).length;
-  const eventsThisWeek = customEvents.filter(event => {
+  const eventsThisWeek = safeCustomEvents.filter(event => {
     const eventDate = parseISO(event.date);
     const daysUntil = differenceInDays(eventDate, today);
     return daysUntil >= 0 && daysUntil <= 7;
   }).length;
   
-  const eventsByType = customEvents.reduce((acc, event) => {
+  const eventsByType = safeCustomEvents.reduce((acc, event) => {
     acc[event.type] = (acc[event.type] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);

@@ -62,13 +62,21 @@ export const useSugestoes = () => {
     
     const requestPromise = retryWithBackoff(async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('chamados')
         .select('orgao_julgador, created_at')
         .not('orgao_julgador', 'is', null)
         .eq('grau', grau)
         .order('created_at', { ascending: false })
         .limit(50);
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) throw error;
 
@@ -127,12 +135,20 @@ export const useSugestoes = () => {
     
     const requestPromise = retryWithBackoff(async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('chamados')
         .select('perfil_usuario_afetado, created_at')
         .not('perfil_usuario_afetado', 'is', null)
         .order('created_at', { ascending: false })
         .limit(30); // Reduzido de 50 para 30
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) throw error;
 
@@ -189,12 +205,20 @@ export const useSugestoes = () => {
     
     const requestPromise = retryWithBackoff(async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('chamados')
         .select('chamado_origem, created_at')
         .not('chamado_origem', 'is', null)
         .order('created_at', { ascending: false })
         .limit(30); // Reduzido de 50 para 30
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) throw error;
 
@@ -238,12 +262,20 @@ export const useSugestoes = () => {
   const buscarSugestoesResumo = async (): Promise<SugestaoItem[]> => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('chamados')
         .select('titulo, created_at')
         .not('titulo', 'is', null)
         .order('created_at', { ascending: false })
         .limit(100);
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) throw error;
 
@@ -266,8 +298,18 @@ export const useSugestoes = () => {
         }))
         .sort((a, b) => b.frequencia - a.frequencia)
         .slice(0, 10);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao buscar sugestões de resumo:', err);
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('TypeError: Failed to fetch')) {
+          console.warn('Problema de conectividade com Supabase - retornando lista vazia');
+        } else if (err.message.includes('Timeout')) {
+          console.warn('Timeout na busca de sugestões de resumo - retornando lista vazia');
+        }
+      }
+      
       return [];
     } finally {
       setLoading(false);

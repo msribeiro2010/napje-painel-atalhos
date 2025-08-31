@@ -73,16 +73,22 @@ export const useUsuarios = () => {
       // Limpar CPF para salvar/buscar
       const cpfLimpo = cpf.replace(/\D/g, '');
 
-      // Verificar se o usuário já existe
-      const { data: existingUser } = await supabase
+      // Verificar se o usuário já existe com timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const checkUserPromise = supabase
         .from('usuarios')
         .select('id')
         .eq('cpf', cpfLimpo)
         .maybeSingle();
 
+      const { data: existingUser } = await Promise.race([checkUserPromise, timeoutPromise]) as any;
+
       if (existingUser) {
-        // Atualizar usuário existente
-        const { data, error } = await supabase
+        // Atualizar usuário existente com timeout
+        const updatePromise = supabase
           .from('usuarios')
           .update({
             nome_completo: nomeCompleto,
@@ -93,11 +99,13 @@ export const useUsuarios = () => {
           .select()
           .single();
 
+        const { data, error } = await Promise.race([updatePromise, timeoutPromise]) as any;
+
         if (error) throw error;
         return data;
       } else {
-        // Criar novo usuário
-        const { data, error } = await supabase
+        // Criar novo usuário com timeout
+        const insertPromise = supabase
           .from('usuarios')
           .insert({
             cpf: cpfLimpo,
@@ -107,12 +115,23 @@ export const useUsuarios = () => {
           .select()
           .single();
 
+        const { data, error } = await Promise.race([insertPromise, timeoutPromise]) as any;
+
         if (error) throw error;
         return data;
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao salvar usuário:', err);
-      toast.error('Erro ao salvar dados do usuário');
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (err?.message?.includes('Failed to fetch') || err?.message?.includes('TypeError: Failed to fetch')) {
+        toast.error('Problema de conexão com o servidor. Tente novamente.');
+      } else if (err?.message?.includes('Timeout')) {
+        toast.error('A operação demorou muito para responder. Tente novamente.');
+      } else {
+        toast.error('Erro ao salvar dados do usuário');
+      }
+      
       return null;
     } finally {
       setLoading(false);
@@ -147,12 +166,19 @@ export const useUsuarios = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para busca de usuários
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const searchPromise = supabase
         .from('usuarios')
         .select('id, cpf, nome_completo, perfil, created_at, updated_at')
         .or(`cpf.ilike.%${termo}%,nome_completo.ilike.%${termo}%`)
         .order('nome_completo')
         .limit(8); // Reduzido de 10 para 8
+
+      const { data, error } = await Promise.race([searchPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error('Erro ao buscar usuários:', error);
@@ -176,7 +202,7 @@ export const useUsuarios = () => {
 
       console.log(`✅ ${usuarios.length} usuários encontrados e armazenados em cache`);
       return usuarios;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao buscar usuários:', err);
       
       // Tentar retornar dados do localStorage como último recurso
@@ -185,7 +211,15 @@ export const useUsuarios = () => {
         return localData;
       }
       
-      toast.error('Erro ao buscar usuários. Verifique sua conexão.');
+      // Tratamento específico para erros de conectividade e timeout
+      if (err?.message?.includes('Failed to fetch') || err?.message?.includes('TypeError: Failed to fetch')) {
+        toast.error('Problema de conexão com o servidor. Tente novamente.');
+      } else if (err?.message?.includes('Timeout')) {
+        toast.error('A busca demorou muito para responder. Tente novamente.');
+      } else {
+        toast.error('Erro ao buscar usuários. Verifique sua conexão.');
+      }
+      
       return [];
     } finally {
       setLoading(false);
@@ -199,11 +233,18 @@ export const useUsuarios = () => {
       // Limpar CPF para busca (remover pontos e traços)
       const cpfLimpo = cpf.replace(/\D/g, '');
       
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para busca por CPF
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const searchPromise = supabase
         .from('usuarios')
         .select('id, cpf, nome_completo, perfil, created_at, updated_at')
         .eq('cpf', cpfLimpo)
         .maybeSingle();
+
+      const { data, error } = await Promise.race([searchPromise, timeoutPromise]) as any;
 
       if (error) throw error;
       return data;

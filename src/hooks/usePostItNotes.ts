@@ -20,18 +20,35 @@ export const usePostItNotes = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('postit_notes')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5); // Apenas as 5 mais recentes para o dashboard
 
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+
       if (error) throw error;
 
       setNotes(data || []);
     } catch (error) {
       console.error('Erro ao carregar notas:', error);
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('TypeError: Failed to fetch')) {
+          console.warn('Problema de conectividade ao carregar notas');
+        } else if (error.message.includes('Timeout')) {
+          console.warn('Timeout ao carregar notas');
+        }
+      }
+      
       setNotes([]);
     } finally {
       setLoading(false);

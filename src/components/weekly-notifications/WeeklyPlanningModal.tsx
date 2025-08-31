@@ -1,0 +1,353 @@
+import React from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  Briefcase,
+  Home,
+  GraduationCap,
+  Gift,
+  AlertCircle,
+  X,
+  Video,
+  BookOpen,
+  Star
+} from 'lucide-react';
+import { WeeklyPlanningData, WeeklyCalendarEvent } from '@/hooks/useWeeklyPlanningData';
+
+interface WeeklyPlanningModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  weeklyData: WeeklyPlanningData;
+}
+
+const getEventIcon = (event: WeeklyCalendarEvent) => {
+  if (event.type === 'custom') {
+    switch (event.category) {
+      case 'curso':
+        return <GraduationCap className="h-4 w-4" />;
+      case 'webinario':
+        return <Video className="h-4 w-4" />;
+      case 'reuniao':
+        return <Users className="h-4 w-4" />;
+      default:
+        return <BookOpen className="h-4 w-4" />;
+    }
+  }
+  
+  if (event.type === 'work') {
+    switch (event.category) {
+      case 'work_onsite':
+        return <Briefcase className="h-4 w-4" />;
+      case 'work_remote':
+        return <Home className="h-4 w-4" />;
+      default:
+        return <Briefcase className="h-4 w-4" />;
+    }
+  }
+  
+  switch (event.type) {
+    case 'birthday':
+      return <Gift className="h-4 w-4" />;
+    case 'holiday':
+      return <Star className="h-4 w-4" />;
+    default:
+      return <AlertCircle className="h-4 w-4" />;
+  }
+};
+
+const getEventColor = (event: WeeklyCalendarEvent) => {
+  if (event.type === 'custom') {
+    switch (event.category) {
+      case 'curso':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'webinario':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'reuniao':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  }
+  
+  if (event.type === 'work') {
+    switch (event.category) {
+      case 'work_onsite':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'work_remote':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-slate-100 text-slate-800 border-slate-200';
+    }
+  }
+  
+  switch (event.type) {
+    case 'birthday':
+      return 'bg-pink-100 text-pink-800 border-pink-200';
+    case 'holiday':
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
+
+const formatDate = (date: Date): string => {
+  return date.toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit'
+  });
+};
+
+const formatDateRange = (start: Date, end: Date): string => {
+  return `${start.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} - ${end.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+};
+
+const groupEventsByDay = (events: WeeklyCalendarEvent[]) => {
+  const grouped: { [key: string]: WeeklyCalendarEvent[] } = {};
+  
+  events.forEach(event => {
+    const dateKey = event.date.toDateString();
+    if (!grouped[dateKey]) {
+      grouped[dateKey] = [];
+    }
+    grouped[dateKey].push(event);
+  });
+  
+  return grouped;
+};
+
+export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
+  isOpen,
+  onClose,
+  weeklyData
+}) => {
+  const { weekStart, weekEnd, weekNumber, events, notifications, summary } = weeklyData;
+  const groupedEvents = groupEventsByDay(events || []);
+  const sortedDates = Object.keys(groupedEvents).sort((a, b) => 
+    new Date(a).getTime() - new Date(b).getTime()
+  );
+
+  const activeNotifications = (notifications || []).filter(n => n.isActive);
+  
+  // Usar dados do summary calculado no hook com fallback
+  const { 
+    totalEvents = 0, 
+    workDays = 0, 
+    workOnsite = 0, 
+    workRemote = 0, 
+    courses = 0, 
+    birthdays = 0, 
+    holidays = 0 
+  } = summary || {};
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Calendar className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-bold text-gray-900">
+                  Planejamento Semanal
+                </DialogTitle>
+                <DialogDescription className="text-lg text-gray-600">
+                  Semana {weekNumber} • {formatDateRange(weekStart, weekEnd)}
+                </DialogDescription>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Resumo da Semana */}
+          <Card className="border-2 border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-blue-900">
+                <Users className="h-5 w-5" />
+                <span>Resumo da Semana</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-slate-600">{totalEvents}</div>
+                  <div className="text-sm text-gray-600">Total de Eventos</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{workOnsite}</div>
+                  <div className="text-sm text-gray-600">Presencial</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{workRemote}</div>
+                  <div className="text-sm text-gray-600">Remoto</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">{courses}</div>
+                  <div className="text-sm text-gray-600">Cursos</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-pink-600">{birthdays}</div>
+                  <div className="text-sm text-gray-600">Aniversários</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">{holidays}</div>
+                  <div className="text-sm text-gray-600">Feriados</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notificações Ativas */}
+          {activeNotifications.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-amber-500" />
+                  <span>Notificações Ativas ({activeNotifications.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {activeNotifications.map((notification, index) => (
+                    <div key={index} className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="font-medium text-amber-900">{notification.title}</div>
+                      <div className="text-sm text-amber-700 mt-1">{notification.message}</div>
+                      <div className="flex items-center space-x-2 mt-2 text-xs text-amber-600">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                          {notification.selectedDays && Array.isArray(notification.selectedDays) && notification.selectedDays.length > 0
+                            ? `Dias: ${notification.selectedDays.map((day: number) => {
+                                const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                                return days[day];
+                              }).join(', ')}`
+                            : `Dia: ${notification.dayofweek || 'N/A'}`
+                          } às {notification.time}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Eventos por Dia */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Calendar className="h-5 w-5" />
+                <span>Agenda da Semana</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {sortedDates.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    Nenhum evento encontrado para esta semana
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sortedDates.map((dateKey, index) => {
+                    const date = new Date(dateKey);
+                    const dayEvents = groupedEvents[dateKey];
+                    
+                    return (
+                      <div key={dateKey}>
+                        {index > 0 && <Separator className="my-4" />}
+                        <div className="space-y-3">
+                          <h3 className="font-semibold text-lg text-gray-900 capitalize">
+                            {formatDate(date)}
+                          </h3>
+                          <div className="grid gap-3">
+                            {dayEvents.map((event, eventIndex) => (
+                              <div
+                                key={eventIndex}
+                                className={`p-3 rounded-lg border ${getEventColor(event)}`}
+                              >
+                                <div className="flex items-start space-x-3">
+                                  <div className="mt-0.5">
+                                    {getEventIcon(event)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium">{event.title}</div>
+                                    {event.description && (
+                                      <div className="text-sm opacity-80 mt-1">
+                                        {event.description}
+                                      </div>
+                                    )}
+                                    {event.time && (
+                                      <div className="flex items-center space-x-1 text-xs opacity-70 mt-1">
+                                        <Clock className="h-3 w-3" />
+                                        <span>{event.time}</span>
+                                      </div>
+                                    )}
+                                    {event.location && (
+                                      <div className="flex items-center space-x-1 text-xs opacity-70 mt-1">
+                                        <MapPin className="h-3 w-3" />
+                                        <span>{event.location}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col items-end gap-1">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {event.type === 'custom' ? event.category : 
+                                       event.type === 'work' ? (
+                                         event.category === 'work_onsite' ? 'Presencial' :
+                                         event.category === 'work_remote' ? 'Remoto' : 'Trabalho'
+                                       ) : event.type}
+                                    </Badge>
+                                    {event.allDay && (
+                                      <Badge variant="outline" className="text-xs">
+                                        Dia inteiro
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Rodapé */}
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <Button variant="outline" onClick={onClose}>
+              Fechar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

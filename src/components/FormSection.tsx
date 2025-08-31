@@ -33,9 +33,10 @@ interface FormSectionProps {
   validationErrors?: Record<string, string>;
   resumoRef?: React.RefObject<HTMLInputElement>;
   notasRef?: React.RefObject<HTMLTextAreaElement>;
+  isOptimizing?: boolean;
 }
 
-export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onOptimizeText, onResetForm, onClearForm, validationErrors = {}, resumoRef, notasRef }: FormSectionProps) => {
+export const FormSection = ({ formData, onInputChange, onMultipleInputChange, onGenerateDescription, onOptimizeText, onResetForm, onClearForm, validationErrors = {}, resumoRef, notasRef, isOptimizing = false }: FormSectionProps) => {
   const { 
     buscarSugestoesOrgaoJulgador, 
     buscarSugestoesPerfil, 
@@ -282,10 +283,11 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
                   onClick={onOptimizeText}
                   size="sm"
                   variant="outline"
-                  className="absolute top-2 right-2 h-8 px-2 text-xs bg-white/90 hover:bg-white border-purple-200 hover:border-purple-300 text-purple-700 hover:text-purple-800 shadow-sm"
+                  disabled={isOptimizing}
+                  className="absolute top-2 right-2 h-8 px-2 text-xs bg-white/90 hover:bg-white border-purple-200 hover:border-purple-300 text-purple-700 hover:text-purple-800 shadow-sm disabled:opacity-50"
                 >
-                  <Wand2 className="h-3 w-3 mr-1" />
-                  Otimizar
+                  <Wand2 className={`h-3 w-3 mr-1 ${isOptimizing ? 'animate-spin' : ''}`} />
+                  {isOptimizing ? 'Otimizando...' : 'Otimizar IA'}
                 </Button>
               )}
             </div>

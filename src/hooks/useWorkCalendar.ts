@@ -20,7 +20,7 @@ export const useWorkCalendar = (month: Date) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchMarks = useCallback(async () => {
-    if (!user || loading) return;
+    if (!user || loading || !month) return;
     setLoading(true);
     setError(null);
     
@@ -28,19 +28,26 @@ export const useWorkCalendar = (month: Date) => {
       console.log('🔄 Buscando marcações do calendário para:', format(month, 'yyyy-MM'));
       console.log('🔄 Usuário autenticado:', user.id);
       
-      const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
-      const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      const monthStart = new Date(month?.getFullYear() || new Date().getFullYear(), month?.getMonth() || new Date().getMonth(), 1);
+      const monthEnd = new Date(month?.getFullYear() || new Date().getFullYear(), (month?.getMonth() || new Date().getMonth()) + 1, 0);
       
       console.log('🔄 Range de datas:', {
         start: monthStart.toISOString().slice(0, 10),
         end: monthEnd.toISOString().slice(0, 10)
       });
 
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
       // Primeiro, verificar se a tabela existe e tem a estrutura correta
-      const { data: testData, error: testError } = await supabase
+      const testQueryPromise = supabase
         .from('user_work_calendar')
         .select('id, date, status')
         .limit(1);
+
+      const { data: testData, error: testError } = await Promise.race([testQueryPromise, timeoutPromise]) as any;
 
       if (testError) {
         console.error('❌ Erro na estrutura da tabela:', testError);
@@ -49,12 +56,14 @@ export const useWorkCalendar = (month: Date) => {
 
       console.log('✅ Estrutura da tabela verificada');
       
-      const { data, error } = await supabase
+      const queryPromise = supabase
         .from('user_work_calendar')
         .select('id, date, status')
         .eq('user_id', user.id)
         .gte('date', monthStart.toISOString().slice(0, 10))
         .lte('date', monthEnd.toISOString().slice(0, 10));
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
         
       if (error) {
         console.error('❌ Erro ao buscar marcações:', error);
@@ -74,6 +83,16 @@ export const useWorkCalendar = (month: Date) => {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar marcações';
       console.error('❌ Erro ao buscar marcações:', err);
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('TypeError: Failed to fetch')) {
+          console.warn('Problema de conectividade ao buscar marcações do calendário');
+        } else if (err.message.includes('Timeout')) {
+          console.warn('Timeout ao buscar marcações do calendário');
+        }
+      }
+      
       setError(errorMessage);
       toast.error('Erro ao carregar marcações do calendário', {
         description: errorMessage
@@ -81,7 +100,7 @@ export const useWorkCalendar = (month: Date) => {
     } finally {
       setLoading(false);
     }
-  }, [user, month.getFullYear(), month.getMonth()]);
+  }, [user, month?.getFullYear(), month?.getMonth()]);
 
   const saveMark = useCallback(async (date: string, status: WorkStatus) => {
     if (!user) {
@@ -102,7 +121,12 @@ export const useWorkCalendar = (month: Date) => {
     setError(null);
     
     try {
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const upsertPromise = supabase
         .from('user_work_calendar')
         .upsert({ 
           user_id: user.id, 
@@ -113,6 +137,8 @@ export const useWorkCalendar = (month: Date) => {
           onConflict: 'user_id, date'
         })
         .select('id, date, status');
+
+      const { data, error } = await Promise.race([upsertPromise, timeoutPromise]) as any;
         
       if (error) {
         console.error('❌ Erro ao salvar modalidade:', error);
@@ -138,6 +164,16 @@ export const useWorkCalendar = (month: Date) => {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao salvar marcação';
       console.error('❌ Erro ao salvar modalidade:', err);
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('TypeError: Failed to fetch')) {
+          console.warn('Problema de conectividade ao salvar modalidade');
+        } else if (err.message.includes('Timeout')) {
+          console.warn('Timeout ao salvar modalidade');
+        }
+      }
+      
       setError(errorMessage);
       
       // Reverter mudança na UI em caso de erro
@@ -180,11 +216,18 @@ export const useWorkCalendar = (month: Date) => {
     setError(null);
     
     try {
-      const { error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const deletePromise = supabase
         .from('user_work_calendar')
         .delete()
         .eq('user_id', user.id)
         .eq('date', date);
+
+      const { error } = await Promise.race([deletePromise, timeoutPromise]) as any;
         
       if (error) {
         console.error('❌ Erro ao remover modalidade:', error);
@@ -200,6 +243,16 @@ export const useWorkCalendar = (month: Date) => {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao remover marcação';
       console.error('❌ Erro ao remover modalidade:', err);
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('TypeError: Failed to fetch')) {
+          console.warn('Problema de conectividade ao remover modalidade');
+        } else if (err.message.includes('Timeout')) {
+          console.warn('Timeout ao remover modalidade');
+        }
+      }
+      
       setError(errorMessage);
       
       // Reverter mudança na UI em caso de erro
@@ -216,8 +269,8 @@ export const useWorkCalendar = (month: Date) => {
   }, [user, marks]);
 
   // Buscar marcações apenas quando user ou month mudarem
-  const currentYear = month.getFullYear();
-  const currentMonth = month.getMonth();
+  const currentYear = month?.getFullYear();
+  const currentMonth = month?.getMonth();
   
   useEffect(() => {
     if (user) {
@@ -226,4 +279,4 @@ export const useWorkCalendar = (month: Date) => {
   }, [user, currentYear, currentMonth, fetchMarks]);
 
   return { marks, loading, error, fetchMarks, saveMark, removeMark };
-}; 
+};

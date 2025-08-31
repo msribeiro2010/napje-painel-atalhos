@@ -142,13 +142,20 @@ export const useAIInsights = () => {
     try {
       // Primeiro, tentar usar as Edge Functions se disponível
       try {
-        const { data, error: edgeError } = await supabase.functions.invoke('generate-ai-insights', {
+        // Timeout de 15 segundos para Edge Functions
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Edge Function demorou mais de 15 segundos')), 15000)
+        );
+
+        const invokePromise = supabase.functions.invoke('generate-ai-insights', {
           body: {
             userId: user.id,
             analysisTypes: ['patterns', 'recommendations', 'predictions', 'anomalies'],
             timeframe: '30d'
           }
         });
+
+        const { data, error: edgeError } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
         if (edgeError) {
           throw new Error('Edge Function error');
@@ -193,7 +200,12 @@ export const useAIInsights = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-user-behavior', {
+      // Timeout de 15 segundos para Edge Functions
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function demorou mais de 15 segundos')), 15000)
+      );
+
+      const invokePromise = supabase.functions.invoke('analyze-user-behavior', {
         body: {
           userId: user.id,
           timeframe,
@@ -201,6 +213,8 @@ export const useAIInsights = () => {
           includeTrends: true
         }
       });
+
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
       if (error) {
         console.warn('Análise de comportamento não disponível:', error);
@@ -218,13 +232,20 @@ export const useAIInsights = () => {
   // Gerar previsões baseadas em dados históricos
   const generatePredictions = useCallback(async (metrics: string[]) => {
     try {
-      const { data, error } = await supabase.functions.invoke('generate-predictions', {
+      // Timeout de 15 segundos para Edge Functions
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function demorou mais de 15 segundos')), 15000)
+      );
+
+      const invokePromise = supabase.functions.invoke('generate-predictions', {
         body: {
           metrics,
           timeframe: '7d',
           includeFactors: true
         }
       });
+
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
       if (error) {
         console.warn('Previsões não disponíveis:', error);
@@ -243,13 +264,20 @@ export const useAIInsights = () => {
   const getDashboardAnalytics = useCallback(async () => {
     try {
       try {
-        const { data, error } = await supabase.functions.invoke('dashboard-analytics', {
+        // Timeout de 15 segundos para Edge Functions
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Edge Function demorou mais de 15 segundos')), 15000)
+        );
+
+        const invokePromise = supabase.functions.invoke('dashboard-analytics', {
           body: {
             includeRealTime: true,
             includeTrends: true,
             timeframe: '7d'
           }
         });
+
+        const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
         if (error) {
           throw new Error('Edge Function error');
@@ -287,13 +315,20 @@ export const useAIInsights = () => {
   // Detectar anomalias nos dados
   const detectAnomalies = useCallback(async (dataType: string, threshold: number = 0.95) => {
     try {
-      const { data, error } = await supabase.functions.invoke('detect-anomalies', {
+      // Timeout de 15 segundos para Edge Functions
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function demorou mais de 15 segundos')), 15000)
+      );
+
+      const invokePromise = supabase.functions.invoke('detect-anomalies', {
         body: {
           dataType,
           threshold,
           timeframe: '24h'
         }
       });
+
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
       if (error) throw error;
 
@@ -309,7 +344,12 @@ export const useAIInsights = () => {
     if (!user) return [];
 
     try {
-      const { data, error } = await supabase.functions.invoke('personalized-recommendations', {
+      // Timeout de 15 segundos para Edge Functions
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function demorou mais de 15 segundos')), 15000)
+      );
+
+      const invokePromise = supabase.functions.invoke('personalized-recommendations', {
         body: {
           userId: user.id,
           context: {
@@ -320,6 +360,8 @@ export const useAIInsights = () => {
           maxRecommendations: 5
         }
       });
+
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
       if (error) throw error;
 
@@ -342,13 +384,20 @@ export const useAIInsights = () => {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('execute-insight-action', {
+      // Timeout de 15 segundos para Edge Functions
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function demorou mais de 15 segundos')), 15000)
+      );
+
+      const invokePromise = supabase.functions.invoke('execute-insight-action', {
         body: {
           insightId: insight.id,
           action: insight.action,
           userId: user?.id
         }
       });
+
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
       if (error) throw error;
 
@@ -372,9 +421,16 @@ export const useAIInsights = () => {
     
     // Salvar no backend que o insight foi ignorado
     try {
-      await supabase.functions.invoke('dismiss-insight', {
+      // Timeout de 15 segundos para Edge Functions
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function demorou mais de 15 segundos')), 15000)
+      );
+
+      const invokePromise = supabase.functions.invoke('dismiss-insight', {
         body: { insightId, userId: user?.id }
       });
+
+      await Promise.race([invokePromise, timeoutPromise]);
     } catch (err) {
       console.error('Erro ao dispensar insight:', err);
     }

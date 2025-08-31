@@ -25,11 +25,18 @@ export const useShortcutsPreferences = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('user_shortcuts_preferences')
         .select('group_order, favorite_groups, favorite_buttons')
         .eq('user_id', user.id)
         .single();
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error loading preferences:', error);
@@ -45,6 +52,15 @@ export const useShortcutsPreferences = () => {
       }
     } catch (error) {
       console.error('Error loading preferences:', error);
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('TypeError: Failed to fetch')) {
+          console.warn('Problema de conectividade com Supabase - usando preferências padrão');
+        } else if (error.message.includes('Timeout')) {
+          console.warn('Timeout na busca de preferências - usando preferências padrão');
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -57,16 +73,23 @@ export const useShortcutsPreferences = () => {
 
       const updatedPreferences = { ...preferences, ...newPreferences };
 
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
       // Primeiro, verificar se já existe um registro para o usuário
-      const { data: existingData } = await supabase
+      const checkPromise = supabase
         .from('user_shortcuts_preferences')
         .select('id')
         .eq('user_id', user.id)
         .single();
 
+      const { data: existingData } = await Promise.race([checkPromise, timeoutPromise]) as any;
+
       if (existingData) {
         // Se existe, fazer UPDATE
-        const { error } = await supabase
+        const updatePromise = supabase
           .from('user_shortcuts_preferences')
           .update({
             group_order: updatedPreferences.groupOrder,
@@ -74,6 +97,8 @@ export const useShortcutsPreferences = () => {
             favorite_buttons: updatedPreferences.favoriteButtons,
           })
           .eq('user_id', user.id);
+
+        const { error } = await Promise.race([updatePromise, timeoutPromise]) as any;
 
         if (error) {
           console.error('Error updating preferences:', error);
@@ -86,7 +111,7 @@ export const useShortcutsPreferences = () => {
         }
       } else {
         // Se não existe, fazer INSERT
-        const { error } = await supabase
+        const insertPromise = supabase
           .from('user_shortcuts_preferences')
           .insert({
             user_id: user.id,
@@ -94,6 +119,8 @@ export const useShortcutsPreferences = () => {
             favorite_groups: updatedPreferences.favoriteGroups,
             favorite_buttons: updatedPreferences.favoriteButtons,
           });
+
+        const { error } = await Promise.race([insertPromise, timeoutPromise]) as any;
 
         if (error) {
           console.error('Error inserting preferences:', error);
@@ -113,11 +140,35 @@ export const useShortcutsPreferences = () => {
       });
     } catch (error) {
       console.error('Error saving preferences:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar as preferências",
-        variant: "destructive"
-      });
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('TypeError: Failed to fetch')) {
+          toast({
+            title: "Erro de Conectividade",
+            description: "Problema de conexão com o servidor. Tente novamente.",
+            variant: "destructive"
+          });
+        } else if (error.message.includes('Timeout')) {
+          toast({
+            title: "Timeout",
+            description: "A operação demorou muito para responder. Tente novamente.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Erro",
+            description: "Não foi possível salvar as preferências",
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Erro",
+          description: "Não foi possível salvar as preferências",
+          variant: "destructive"
+        });
+      }
     }
   };
 

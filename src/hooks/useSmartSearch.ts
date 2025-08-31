@@ -166,7 +166,12 @@ export const useSmartSearch = () => {
     console.log('🔍 Buscando em chamados:', query);
     
     try {
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('chamados')
         .select(`
           id,
@@ -179,6 +184,8 @@ export const useSmartSearch = () => {
         .or(`resumo.ilike.%${query}%,notas.ilike.%${query}%,grau.ilike.%${query}%`)
         .order('created_at', { ascending: false })
         .limit(15);
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error('❌ Erro ao buscar chamados:', error);
@@ -221,6 +228,16 @@ export const useSmartSearch = () => {
       }));
     } catch (err) {
       console.error('❌ Erro na busca de chamados:', err);
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('TypeError: Failed to fetch')) {
+          console.warn('Problema de conectividade com Supabase - usando dados de exemplo');
+        } else if (err.message.includes('Timeout')) {
+          console.warn('Timeout na busca de chamados - usando dados de exemplo');
+        }
+      }
+      
       return getExampleChamados(query);
     }
   }, []);

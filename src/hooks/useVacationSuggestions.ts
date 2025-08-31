@@ -33,13 +33,19 @@ export const useVacationSuggestions = (year: number = new Date().getFullYear()) 
         const yearStart = format(startOfYear(new Date(year, 0, 1)), 'yyyy-MM-dd');
         const yearEnd = format(endOfYear(new Date(year, 11, 31)), 'yyyy-MM-dd');
 
-        // Usar query SQL raw para contornar problema de tipos
-        const { data: feriados, error } = await supabase
+        // Timeout de 10 segundos para evitar travamento
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+        );
+
+        const queryPromise = supabase
           .from('feriados' as any)
           .select('*')
           .gte('data', yearStart)
           .lte('data', yearEnd)
-          .order('data', { ascending: true }) as { data: Feriado[] | null, error: any };
+          .order('data', { ascending: true });
+
+        const { data: feriados, error } = await Promise.race([queryPromise, timeoutPromise]) as { data: Feriado[] | null, error: any };
 
         if (error) {
           console.error('Erro ao buscar feriados:', error);
@@ -54,8 +60,17 @@ export const useVacationSuggestions = (year: number = new Date().getFullYear()) 
         });
 
         return generateVacationSuggestions(feriadosFuturos, year);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erro no useVacationSuggestions:', error);
+        
+        // Em caso de erro de conectividade ou timeout, retorna sugestões básicas
+        if (error?.message?.includes('Failed to fetch') || 
+            error?.message?.includes('Timeout') ||
+            error?.name === 'TypeError') {
+          console.log('Gerando sugestões básicas devido a problemas de conectividade');
+          return createBasicSuggestions(year);
+        }
+        
         return [];
       }
     },

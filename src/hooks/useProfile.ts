@@ -16,11 +16,18 @@ export const useProfile = () => {
       console.log('useProfile: Fetching profile for user:', user.id);
       
       try {
-        const { data, error } = await supabase
+        // Timeout de 10 segundos para evitar travamento
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+        );
+
+        const queryPromise = supabase
           .from("profiles")
           .select("*")
           .eq("id", user.id)
           .single();
+
+        const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
         if (error) {
           console.error('useProfile: Supabase error:', error);
@@ -31,6 +38,16 @@ export const useProfile = () => {
         return data;
       } catch (err) {
         console.error('useProfile: Unexpected error:', err);
+        
+        // Tratamento específico para erros de conectividade e timeout
+        if (err instanceof Error) {
+          if (err.message.includes('Failed to fetch') || err.message.includes('TypeError: Failed to fetch')) {
+            throw new Error('Problema de conectividade. Verifique sua conexão.');
+          } else if (err.message.includes('Timeout')) {
+            throw new Error('Operação demorou muito. Tente novamente.');
+          }
+        }
+        
         throw err;
       }
     },

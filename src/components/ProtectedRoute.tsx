@@ -47,9 +47,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/auth" replace />;
   }
 
-  // Se o usuário não tem profile (erro na busca), redireciona para login
+  // Se o usuário não tem profile, permite acesso com perfil padrão
   if (!profile) {
-    return <Navigate to="/auth" replace />;
+    // Permite acesso mesmo sem perfil na tabela profiles
+    if (requireAdmin) {
+      return <Navigate to="/" replace />;
+    }
+    return <>{children}</>;
   }
 
   // Se o usuário está pendente de aprovação

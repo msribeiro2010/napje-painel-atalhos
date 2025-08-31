@@ -27,25 +27,25 @@ export const useCustomEvents = (month: Date) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchCustomEvents = useCallback(async () => {
-    if (!user) return;
+    if (!user || !month) return;
     
     // Verificar cache primeiro
-    const cacheKey = `${user.id}-${month.getFullYear()}-${month.getMonth()}`;
+    const cacheKey = `${user.id}-${month?.getFullYear()}-${month?.getMonth()}`;
     const cached = eventsCache.get(cacheKey);
     const now = Date.now();
-    
+
     if (cached && (now - cached.timestamp) < CACHE_DURATION) {
       setCustomEvents(cached.data);
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       // Buscar apenas eventos do mês atual para reduzir consumo
-      const startDate = new Date(month.getFullYear(), month.getMonth(), 1);
-      const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      const startDate = new Date(month?.getFullYear() || new Date().getFullYear(), month?.getMonth() || new Date().getMonth(), 1);
+      const endDate = new Date(month?.getFullYear() || new Date().getFullYear(), (month?.getMonth() || new Date().getMonth()) + 1, 0);
       
       const { data, error } = await supabase
         .from('user_custom_events')
@@ -71,7 +71,7 @@ export const useCustomEvents = (month: Date) => {
     } finally {
       setLoading(false);
     }
-  }, [user, month.getFullYear(), month.getMonth()]);
+  }, [user, month?.getFullYear(), month?.getMonth()]);
 
   const addCustomEvent = useCallback(async (event: Omit<CustomEvent, 'id' | 'user_id'>) => {
     if (!user?.id) {
@@ -178,8 +178,10 @@ export const useCustomEvents = (month: Date) => {
       setCustomEvents(prev => [...prev, data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
       
       // Limpar cache para forçar atualização na próxima consulta
-      const cacheKey = `${user.id}-${month.getFullYear()}-${month.getMonth()}`;
-      eventsCache.delete(cacheKey);
+      if (month) {
+        const cacheKey = `${user.id}-${month?.getFullYear()}-${month?.getMonth()}`;
+        eventsCache.delete(cacheKey);
+      }
       
       // Labels para o toast
       const typeLabels = {
@@ -246,8 +248,10 @@ export const useCustomEvents = (month: Date) => {
       setCustomEvents(prev => prev.map(e => e.id === id ? data : e));
       
       // Limpar cache para forçar atualização na próxima consulta
-      const cacheKey = `${user.id}-${month.getFullYear()}-${month.getMonth()}`;
-      eventsCache.delete(cacheKey);
+      if (month) {
+        const cacheKey = `${user.id}-${month?.getFullYear()}-${month?.getMonth()}`;
+        eventsCache.delete(cacheKey);
+      }
       
       toast.success('Evento atualizado!', {
         description: `"${event.title}" foi modificado com sucesso`
@@ -301,8 +305,10 @@ export const useCustomEvents = (month: Date) => {
       console.log('✅ Evento removido com sucesso');
       
       // Limpar cache para forçar atualização na próxima consulta
-      const cacheKey = `${user.id}-${month.getFullYear()}-${month.getMonth()}`;
-      eventsCache.delete(cacheKey);
+      if (month) {
+        const cacheKey = `${user.id}-${month?.getFullYear()}-${month?.getMonth()}`;
+        eventsCache.delete(cacheKey);
+      }
       
       toast.success('Evento removido!', {
         description: eventToRemove ? `"${eventToRemove.title}" foi excluído` : 'Evento excluído com sucesso'
@@ -328,8 +334,8 @@ export const useCustomEvents = (month: Date) => {
   }, [loading, customEvents, user]);
 
   // Buscar eventos apenas quando user ou month mudarem
-  const currentYear = month.getFullYear();
-  const currentMonth = month.getMonth();
+  const currentYear = month?.getFullYear();
+  const currentMonth = month?.getMonth();
   
   useEffect(() => {
     if (user) {

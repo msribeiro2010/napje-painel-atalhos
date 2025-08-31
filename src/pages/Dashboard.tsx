@@ -26,6 +26,9 @@ import { ChatAssistant } from '@/components/ChatAssistant';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
 import { usePostItNotes } from '@/hooks/usePostItNotes';
 import { usePlantaoNotifications } from '@/hooks/usePlantaoNotifications';
+import { useWeeklyNotifications } from '@/hooks/useWeeklyNotifications';
+import { useWeeklyPlanning } from '@/hooks/useWeeklyPlanning';
+import { WeeklyPlanningModal } from '@/components/weekly-notifications/WeeklyPlanningModal';
 
 
 import { ptBR } from 'date-fns/locale';
@@ -49,7 +52,11 @@ const Dashboard = () => {
   // Hook para notificações de plantão
   usePlantaoNotifications();
   
-
+  // Hook para notificações semanais - ativa automaticamente ao entrar no sistema
+  useWeeklyNotifications();
+  
+  // Hook para planejamento semanal - exibe modal automaticamente aos domingos e segundas
+  const { weeklyData, isModalOpen, closeModal } = useWeeklyPlanning();
 
   const [postItOpen, setPostItOpen] = useState(false);
   const [smartSearchOpen, setSmartSearchOpen] = useState(false);
@@ -669,6 +676,13 @@ const Dashboard = () => {
       {/* <EventNotificationToast /> */}
 
       {/* Upcoming Events Modal - REMOVIDO */}
+      
+      {/* Weekly Planning Modal - Exibição automática aos domingos e segundas */}
+      <WeeklyPlanningModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        weeklyData={weeklyData}
+      />
       </ModernLayout>
     </ErrorBoundary>
   );

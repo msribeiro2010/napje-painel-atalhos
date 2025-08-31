@@ -462,7 +462,9 @@ export type Database = {
           created_at: string
           dayofweek: number
           id: string
+          isWeekdayRange: boolean | null
           mensagem: string
+          selectedDays: number[] | null
           time: string
           titulo: string
           updated_at: string
@@ -472,7 +474,9 @@ export type Database = {
           created_at?: string
           dayofweek?: number
           id?: string
+          isWeekdayRange?: boolean | null
           mensagem: string
+          selectedDays?: number[] | null
           time?: string
           titulo: string
           updated_at?: string
@@ -482,7 +486,9 @@ export type Database = {
           created_at?: string
           dayofweek?: number
           id?: string
+          isWeekdayRange?: boolean | null
           mensagem?: string
+          selectedDays?: number[] | null
           time?: string
           titulo?: string
           updated_at?: string

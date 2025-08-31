@@ -76,7 +76,7 @@ export const EventsManagementDialog = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
   // Filtrar e ordenar eventos futuros
-  const filteredAndSortedFutureEvents = customEvents
+  const filteredAndSortedFutureEvents = (customEvents || [])
     .filter(event => {
       const eventDate = parseISO(event.date);
       const isFuture = isAfter(eventDate, startOfDay(new Date()));
@@ -196,7 +196,7 @@ export const EventsManagementDialog = () => {
     return null;
   };
 
-  const totalEvents = stats.past + customEvents.filter(event => {
+  const totalEvents = stats.past + (customEvents || []).filter(event => {
     const eventDate = parseISO(event.date);
     return isAfter(eventDate, startOfDay(new Date()));
   }).length;

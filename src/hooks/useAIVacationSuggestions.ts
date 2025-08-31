@@ -21,12 +21,19 @@ export const useAIVacationSuggestions = () => {
     try {
       console.log(`Gerando sugestões de férias com IA para ${year}...`);
       
-      const { data, error: functionError } = await supabase.functions.invoke(
+      // Timeout de 30 segundos para Edge Function (IA pode demorar mais)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: IA demorou mais de 30 segundos para responder')), 30000)
+      );
+
+      const functionPromise = supabase.functions.invoke(
         'generate-vacation-suggestions',
         {
           body: { year }
         }
       );
+
+      const { data, error: functionError } = await Promise.race([functionPromise, timeoutPromise]) as any;
 
       if (functionError) {
         console.error('Erro na Edge Function:', functionError);
@@ -64,6 +71,10 @@ export const useAIVacationSuggestions = () => {
       } else if (errorMessage.includes('Rate limit')) {
         toast.error('⏱️ Limite de uso atingido', {
           description: 'Aguarde alguns minutos antes de tentar novamente'
+        });
+      } else if (errorMessage.includes('Timeout') || errorMessage.includes('Failed to fetch')) {
+        toast.error('⏱️ Timeout na IA', {
+          description: 'A IA demorou muito para responder. Tente novamente.'
         });
       } else {
         toast.error('❌ Erro ao gerar sugestões com IA', {

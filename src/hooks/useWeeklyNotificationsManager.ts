@@ -7,7 +7,9 @@ export interface WeeklyNotification {
   titulo: string;
   mensagem: string;
   ativo: boolean;
-  dayofweek: number; // 0 = Sunday, 1 = Monday, etc.
+  dayofweek: number; // 0 = Sunday, 1 = Monday, etc. (mantido para compatibilidade)
+  selectedDays?: number[]; // Novo: array de dias selecionados
+  isWeekdayRange?: boolean; // Novo: indica se é período seg-sex
   time: string; // HH:MM format
   created_at: string;
   updated_at: string;
@@ -17,14 +19,18 @@ export interface WeeklyNotificationFormData {
   titulo: string;
   mensagem: string;
   ativo: boolean;
-  dayofweek: number; // 0 = Sunday, 1 = Monday, etc.
+  dayofweek: number; // 0 = Sunday, 1 = Monday, etc. (mantido para compatibilidade)
+  selectedDays?: number[]; // Novo: array de dias selecionados
+  isWeekdayRange?: boolean; // Novo: indica se é período seg-sex
   time: string; // HH:MM format
 }
 
 export interface WeeklyNotificationSettings {
   enabled: boolean;
   frequency: 'weekly' | 'biweekly' | 'monthly';
-  dayofweek: number; // 0 = Sunday, 1 = Monday, etc.
+  dayofweek: number; // 0 = Sunday, 1 = Monday, etc. (mantido para compatibilidade)
+  selectedDays?: number[]; // Novo: array de dias selecionados
+  isWeekdayRange?: boolean; // Novo: indica se é período seg-sex
   time: string; // HH:MM format
 }
 
@@ -88,10 +94,15 @@ export const useWeeklyNotificationsManager = () => {
       console.error('Erro ao buscar notificações:', { message: error, details: error });
       
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        toast.error('Erro de conexão ao carregar notificações. Verifique sua internet.');
+        toast.error('Serviço temporariamente indisponível. Tente novamente mais tarde.', {
+          description: 'O banco de dados não está acessível no momento.'
+        });
       } else {
         toast.error(`Erro ao carregar notificações: ${error?.message || 'Erro desconhecido'}`);
       }
+      
+      // Set empty array as fallback
+      setNotifications([]);
     } finally {
       setIsLoading(false);
     }
@@ -112,6 +123,8 @@ export const useWeeklyNotificationsManager = () => {
             mensagem: formData.mensagem,
             ativo: formData.ativo,
             dayofweek: formData.dayofweek,
+            selectedDays: formData.selectedDays,
+            isWeekdayRange: formData.isWeekdayRange,
             time: formData.time,
             updated_at: new Date().toISOString()
           })
@@ -134,6 +147,8 @@ export const useWeeklyNotificationsManager = () => {
             mensagem: formData.mensagem,
             ativo: formData.ativo,
             dayofweek: formData.dayofweek,
+            selectedDays: formData.selectedDays,
+            isWeekdayRange: formData.isWeekdayRange,
             time: formData.time
           })
           .select();
@@ -154,7 +169,9 @@ export const useWeeklyNotificationsManager = () => {
       
       // More specific error handling
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        toast.error('Erro de conexão. Verifique sua internet e tente novamente.');
+        toast.error('Serviço temporariamente indisponível. Tente novamente mais tarde.', {
+          description: 'Não foi possível conectar ao banco de dados.'
+        });
       } else if (error?.message?.includes('JWT')) {
         toast.error('Sessão expirada. Faça login novamente.');
       } else if (error?.message?.includes('permission')) {
@@ -181,7 +198,14 @@ export const useWeeklyNotificationsManager = () => {
       await fetchNotifications();
     } catch (error) {
       console.error('Erro ao excluir notificação:', error);
-      toast.error('Erro ao excluir notificação');
+      
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        toast.error('Serviço temporariamente indisponível. Tente novamente mais tarde.', {
+          description: 'Não foi possível conectar ao banco de dados.'
+        });
+      } else {
+        toast.error('Erro ao excluir notificação');
+      }
     }
   };
 
@@ -198,13 +222,43 @@ export const useWeeklyNotificationsManager = () => {
     fetchNotifications();
   }, []);
 
+  // Create notification wrapper
+  const createNotification = async (formData: Omit<WeeklyNotificationFormData, 'dayofweek'> & { diasSemana: string[], horario: string }) => {
+    const convertedData: WeeklyNotificationFormData = {
+      titulo: formData.titulo,
+      mensagem: formData.mensagem,
+      ativo: formData.ativo,
+      dayofweek: 1, // Default value
+      time: formData.horario
+    };
+    return await saveNotification(convertedData);
+  };
+
+  // Update notification wrapper
+  const updateNotification = async (id: string, formData: Omit<WeeklyNotificationFormData, 'dayofweek'> & { diasSemana: string[], horario: string }) => {
+    const convertedData: WeeklyNotificationFormData = {
+      titulo: formData.titulo,
+      mensagem: formData.mensagem,
+      ativo: formData.ativo,
+      dayofweek: 1, // Default value
+      time: formData.horario
+    };
+    return await saveNotification(convertedData, id);
+  };
+
+  // Update settings wrapper
+  const updateSettings = (newSettings: WeeklyNotificationSettings) => {
+    saveSettings(newSettings);
+  };
+
   return {
     notifications,
     isLoading,
     settings,
-    saveSettings,
-    saveNotification,
+    createNotification,
+    updateNotification,
     deleteNotification,
+    updateSettings,
     testNotification,
     fetchNotifications
   };

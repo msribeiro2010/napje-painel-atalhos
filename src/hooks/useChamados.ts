@@ -91,7 +91,12 @@ export const useChamados = () => {
 
       const resumoFinal = formData.resumo === 'Outro (personalizado)' ? formData.resumoCustom : formData.resumo;
 
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const insertPromise = supabase
         .from('chamados')
         .insert({
           titulo: resumoFinal,
@@ -108,6 +113,8 @@ export const useChamados = () => {
         .select()
         .single();
 
+      const { data, error } = await Promise.race([insertPromise, timeoutPromise]) as any;
+
       if (error) throw error;
       
       // Limpar cache após salvar novo chamado
@@ -119,8 +126,21 @@ export const useChamados = () => {
     } catch (err: any) {
       const errorMessage = err?.message || 'Erro desconhecido ao salvar chamado';
       console.error('Erro ao salvar chamado:', err);
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('TypeError: Failed to fetch')) {
+          toast.error('Problema de conectividade. Verifique sua conexão e tente novamente.');
+        } else if (err.message.includes('Timeout')) {
+          toast.error('Operação demorou muito para responder. Tente novamente.');
+        } else {
+          toast.error('Erro ao salvar chamado. Tente novamente.');
+        }
+      } else {
+        toast.error('Erro ao salvar chamado. Tente novamente.');
+      }
+      
       setError(errorMessage);
-      toast.error('Erro ao salvar chamado. Tente novamente.');
       return null;
     } finally {
       setLoading(false);
@@ -155,7 +175,12 @@ export const useChamados = () => {
       setLoading(true);
       console.log(`🔄 Buscando ${limite} chamados recentes do Supabase...`);
       
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('chamados')
         .select(`
           id,
@@ -173,6 +198,8 @@ export const useChamados = () => {
         `)
         .order('created_at', { ascending: false })
         .limit(Math.max(limite, 30)); // Reduzido de 50 para 30
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error('Erro ao buscar chamados:', error);
@@ -217,6 +244,24 @@ export const useChamados = () => {
     } catch (err: any) {
       const errorMessage = err?.message || 'Erro desconhecido ao buscar chamados';
       console.error('❌ Erro ao buscar chamados:', err);
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('TypeError: Failed to fetch')) {
+          console.warn('Problema de conectividade com Supabase - tentando usar dados do localStorage');
+          const localData = loadFromLocalStorage();
+          if (localData) {
+            return localData.slice(0, limite);
+          }
+        } else if (err.message.includes('Timeout')) {
+          console.warn('Timeout na busca de chamados - tentando usar dados do localStorage');
+          const localData = loadFromLocalStorage();
+          if (localData) {
+            return localData.slice(0, limite);
+          }
+        }
+      }
+      
       setError(errorMessage);
       
       // Tentar retornar dados do localStorage como último recurso
@@ -238,10 +283,17 @@ export const useChamados = () => {
       setLoading(true);
       setError(null);
       
-      const { error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const deletePromise = supabase
         .from('chamados')
         .delete()
         .eq('id', id);
+
+      const { error } = await Promise.race([deletePromise, timeoutPromise]) as any;
 
       if (error) throw error;
       
@@ -254,8 +306,21 @@ export const useChamados = () => {
     } catch (err: any) {
       const errorMessage = err?.message || 'Erro desconhecido ao excluir chamado';
       console.error('Erro ao excluir chamado:', err);
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('TypeError: Failed to fetch')) {
+          toast.error('Problema de conectividade. Verifique sua conexão e tente novamente.');
+        } else if (err.message.includes('Timeout')) {
+          toast.error('Operação demorou muito para responder. Tente novamente.');
+        } else {
+          toast.error('Erro ao excluir chamado. Tente novamente.');
+        }
+      } else {
+        toast.error('Erro ao excluir chamado. Tente novamente.');
+      }
+      
       setError(errorMessage);
-      toast.error('Erro ao excluir chamado. Tente novamente.');
       return false;
     } finally {
       setLoading(false);
@@ -273,7 +338,12 @@ export const useChamados = () => {
         return null;
       }
       
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('chamados')
         .select('nome_usuario_afetado, perfil_usuario_afetado, cpf_usuario_afetado')
         .eq('cpf_usuario_afetado', cpfLimpo)
@@ -281,6 +351,8 @@ export const useChamados = () => {
         .not('perfil_usuario_afetado', 'is', null)
         .order('created_at', { ascending: false })
         .limit(1);
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error('Erro na query buscarDadosUsuarioPorCPF:', error);
@@ -291,6 +363,16 @@ export const useChamados = () => {
       return data && data.length > 0 ? data[0] : null;
     } catch (err: any) {
       console.error('Erro ao buscar dados do usuário por CPF:', err);
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('TypeError: Failed to fetch')) {
+          console.warn('Problema de conectividade ao buscar dados do usuário por CPF');
+        } else if (err.message.includes('Timeout')) {
+          console.warn('Timeout ao buscar dados do usuário por CPF');
+        }
+      }
+      
       setError(err?.message || 'Erro ao buscar dados do usuário');
       return null;
     }

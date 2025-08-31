@@ -16,10 +16,18 @@ export const useAssuntos = () => {
   const fetchAssuntos = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('assuntos')
         .select('id, nome, categoria')
         .order('nome');
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) throw error;
       

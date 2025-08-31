@@ -25,6 +25,11 @@ export const EventNotificationToast = () => {
       return; // Já mostrou notificação hoje
     }
 
+    // Verificar se customEvents está disponível
+    if (!customEvents || !Array.isArray(customEvents)) {
+      return;
+    }
+
     // Verificar eventos de hoje e amanhã
     const todayEvents = customEvents.filter(event => isToday(parseISO(event.date)));
     const tomorrowEvents = customEvents.filter(event => isTomorrow(parseISO(event.date)));

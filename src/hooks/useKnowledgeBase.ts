@@ -15,11 +15,18 @@ export const useKnowledgeBase = () => {
 
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('base_conhecimento')
         .select('categoria')
         .not('categoria', 'is', null)
         .order('categoria');
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) throw error;
       
@@ -50,10 +57,18 @@ export const useKnowledgeBase = () => {
   const fetchItems = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      
+      // Timeout de 10 segundos para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const queryPromise = supabase
         .from('base_conhecimento')
         .select('*')
         .order('created_at', { ascending: false });
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) throw error;
       
@@ -65,7 +80,22 @@ export const useKnowledgeBase = () => {
       setItems(processedData);
     } catch (error) {
       console.error('Erro ao buscar itens:', error);
-      toast.error('Erro ao carregar base de conhecimento');
+      
+      // Tratamento específico para erros de conectividade e timeout
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('TypeError: Failed to fetch')) {
+          toast.error('Problema de conectividade. Verifique sua conexão.');
+        } else if (error.message.includes('Timeout')) {
+          toast.error('Operação demorou muito. Tente novamente.');
+        } else {
+          toast.error('Erro ao carregar base de conhecimento');
+        }
+      } else {
+        toast.error('Erro ao carregar base de conhecimento');
+      }
+      
+      // Definir como vazio em caso de erro
+      setItems([]);
     } finally {
       setIsLoading(false);
     }
@@ -86,9 +116,16 @@ export const useKnowledgeBase = () => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        // Timeout de 30 segundos para upload de arquivo
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Upload demorou mais de 30 segundos')), 30000)
+        );
+
+        const uploadPromise = supabase.storage
           .from('knowledge-base-files')
           .upload(fileName, file);
+
+        const { data: uploadData, error: uploadError } = await Promise.race([uploadPromise, timeoutPromise]) as any;
 
         if (uploadError) throw uploadError;
         arquivo_print_url = uploadData.path;
@@ -97,9 +134,16 @@ export const useKnowledgeBase = () => {
         const fileExt = formData.arquivo_print.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        // Timeout de 30 segundos para upload de arquivo
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Upload demorou mais de 30 segundos')), 30000)
+        );
+
+        const uploadPromise = supabase.storage
           .from('knowledge-base-files')
           .upload(fileName, formData.arquivo_print);
+
+        const { data: uploadData, error: uploadError } = await Promise.race([uploadPromise, timeoutPromise]) as any;
 
         if (uploadError) throw uploadError;
         arquivo_print_url = uploadData.path;
@@ -108,7 +152,12 @@ export const useKnowledgeBase = () => {
 
 
       if (editingItem) {
-        const { error } = await supabase
+        // Timeout de 10 segundos para update
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+        );
+
+        const updatePromise = supabase
           .from('base_conhecimento')
           .update({
             titulo: formData.titulo,
@@ -120,10 +169,17 @@ export const useKnowledgeBase = () => {
           })
           .eq('id', editingItem.id);
 
+        const { error } = await Promise.race([updatePromise, timeoutPromise]) as any;
+
         if (error) throw error;
         toast.success('Item atualizado com sucesso!');
       } else {
-        const { error } = await supabase
+        // Timeout de 10 segundos para insert
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+        );
+
+        const insertPromise = supabase
           .from('base_conhecimento')
           .insert({
             titulo: formData.titulo,
@@ -134,6 +190,8 @@ export const useKnowledgeBase = () => {
             arquivo_print: arquivo_print_url || null
           });
 
+        const { error } = await Promise.race([insertPromise, timeoutPromise]) as any;
+
         if (error) throw error;
         toast.success('Item adicionado com sucesso!');
       }
@@ -141,19 +199,31 @@ export const useKnowledgeBase = () => {
       fetchItems();
       fetchCategories(); // Atualizar categorias após salvar
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar item:', error);
-      toast.error('Erro ao salvar item');
+      
+      if (error?.message?.includes('Timeout') || error?.message?.includes('Failed to fetch') || error instanceof TypeError) {
+        toast.error('Erro de conectividade. Verifique sua conexão e tente novamente.');
+      } else {
+        toast.error('Erro ao salvar item');
+      }
       return false;
     }
   };
 
   const deleteItem = async (itemId: string) => {
     try {
-      const { error } = await supabase
+      // Timeout de 10 segundos para delete
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+      );
+
+      const deletePromise = supabase
         .from('base_conhecimento')
         .delete()
         .eq('id', itemId);
+
+      const { error } = await Promise.race([deletePromise, timeoutPromise]) as any;
 
       if (error) throw error;
       
@@ -161,9 +231,14 @@ export const useKnowledgeBase = () => {
       setItems(prevItems => prevItems.filter(item => item.id !== itemId));
       toast.success('Item excluído com sucesso!');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao excluir item:', error);
-      toast.error('Erro ao excluir item');
+      
+      if (error?.message?.includes('Timeout') || error?.message?.includes('Failed to fetch') || error instanceof TypeError) {
+        toast.error('Erro de conectividade. Verifique sua conexão e tente novamente.');
+      } else {
+        toast.error('Erro ao excluir item');
+      }
       return false;
     }
   };
@@ -172,10 +247,17 @@ export const useKnowledgeBase = () => {
     try {
       const item = items.find(i => i.id === itemId);
       if (item) {
-        const { error } = await supabase
+        // Timeout de 10 segundos para update
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+        );
+
+        const updatePromise = supabase
           .from('base_conhecimento')
           .update({ visualizacoes: (item.visualizacoes || 0) + 1 })
           .eq('id', itemId);
+
+        const { error } = await Promise.race([updatePromise, timeoutPromise]) as any;
         
         if (error) throw error;
         
@@ -188,8 +270,12 @@ export const useKnowledgeBase = () => {
           )
         );
       }
-    } catch (error) {
-      console.error('Erro ao incrementar visualização:', error);
+    } catch (error: any) {
+      if (error?.message?.includes('Timeout') || error?.message?.includes('Failed to fetch') || error instanceof TypeError) {
+        console.warn('Erro de conectividade ao incrementar visualização:', error);
+      } else {
+        console.error('Erro ao incrementar visualização:', error);
+      }
     }
   };
 
@@ -197,10 +283,17 @@ export const useKnowledgeBase = () => {
     try {
       const item = items.find(i => i.id === itemId);
       if (item) {
-        const { error } = await supabase
+        // Timeout de 10 segundos para update
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+        );
+
+        const updatePromise = supabase
           .from('base_conhecimento')
           .update({ util_count: (item.util_count || 0) + 1 })
           .eq('id', itemId);
+
+        const { error } = await Promise.race([updatePromise, timeoutPromise]) as any;
         
         if (error) throw error;
         toast.success('Marcado como útil!');
@@ -214,9 +307,14 @@ export const useKnowledgeBase = () => {
           )
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao marcar como útil:', error);
-      toast.error('Erro ao marcar como útil');
+      
+      if (error?.message?.includes('Timeout') || error?.message?.includes('Failed to fetch') || error instanceof TypeError) {
+        toast.error('Erro de conectividade. Verifique sua conexão e tente novamente.');
+      } else {
+        toast.error('Erro ao marcar como útil');
+      }
     }
   };
 

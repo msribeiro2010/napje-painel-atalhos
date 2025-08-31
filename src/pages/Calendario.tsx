@@ -167,7 +167,7 @@ function CalendarComponent() {
         saveMark(key, 'ferias');
         currentDate = addDays(currentDate, 1);
       }
-      if (startDate.getMonth() !== month.getMonth() || startDate.getFullYear() !== month.getFullYear()) {
+      if (month && (startDate.getMonth() !== month.getMonth() || startDate.getFullYear() !== month.getFullYear())) {
         setMonth(startDate);
       }
       setShowAISuggestions(false);
@@ -242,7 +242,7 @@ function CalendarComponent() {
           const isFolga = mark === 'folga';
 
           // Eventos personalizados do dia
-          const customEventsOfDay = customEvents.filter(ev => ev.date === key);
+          const customEventsOfDay = (customEvents || []).filter(ev => ev.date === key);
 
           // Determinar cor de fundo - priorizar feriados
           let backgroundColor = mark ? calendarLabels[mark].color : calendarLabels.presencial.color;
@@ -482,13 +482,13 @@ function CalendarComponent() {
               </Button>
             </div>
             <p className="text-sm text-purple-100 mt-1">
-              Sugestões inteligentes para {month.getFullYear()}
+              Sugestões inteligentes para {month ? month.getFullYear() : new Date().getFullYear()}
             </p>
           </div>
           
           <div className="max-h-[calc(90vh-8rem)] overflow-y-auto p-4">
             <VacationSuggestionsPanel
-              year={month.getFullYear()}
+              year={month ? month.getFullYear() : new Date().getFullYear()}
               onSelectSuggestion={handleSelectVacationSuggestion}
             />
           </div>
