@@ -30,34 +30,51 @@ export const useUpcomingEvents = () => {
     aniversariantes: []
   });
   const [loading, setLoading] = useState(true);
+  const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
     const fetchUpcomingEvents = async () => {
       try {
         setLoading(true);
+        setTimeoutReached(false);
+        
         const today = startOfDay(new Date());
         const monthStart = startOfMonth(today);
         const monthEnd = endOfMonth(today);
         const nextMonthEnd = endOfMonth(addDays(monthEnd, 30)); // Próximo mês também
         
+        // Timeout de segurança de 5 segundos
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout na busca de eventos')), 5000)
+        );
+        
         // Buscar feriados desde hoje até o final do próximo mês
-        const { data: feriados, error: feriadosError } = await supabase
+        const feriadosPromise = supabase
           .from('feriados')
           .select('*')
           .gte('data', format(today, 'yyyy-MM-dd')) // Incluir hoje
-          .lte('data', format(nextMonthEnd, 'yyyy-MM-dd'));
+          .lte('data', format(nextMonthEnd, 'yyyy-MM-dd'))
+          .limit(5); // Limitar resultados
+
+        const aniversariantesPromise = supabase
+          .from('aniversariantes')
+          .select('*')
+          .limit(10); // Limitar resultados
+
+        const [feriadosResult, aniversariantesResult] = await Promise.race([
+          Promise.all([feriadosPromise, aniversariantesPromise]),
+          timeoutPromise
+        ]) as any;
+
+        const { data: feriados, error: feriadosError } = feriadosResult;
+        const { data: aniversariantes, error: aniversariantesError } = aniversariantesResult;
 
         if (feriadosError) {
-          console.error('Erro ao buscar feriados:', feriadosError);
+          console.warn('Erro ao buscar feriados:', feriadosError);
         }
 
-        // Buscar todos os aniversariantes
-        const { data: aniversariantes, error: aniversariantesError } = await supabase
-          .from('aniversariantes')
-          .select('*');
-
         if (aniversariantesError) {
-          console.error('Erro ao buscar aniversariantes:', aniversariantesError);
+          console.warn('Erro ao buscar aniversariantes:', aniversariantesError);
         }
 
         // Processar aniversariantes com lógica melhorada
@@ -131,7 +148,13 @@ export const useUpcomingEvents = () => {
           aniversariantes: aniversariantesFiltrados
         });
       } catch (error) {
-        console.error('Erro ao buscar eventos próximos:', error);
+        console.warn('Erro ao buscar eventos próximos (timeout ou erro de conexão):', error);
+        setTimeoutReached(true);
+        // Definir como vazio em caso de erro para evitar loading infinito
+        setEvents({
+          feriados: [],
+          aniversariantes: []
+        });
       } finally {
         setLoading(false);
       }
@@ -139,8 +162,8 @@ export const useUpcomingEvents = () => {
 
     fetchUpcomingEvents();
     
-    // Atualizar a cada 30 minutos para garantir dados atualizados
-    const interval = setInterval(fetchUpcomingEvents, 30 * 60 * 1000);
+    // Atualizar a cada 60 minutos em vez de 30 para reduzir carga
+    const interval = setInterval(fetchUpcomingEvents, 60 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, []);
@@ -149,7 +172,7 @@ export const useUpcomingEvents = () => {
 
   return {
     events,
-    loading,
+    loading: timeoutReached ? false : loading, // Força loading false se timeout
     hasUpcomingEvents
   };
 };

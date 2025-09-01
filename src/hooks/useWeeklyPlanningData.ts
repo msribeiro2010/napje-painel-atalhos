@@ -58,8 +58,8 @@ export const useWeeklyPlanningData = (targetDate?: Date) => {
   const { events: upcomingEvents, loading: upcomingEventsLoading } = useUpcomingEvents();
   const { settings, notificationItems } = useWeeklyNotifications();
 
-  
   const [loading, setLoading] = useState(false);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
 
   // Converter eventos customizados para formato padrão
   const customEvents = useMemo(() => {
@@ -304,17 +304,37 @@ export const useWeeklyPlanningData = (targetDate?: Date) => {
     return days;
   }, [weekStart, getEventsForDay]);
 
-  // Loading state
+  // Loading state com timeout para evitar loading infinito
   const isLoading = customEventsLoading || workCalendarLoading || upcomingEventsLoading || loading;
+  
+  // Timeout de segurança para evitar loading infinito
+  useEffect(() => {
+    if (isLoading && !hasTimedOut) {
+      const timeout = setTimeout(() => {
+        console.warn('Loading timeout reached - forcing loading to false');
+        setHasTimedOut(true);
+      }, 10000); // 10 segundos de timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading, hasTimedOut]);
+
+  // Reset timeout quando loading parar naturalmente
+  useEffect(() => {
+    if (!isLoading && hasTimedOut) {
+      setHasTimedOut(false);
+    }
+  }, [isLoading, hasTimedOut]);
   
 
   return {
     weeklyData,
-    isLoading,
+    isLoading: hasTimedOut ? false : isLoading, // Força loading false se timeout
     getEventsForDay,
     getNext7Days,
     refresh: useCallback(() => {
       setLoading(true);
+      setHasTimedOut(false); // Reset timeout no refresh
       setTimeout(() => setLoading(false), 100); // Trigger re-render
     }, [])
   };

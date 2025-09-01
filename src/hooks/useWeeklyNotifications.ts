@@ -49,35 +49,31 @@ export const useWeeklyNotifications = () => {
   // Buscar itens da base de conhecimento (sem filtro de notificação)
   const fetchNotificationItems = useCallback(async () => {
     try {
-      // Timeout de 10 segundos para evitar travamento
+      // Timeout mais agressivo de 5 segundos
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 10 segundos')), 10000)
+        setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 5 segundos')), 5000)
       );
 
       const queryPromise = supabase
         .from('base_conhecimento')
         .select('id, titulo, categoria')
         .order('created_at', { ascending: false })
-        .limit(10); // Limitar para evitar muitos itens
+        .limit(5) // Reduzir ainda mais o limite
+        .abortSignal(AbortSignal.timeout(4000)); // Timeout nativo do navegador
 
       const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
-      if (error) throw error;
+      if (error) {
+        console.warn('Erro na consulta Supabase:', error);
+        setNotificationItems([]);
+        return;
+      }
       
       setNotificationItems(data || []);
     } catch (error) {
-      console.error('Erro ao buscar itens:', error);
+      console.warn('Erro ao buscar itens (fallback para vazio):', error);
       
-      // Tratamento específico para erros de conectividade
-      if (error instanceof Error) {
-        if (error.message.includes('Failed to fetch') || error.message.includes('TypeError: Failed to fetch')) {
-          console.warn('Problema de conectividade com Supabase - definindo itens como vazio');
-        } else if (error.message.includes('Timeout')) {
-          console.warn('Timeout na busca de itens - definindo como vazio');
-        }
-      }
-      
-      // Definir como vazio em caso de erro para evitar travamento
+      // Sempre definir como vazio em caso de qualquer erro
       setNotificationItems([]);
     }
   }, []);

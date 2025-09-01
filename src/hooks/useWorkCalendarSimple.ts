@@ -19,9 +19,9 @@ export const useWorkCalendarSimple = (weekStart: Date, weekEnd: Date) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simular dados para teste
+    // Simular dados para teste com timeout mais rápido
     setLoading(true);
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       // Dados mock para testar
       const mockEvents: WorkCalendarEvent[] = [
         {
@@ -37,7 +37,10 @@ export const useWorkCalendarSimple = (weekStart: Date, weekEnd: Date) => {
       
       setWorkEvents(mockEvents);
       setLoading(false);
-    }, 500);
+    }, 200); // Reduzido de 500ms para 200ms
+
+    // Cleanup do timeout se o componente for desmontado
+    return () => clearTimeout(timeout);
   }, [user, weekStart, weekEnd]);
 
   return { workEvents, loading, error };

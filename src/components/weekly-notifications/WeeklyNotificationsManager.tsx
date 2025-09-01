@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, Plus, Settings, TestTube, Edit, Trash2, Calendar, Clock, CheckCircle, XCircle, Sparkles, Eye, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,8 +26,29 @@ export const WeeklyNotificationsManager = () => {
     testNotification
   } = useWeeklyNotificationsManager();
 
-  const { weeklyData, isLoading: planningLoading } = useWeeklyPlanningData();
+  const { weeklyData, isLoading: planningLoadingRaw } = useWeeklyPlanningData();
   const [isPlanningModalOpen, setIsPlanningModalOpen] = useState(false);
+  const [planningTimeout, setPlanningTimeout] = useState(false);
+
+  // Timeout de segurança para o loading do planejamento
+  useEffect(() => {
+    if (planningLoadingRaw && !planningTimeout) {
+      const timeout = setTimeout(() => {
+        console.warn('Planning loading timeout - forcing to false');
+        setPlanningTimeout(true);
+      }, 8000); // 8 segundos timeout
+
+      return () => clearTimeout(timeout);
+    }
+    
+    // Reset timeout quando loading parar
+    if (!planningLoadingRaw && planningTimeout) {
+      setPlanningTimeout(false);
+    }
+  }, [planningLoadingRaw, planningTimeout]);
+
+  // Loading com timeout aplicado
+  const planningLoading = planningTimeout ? false : planningLoadingRaw;
   
 
   const [isMainDialogOpen, setIsMainDialogOpen] = useState(false);
