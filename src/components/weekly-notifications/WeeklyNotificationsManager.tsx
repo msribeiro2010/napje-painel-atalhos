@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useWeeklyNotificationsManager, WeeklyNotification, WeeklyNotificationFormData } from '@/hooks/useWeeklyNotificationsManager';
 import { WeeklyNotificationDialog } from './WeeklyNotificationDialog';
 import { WeeklyPlanningModal } from './WeeklyPlanningModal';
-import { useWeeklyPlanningData } from '@/hooks/useWeeklyPlanningData';
+import { useWeeklyPlanningLazy } from '@/hooks/useWeeklyPlanningLazy';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 
@@ -26,29 +26,9 @@ export const WeeklyNotificationsManager = () => {
     testNotification
   } = useWeeklyNotificationsManager();
 
-  const { weeklyData, isLoading: planningLoadingRaw } = useWeeklyPlanningData();
+  // Usar o hook lazy para carregar dados apenas quando necessário
+  const { data: weeklyData, loading: planningLoading, error: planningError, loadWeeklyData, reset } = useWeeklyPlanningLazy();
   const [isPlanningModalOpen, setIsPlanningModalOpen] = useState(false);
-  const [planningTimeout, setPlanningTimeout] = useState(false);
-
-  // Timeout de segurança para o loading do planejamento
-  useEffect(() => {
-    if (planningLoadingRaw && !planningTimeout) {
-      const timeout = setTimeout(() => {
-        console.warn('Planning loading timeout - forcing to false');
-        setPlanningTimeout(true);
-      }, 8000); // 8 segundos timeout
-
-      return () => clearTimeout(timeout);
-    }
-    
-    // Reset timeout quando loading parar
-    if (!planningLoadingRaw && planningTimeout) {
-      setPlanningTimeout(false);
-    }
-  }, [planningLoadingRaw, planningTimeout]);
-
-  // Loading com timeout aplicado
-  const planningLoading = planningTimeout ? false : planningLoadingRaw;
   
 
   const [isMainDialogOpen, setIsMainDialogOpen] = useState(false);
@@ -223,7 +203,12 @@ export const WeeklyNotificationsManager = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setIsPlanningModalOpen(true)}
+          onClick={async () => {
+            if (!weeklyData) {
+              await loadWeeklyData();
+            }
+            setIsPlanningModalOpen(true);
+          }}
           className="flex items-center gap-2 transition-all duration-200 hover:shadow-md hover:bg-green-50 dark:hover:bg-green-950 border-green-200 hover:border-green-300 dark:border-green-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200"
           disabled={planningLoading}
         >
@@ -515,7 +500,10 @@ export const WeeklyNotificationsManager = () => {
       {weeklyData && (
         <WeeklyPlanningModal
           isOpen={isPlanningModalOpen}
-          onClose={() => setIsPlanningModalOpen(false)}
+          onClose={() => {
+            setIsPlanningModalOpen(false);
+            reset(); // Limpar dados ao fechar para economizar memória
+          }}
           weeklyData={weeklyData}
         />
       )}

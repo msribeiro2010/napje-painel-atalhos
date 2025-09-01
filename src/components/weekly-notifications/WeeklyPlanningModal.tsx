@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -25,12 +24,12 @@ import {
   BookOpen,
   Star
 } from 'lucide-react';
-import { WeeklyPlanningData, WeeklyCalendarEvent } from '@/hooks/useWeeklyPlanningData';
+import { LazyWeeklyPlanningData, WeeklyCalendarEvent } from '@/hooks/useWeeklyPlanningLazy';
 
 interface WeeklyPlanningModalProps {
   isOpen: boolean;
   onClose: () => void;
-  weeklyData: WeeklyPlanningData;
+  weeklyData: LazyWeeklyPlanningData;
 }
 
 const getEventIcon = (event: WeeklyCalendarEvent) => {
@@ -134,13 +133,14 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
   onClose,
   weeklyData
 }) => {
-  const { weekStart, weekEnd, weekNumber, events, notifications, summary } = weeklyData;
+  const { weekStart, weekEnd, weekNumber, events, summary } = weeklyData;
   const groupedEvents = groupEventsByDay(events || []);
   const sortedDates = Object.keys(groupedEvents).sort((a, b) => 
     new Date(a).getTime() - new Date(b).getTime()
   );
 
-  const activeNotifications = (notifications || []).filter(n => n.isActive);
+  // Não mostrar notificações - apenas dados reais dos eventos
+  const activeNotifications: any[] = [];
   
   // Usar dados do summary calculado no hook com fallback
   const { 
@@ -220,40 +220,6 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               </div>
             </CardContent>
           </Card>
-
-          {/* Notificações Ativas */}
-          {activeNotifications.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <AlertCircle className="h-5 w-5 text-amber-500" />
-                  <span>Notificações Ativas ({activeNotifications.length})</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {activeNotifications.map((notification, index) => (
-                    <div key={index} className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <div className="font-medium text-amber-900">{notification.title}</div>
-                      <div className="text-sm text-amber-700 mt-1">{notification.message}</div>
-                      <div className="flex items-center space-x-2 mt-2 text-xs text-amber-600">
-                        <Clock className="h-3 w-3" />
-                        <span>
-                          {notification.selectedDays && Array.isArray(notification.selectedDays) && notification.selectedDays.length > 0
-                            ? `Dias: ${notification.selectedDays.map((day: number) => {
-                                const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                                return days[day];
-                              }).join(', ')}`
-                            : `Dia: ${notification.dayofweek || 'N/A'}`
-                          } às {notification.time}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Eventos por Dia */}
           <Card>
