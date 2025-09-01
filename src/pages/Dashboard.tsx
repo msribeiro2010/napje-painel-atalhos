@@ -25,10 +25,6 @@ import { ChatAssistant } from '@/components/ChatAssistant';
 // import { useEventReminders } from '@/hooks/useEventReminders';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
 import { usePostItNotes } from '@/hooks/usePostItNotes';
-import { usePlantaoNotifications } from '@/hooks/usePlantaoNotifications';
-import { useWeeklyNotifications } from '@/hooks/useWeeklyNotifications';
-import { useWeeklyPlanning } from '@/hooks/useWeeklyPlanning';
-import { WeeklyPlanningModal } from '@/components/weekly-notifications/WeeklyPlanningModal';
 
 
 import { ptBR } from 'date-fns/locale';
@@ -39,7 +35,6 @@ import { SmartSearchDialog } from '@/components/SmartSearchDialog';
 import { SearchResult } from '@/hooks/useSmartSearch';
 import { toast } from '@/hooks/use-toast';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { PlantaoPanel } from '@/components/PlantaoPanel';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -49,14 +44,7 @@ const Dashboard = () => {
   // useEventReminders(); // Hook de lembretes
   const { notes: postItNotes, loading: notesLoading, stats: notesStats, latestNote } = usePostItNotes();
   
-  // Hook para notificações de plantão
-  usePlantaoNotifications();
-  
-  // Hook para notificações semanais - ativa automaticamente ao entrar no sistema
-  useWeeklyNotifications();
-  
-  // Hook para planejamento semanal - exibe modal automaticamente aos domingos e segundas
-  const { weeklyData, isModalOpen, closeModal } = useWeeklyPlanning();
+  // Alertas automáticos removidos - mantendo apenas eventos da semana via botão
 
   const [postItOpen, setPostItOpen] = useState(false);
   const [smartSearchOpen, setSmartSearchOpen] = useState(false);
@@ -570,8 +558,7 @@ const Dashboard = () => {
             <div className="space-y-6 sticky top-6">
               {/* Seção de Insights de IA removida para interface mais limpa */}
 
-              {/* Painel de Plantões */}
-              <PlantaoPanel />
+              {/* Alertas de plantão removidos - mantendo apenas eventos da semana */}
 
 
 
@@ -677,12 +664,7 @@ const Dashboard = () => {
 
       {/* Upcoming Events Modal - REMOVIDO */}
       
-      {/* Weekly Planning Modal - Exibição automática aos domingos e segundas */}
-      <WeeklyPlanningModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        weeklyData={weeklyData}
-      />
+      {/* Weekly Planning Modal - REMOVIDO - Mantendo apenas eventos via botão */}
       </ModernLayout>
     </ErrorBoundary>
   );
