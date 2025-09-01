@@ -21,6 +21,7 @@ export interface WeeklyNotificationFormData {
   ativo: boolean;
   dayofweek: number; // 0 = Sunday, 1 = Monday, etc. (mantido para compatibilidade)
   selectedDays?: number[]; // Novo: array de dias selecionados
+  isWeekdayRange?: boolean; // Novo: indica se é período seg-sex
   time: string; // HH:MM format
 }
 
@@ -122,7 +123,8 @@ export const useWeeklyNotificationsManager = () => {
             mensagem: formData.mensagem,
             ativo: formData.ativo,
             dayofweek: formData.dayofweek,
-            selectedDays: formData.selectedDays,
+            selectedDays: formData.selectedDays || [formData.dayofweek],
+            isWeekdayRange: formData.isWeekdayRange || false,
             time: formData.time,
             updated_at: new Date().toISOString()
           })
@@ -145,7 +147,8 @@ export const useWeeklyNotificationsManager = () => {
             mensagem: formData.mensagem,
             ativo: formData.ativo,
             dayofweek: formData.dayofweek,
-            selectedDays: formData.selectedDays,
+            selectedDays: formData.selectedDays || [formData.dayofweek],
+            isWeekdayRange: formData.isWeekdayRange || false,
             time: formData.time
           })
           .select();

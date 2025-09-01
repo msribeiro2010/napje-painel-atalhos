@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { WeeklyNotification, WeeklyNotificationFormData } from '@/hooks/useWeeklyNotificationsManager';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface WeeklyNotificationDialogProps {
   isOpen: boolean;
@@ -39,9 +39,18 @@ export const WeeklyNotificationDialog = ({
 }: WeeklyNotificationDialogProps) => {
   const [extendedFormData, setExtendedFormData] = useState<ExtendedFormData>({
     ...formData,
-    selectedDays: [],
-    isWeekdayRange: false
+    selectedDays: formData.selectedDays || [],
+    isWeekdayRange: formData.isWeekdayRange || false
   });
+
+  // Sincronizar extendedFormData quando formData mudar (para edição)
+  useEffect(() => {
+    setExtendedFormData({
+      ...formData,
+      selectedDays: formData.selectedDays || [],
+      isWeekdayRange: formData.isWeekdayRange || false
+    });
+  }, [formData, editingNotification]);
   const timeOptions = [
     { value: '07:00', label: '07:00' },
     { value: '08:00', label: '08:00' },
@@ -115,24 +124,34 @@ export const WeeklyNotificationDialog = ({
       .join(', ');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.titulo.trim() || !formData.mensagem.trim()) {
       return;
     }
     
-    // Sincronizar dados estendidos com formData antes de submeter
-    setFormData(prev => ({
-      ...prev,
-      selectedDays: extendedFormData.selectedDays,
-      isWeekdayRange: extendedFormData.isWeekdayRange
-    }));
+    // Criar formData atualizado com dados de dias selecionados
+    const updatedFormData = {
+      ...formData,
+      selectedDays: extendedFormData.isWeekdayRange 
+        ? [1, 2, 3, 4, 5] // Segunda a Sexta ordenados
+        : (extendedFormData.selectedDays || []).sort((a, b) => a - b), // Ordenar dias selecionados
+      isWeekdayRange: extendedFormData.isWeekdayRange,
+      dayofweek: extendedFormData.isWeekdayRange 
+        ? 1 // Segunda-feira como padrão para compatibilidade
+        : (extendedFormData.selectedDays?.[0] || formData.dayofweek)
+    };
     
-    // Aguardar um tick para garantir que o estado foi atualizado
-    setTimeout(async () => {
-      const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
-      await onSubmit(fakeEvent);
-    }, 0);
+    // Atualizar formData e chamar onSubmit diretamente
+    setFormData(updatedFormData);
+    
+    // Criar evento simulado com formData atualizado
+    const fakeEvent = { 
+      preventDefault: () => {},
+      target: { formData: updatedFormData }
+    } as any;
+    
+    await onSubmit(fakeEvent);
   };
 
   return (

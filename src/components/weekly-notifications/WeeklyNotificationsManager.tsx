@@ -100,7 +100,8 @@ export const WeeklyNotificationsManager = () => {
       mensagem: '',
       ativo: true,
       dayofweek: 1,
-      selectedDays: [1, 2, 3, 4, 5], // Segunda a sexta por padrão
+      selectedDays: [],
+      isWeekdayRange: false,
       time: '09:00'
     });
     setEditingNotification(null);
@@ -119,6 +120,7 @@ export const WeeklyNotificationsManager = () => {
       ativo: notification.ativo,
       dayofweek: notification.dayofweek,
       selectedDays: notification.selectedDays || [notification.dayofweek],
+      isWeekdayRange: notification.isWeekdayRange || false,
       time: notification.time
     });
     setIsNotificationDialogOpen(true);
@@ -133,12 +135,16 @@ export const WeeklyNotificationsManager = () => {
     }
 
     try {
+      // Garantir que selectedDays está ordenado e não vazio
+      const sortedDays = (formData.selectedDays || [formData.dayofweek]).sort((a, b) => a - b);
+      
       const notificationData = {
         titulo: formData.titulo.trim(),
         mensagem: formData.mensagem.trim(),
         ativo: formData.ativo,
-        dayofweek: formData.selectedDays[0] || 0,
-        selectedDays: formData.selectedDays || [],
+        dayofweek: sortedDays[0] || 1, // Primeiro dia como fallback
+        selectedDays: sortedDays,
+        isWeekdayRange: formData.isWeekdayRange || false,
         time: formData.time
       };
 
@@ -397,11 +403,18 @@ export const WeeklyNotificationsManager = () => {
                                     {notification.time}
                                   </span>
                                   <span className="text-gray-400 mx-2">•</span>
-                                  <span className="font-medium text-purple-700 dark:text-purple-300">
-                                    {(notification.selectedDays || []).map(dia => {
-                                      const dayName = Object.keys(dayNames)[dia] as keyof typeof dayNames;
-                                      return dayNames[dayName];
-                                    }).join(', ')}
+                                  <Calendar className="h-4 w-4 text-blue-500" />
+                                  <span className="font-medium text-blue-700 dark:text-blue-300">
+                                    {notification.isWeekdayRange 
+                                      ? 'Segunda a Sexta-feira'
+                                      : (notification.selectedDays || [notification.dayofweek])
+                                          .sort((a, b) => a - b)
+                                          .map(day => {
+                                            const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                                            return dayLabels[day] || 'N/A';
+                                          })
+                                          .join(', ')
+                                    }
                                   </span>
                                 </div>
                               </div>
