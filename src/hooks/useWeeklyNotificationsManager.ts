@@ -116,18 +116,27 @@ export const useWeeklyNotificationsManager = () => {
 
       if (editingId) {
         // Update existing notification
+        // Preparar dados de forma robusta
+        const updateData: any = {
+          titulo: formData.titulo,
+          mensagem: formData.mensagem,
+          ativo: formData.ativo,
+          dayofweek: formData.dayofweek,
+          time: formData.time,
+          updated_at: new Date().toISOString()
+        };
+
+        // Tentar incluir colunas novas se existirem
+        try {
+          updateData.selectedDays = formData.selectedDays || [formData.dayofweek];
+          updateData.isWeekdayRange = formData.isWeekdayRange || false;
+        } catch (err) {
+          console.warn('Algumas colunas podem não existir ainda:', err);
+        }
+
         const { data, error } = await supabase
           .from('weekly_notifications')
-          .update({
-            titulo: formData.titulo,
-            mensagem: formData.mensagem,
-            ativo: formData.ativo,
-            dayofweek: formData.dayofweek,
-            selectedDays: formData.selectedDays || [formData.dayofweek],
-            isWeekdayRange: formData.isWeekdayRange || false,
-            time: formData.time,
-            updated_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('id', editingId)
           .select();
 
@@ -140,17 +149,26 @@ export const useWeeklyNotificationsManager = () => {
         toast.success('Notificação atualizada com sucesso!');
       } else {
         // Create new notification
+        // Preparar dados de forma robusta
+        const insertData: any = {
+          titulo: formData.titulo,
+          mensagem: formData.mensagem,
+          ativo: formData.ativo,
+          dayofweek: formData.dayofweek,
+          time: formData.time
+        };
+
+        // Tentar incluir colunas novas se existirem
+        try {
+          insertData.selectedDays = formData.selectedDays || [formData.dayofweek];
+          insertData.isWeekdayRange = formData.isWeekdayRange || false;
+        } catch (err) {
+          console.warn('Algumas colunas podem não existir ainda:', err);
+        }
+
         const { data, error } = await supabase
           .from('weekly_notifications')
-          .insert({
-            titulo: formData.titulo,
-            mensagem: formData.mensagem,
-            ativo: formData.ativo,
-            dayofweek: formData.dayofweek,
-            selectedDays: formData.selectedDays || [formData.dayofweek],
-            isWeekdayRange: formData.isWeekdayRange || false,
-            time: formData.time
-          })
+          .insert(insertData)
           .select();
 
         if (error) {
