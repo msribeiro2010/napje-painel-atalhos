@@ -40,7 +40,6 @@ export const WeeklyNotificationsManager = () => {
     ativo: true,
     dayofweek: 1, // Segunda-feira por padrão
     selectedDays: [1, 2, 3, 4, 5], // Segunda a sexta por padrão
-    isWeekdayRange: true, // Período seg-sex ativo por padrão
     time: '09:00'
   });
 
@@ -102,7 +101,6 @@ export const WeeklyNotificationsManager = () => {
       ativo: true,
       dayofweek: 1,
       selectedDays: [1, 2, 3, 4, 5], // Segunda a sexta por padrão
-      isWeekdayRange: true,
       time: '09:00'
     });
     setEditingNotification(null);
@@ -121,7 +119,6 @@ export const WeeklyNotificationsManager = () => {
       ativo: notification.ativo,
       dayofweek: notification.dayofweek,
       selectedDays: notification.selectedDays || [notification.dayofweek],
-      isWeekdayRange: notification.isWeekdayRange || false,
       time: notification.time
     });
     setIsNotificationDialogOpen(true);
@@ -142,7 +139,6 @@ export const WeeklyNotificationsManager = () => {
         ativo: formData.ativo,
         dayofweek: formData.selectedDays[0] || 0,
         selectedDays: formData.selectedDays || [],
-        isWeekdayRange: formData.isWeekdayRange || false,
         time: formData.time
       };
 
