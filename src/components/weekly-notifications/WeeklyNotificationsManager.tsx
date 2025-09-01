@@ -37,9 +37,11 @@ export const WeeklyNotificationsManager = () => {
   const [formData, setFormData] = useState<WeeklyNotificationFormData>({
     titulo: '',
     mensagem: '',
-    diasSemana: [],
-    horario: '09:00',
-    ativo: true
+    ativo: true,
+    dayofweek: 1, // Segunda-feira por padrão
+    selectedDays: [1, 2, 3, 4, 5], // Segunda a sexta por padrão
+    isWeekdayRange: true, // Período seg-sex ativo por padrão
+    time: '09:00'
   });
 
   const activeNotifications = (notifications || []).filter(n => n.ativo);
@@ -97,9 +99,11 @@ export const WeeklyNotificationsManager = () => {
     setFormData({
       titulo: '',
       mensagem: '',
-      diasSemana: [],
-      horario: '09:00',
-      ativo: true
+      ativo: true,
+      dayofweek: 1,
+      selectedDays: [1, 2, 3, 4, 5], // Segunda a sexta por padrão
+      isWeekdayRange: true,
+      time: '09:00'
     });
     setEditingNotification(null);
   };
@@ -114,9 +118,11 @@ export const WeeklyNotificationsManager = () => {
     setFormData({
       titulo: notification.titulo,
       mensagem: notification.mensagem,
-      diasSemana: notification.diasSemana,
-      horario: notification.horario,
-      ativo: notification.ativo
+      ativo: notification.ativo,
+      dayofweek: notification.dayofweek,
+      selectedDays: notification.selectedDays || [notification.dayofweek],
+      isWeekdayRange: notification.isWeekdayRange || false,
+      time: notification.time
     });
     setIsNotificationDialogOpen(true);
   };
@@ -124,27 +130,26 @@ export const WeeklyNotificationsManager = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.titulo.trim() || !formData.mensagem.trim() || formData.diasSemana.length === 0) {
+    // Validação mais flexível - só precisa de título e mensagem
+    if (!formData.titulo.trim() || !formData.mensagem.trim()) {
       return;
     }
 
     try {
+      const notificationData = {
+        titulo: formData.titulo.trim(),
+        mensagem: formData.mensagem.trim(),
+        ativo: formData.ativo,
+        dayofweek: formData.selectedDays[0] || 0,
+        selectedDays: formData.selectedDays || [],
+        isWeekdayRange: formData.isWeekdayRange || false,
+        time: formData.time
+      };
+
       if (editingNotification) {
-        await updateNotification(editingNotification.id, {
-          titulo: formData.titulo.trim(),
-          mensagem: formData.mensagem.trim(),
-          diasSemana: formData.diasSemana,
-          horario: formData.horario,
-          ativo: formData.ativo
-        });
+        await updateNotification(editingNotification.id, notificationData);
       } else {
-        await createNotification({
-          titulo: formData.titulo.trim(),
-          mensagem: formData.mensagem.trim(),
-          diasSemana: formData.diasSemana,
-          horario: formData.horario,
-          ativo: formData.ativo
-        });
+        await createNotification(notificationData);
       }
       
       setIsNotificationDialogOpen(false);
@@ -393,11 +398,14 @@ export const WeeklyNotificationsManager = () => {
                                 <div className="flex items-center gap-2 text-sm">
                                   <Clock className="h-4 w-4 text-purple-500" />
                                   <span className="font-medium text-purple-700 dark:text-purple-300">
-                                    {notification.horario}
+                                    {notification.time}
                                   </span>
                                   <span className="text-gray-400 mx-2">•</span>
                                   <span className="font-medium text-purple-700 dark:text-purple-300">
-                                    {(notification.diasSemana || []).map(dia => dayNames[dia as keyof typeof dayNames]).join(', ')}
+                                    {(notification.selectedDays || []).map(dia => {
+                                      const dayName = Object.keys(dayNames)[dia] as keyof typeof dayNames;
+                                      return dayNames[dayName];
+                                    }).join(', ')}
                                   </span>
                                 </div>
                               </div>

@@ -19,7 +19,7 @@ interface WeeklyNotificationDialogProps {
   editingNotification: WeeklyNotification | null;
   formData: WeeklyNotificationFormData;
   setFormData: React.Dispatch<React.SetStateAction<WeeklyNotificationFormData>>;
-  onSubmit: () => void;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -129,8 +129,9 @@ export const WeeklyNotificationDialog = ({
     }));
     
     // Aguardar um tick para garantir que o estado foi atualizado
-    setTimeout(() => {
-      onSubmit();
+    setTimeout(async () => {
+      const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+      await onSubmit(fakeEvent);
     }, 0);
   };
 

@@ -223,27 +223,13 @@ export const useWeeklyNotificationsManager = () => {
   }, []);
 
   // Create notification wrapper
-  const createNotification = async (formData: Omit<WeeklyNotificationFormData, 'dayofweek'> & { diasSemana: string[], horario: string }) => {
-    const convertedData: WeeklyNotificationFormData = {
-      titulo: formData.titulo,
-      mensagem: formData.mensagem,
-      ativo: formData.ativo,
-      dayofweek: 1, // Default value
-      time: formData.horario
-    };
-    return await saveNotification(convertedData);
+  const createNotification = async (formData: WeeklyNotificationFormData) => {
+    return await saveNotification(formData);
   };
 
   // Update notification wrapper
-  const updateNotification = async (id: string, formData: Omit<WeeklyNotificationFormData, 'dayofweek'> & { diasSemana: string[], horario: string }) => {
-    const convertedData: WeeklyNotificationFormData = {
-      titulo: formData.titulo,
-      mensagem: formData.mensagem,
-      ativo: formData.ativo,
-      dayofweek: 1, // Default value
-      time: formData.horario
-    };
-    return await saveNotification(convertedData, id);
+  const updateNotification = async (id: string, formData: WeeklyNotificationFormData) => {
+    return await saveNotification(formData, id);
   };
 
   // Update settings wrapper
