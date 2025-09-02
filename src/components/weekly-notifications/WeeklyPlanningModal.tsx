@@ -22,7 +22,10 @@ import {
   X,
   Video,
   BookOpen,
-  Star
+  Star,
+  Umbrella,
+  Sun,
+  Shield
 } from 'lucide-react';
 import { LazyWeeklyPlanningData, WeeklyCalendarEvent } from '@/hooks/useWeeklyPlanningLazy';
 
@@ -147,8 +150,13 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
     totalEvents = 0, 
     workDays = 0, 
     workOnsite = 0, 
-    workRemote = 0, 
-    courses = 0, 
+    workRemote = 0,
+    vacation = 0,
+    timeOff = 0,
+    onCall = 0,
+    courses = 0,
+    meetings = 0,
+    webinars = 0,
     birthdays = 0, 
     holidays = 0 
   } = summary || {};
@@ -192,7 +200,7 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               Resumo da Semana
             </h2>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
               {/* Total de Eventos */}
               <Card className="border-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 shadow-lg hover:shadow-xl transition-all duration-300">
                 <CardContent className="p-4 text-center">
@@ -245,16 +253,96 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                 </CardContent>
               </Card>
 
+              {/* Férias */}
+              {vacation > 0 && (
+                <Card className="border-0 bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-900/30 dark:to-rose-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-4 text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Umbrella className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="text-3xl font-bold text-red-700 dark:text-red-300 mb-1">{vacation}</div>
+                    <div className="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wide">Férias</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Folgas */}
+              {timeOff > 0 && (
+                <Card className="border-0 bg-gradient-to-br from-gray-50 to-slate-100 dark:from-gray-800/30 dark:to-slate-700/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-4 text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Sun className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                    </div>
+                    <div className="text-3xl font-bold text-gray-700 dark:text-gray-300 mb-1">{timeOff}</div>
+                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Folgas</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Plantão */}
+              {onCall > 0 && (
+                <Card className="border-0 bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-900/30 dark:to-amber-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-4 text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Shield className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
+                    <div className="text-3xl font-bold text-yellow-700 dark:text-yellow-300 mb-1">{onCall}</div>
+                    <div className="text-xs font-medium text-yellow-600 dark:text-yellow-400 uppercase tracking-wide">Plantão</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Reuniões */}
+              {meetings > 0 && (
+                <Card className="border-0 bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-indigo-900/30 dark:to-blue-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-4 text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div className="text-3xl font-bold text-indigo-700 dark:text-indigo-300 mb-1">{meetings}</div>
+                    <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">Reuniões</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Webinários */}
+              {webinars > 0 && (
+                <Card className="border-0 bg-gradient-to-br from-teal-50 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-4 text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Video className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                    </div>
+                    <div className="text-3xl font-bold text-teal-700 dark:text-teal-300 mb-1">{webinars}</div>
+                    <div className="text-xs font-medium text-teal-600 dark:text-teal-400 uppercase tracking-wide">Webinários</div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Feriados */}
-              <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/30 dark:to-amber-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                <CardContent className="p-4 text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    <Star className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <div className="text-3xl font-bold text-orange-700 dark:text-orange-300 mb-1">{holidays}</div>
-                  <div className="text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wide">Feriados</div>
-                </CardContent>
-              </Card>
+              {holidays > 0 && (
+                <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/30 dark:to-amber-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-4 text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Star className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div className="text-3xl font-bold text-orange-700 dark:text-orange-300 mb-1">{holidays}</div>
+                    <div className="text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wide">Feriados</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Aniversários */}
+              {birthdays > 0 && (
+                <Card className="border-0 bg-gradient-to-br from-pink-50 to-rose-100 dark:from-pink-900/30 dark:to-rose-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-4 text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Gift className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                    </div>
+                    <div className="text-3xl font-bold text-pink-700 dark:text-pink-300 mb-1">{birthdays}</div>
+                    <div className="text-xs font-medium text-pink-600 dark:text-pink-400 uppercase tracking-wide">Aniversários</div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
 

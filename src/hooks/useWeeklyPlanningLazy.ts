@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
-import { useCustomEventsWeekly } from '@/hooks/useCustomEventsWeekly';
-import { useWorkCalendarSimple as useWorkCalendarWeekly } from '@/hooks/useWorkCalendarSimple';
-import { useUpcomingEvents } from '@/hooks/useUpcomingEvents';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useCustomEvents } from '@/hooks/useCustomEvents';
+import { useWorkCalendar } from '@/hooks/useWorkCalendar';
+import { useCalendarEvents } from '@/hooks/useCalendarEvents';
 import { startOfWeek, endOfWeek, getWeek, format, isWithinInterval, parseISO, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -16,6 +16,9 @@ export interface LazyWeeklyPlanningData {
     workDays: number;
     workOnsite: number;
     workRemote: number;
+    vacation: number;
+    timeOff: number;
+    onCall: number;
     courses: number;
     meetings: number;
     webinars: number;
@@ -41,158 +44,137 @@ export const useWeeklyPlanningLazy = (targetDate?: Date) => {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
   
-  const [data, setData] = useState<LazyWeeklyPlanningData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Usar hooks reais existentes para buscar dados
+  const { customEvents, loading: customLoading } = useCustomEvents(currentDate);
+  const { marks: workMarks, loading: workLoading } = useWorkCalendar(currentDate);
+  const { data: calendarEvents, isLoading: calendarLoading } = useCalendarEvents(currentDate);
 
-  const loadWeeklyData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Timeout de segurança
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout ao carregar dados')), 5000)
-      );
-
-      // Carregar apenas dados essenciais
-      const dataPromise = Promise.all([
-        // Eventos customizados
-        fetch(`/api/custom-events?start=${format(weekStart, 'yyyy-MM-dd')}&end=${format(weekEnd, 'yyyy-MM-dd')}`),
-        // Calendário de trabalho
-        fetch(`/api/work-calendar?start=${format(weekStart, 'yyyy-MM-dd')}&end=${format(weekEnd, 'yyyy-MM-dd')}`),
-        // Feriados e aniversários apenas para a semana atual
-        fetch(`/api/upcoming-events?start=${format(weekStart, 'yyyy-MM-dd')}&end=${format(weekEnd, 'yyyy-MM-dd')}`)
-      ]);
-
-      const results = await Promise.race([dataPromise, timeoutPromise]) as any;
-      
-      // Mock data para desenvolvimento - dados atualizados conforme realidade
-      const mockWorkEvents = [
-        {
-          id: 'work-1',
-          title: 'Trabalho Presencial',
-          date: addDays(weekStart, 1), // Segunda
-          type: 'work',
-          category: 'work_onsite',
-          allDay: true
-        },
-        {
-          id: 'work-2',
-          title: 'Trabalho Presencial',
-          date: addDays(weekStart, 2), // Terça
-          type: 'work',
-          category: 'work_onsite',
-          allDay: true
-        },
-        {
-          id: 'work-3',
-          title: 'Trabalho Presencial',
-          date: addDays(weekStart, 3), // Quarta
-          type: 'work',
-          category: 'work_onsite',
-          allDay: true
-        },
-        {
-          id: 'work-4',
-          title: 'Trabalho Presencial',
-          date: addDays(weekStart, 4), // Quinta
-          type: 'work',
-          category: 'work_onsite',
-          allDay: true
-        },
-        {
-          id: 'work-5', 
-          title: 'Trabalho Remoto',
-          date: addDays(weekStart, 5), // Sexta
-          type: 'work',
-          category: 'work_remote',
-          allDay: true
-        }
-      ];
-
-      const mockCustomEvents = [
-        {
-          id: 'custom-1',
-          title: 'Curso de React',
-          date: addDays(weekStart, 2),
-          type: 'custom',
-          category: 'curso',
-          time: '14:00'
-        }
-      ];
-
-      const mockHolidays = [];
-      const mockBirthdays = [];
-
-      const allEvents = [...mockWorkEvents, ...mockCustomEvents, ...mockHolidays, ...mockBirthdays]
-        .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-      // Calcular resumo apenas com dados reais
-      const workOnsite = mockWorkEvents.filter(e => e.category === 'work_onsite').length;
-      const workRemote = mockWorkEvents.filter(e => e.category === 'work_remote').length;
-      const courses = mockCustomEvents.filter(e => e.category === 'curso').length;
-      const meetings = mockCustomEvents.filter(e => e.category === 'reuniao').length;
-      const webinars = mockCustomEvents.filter(e => e.category === 'webinario').length;
-
-      const weeklyData: LazyWeeklyPlanningData = {
-        weekStart,
-        weekEnd,
-        weekNumber: getWeek(currentDate, { weekStartsOn: 0, locale: ptBR }),
-        year: currentDate.getFullYear(),
-        events: allEvents,
-        summary: {
-          totalEvents: allEvents.length,
-          workDays: workOnsite + workRemote,
-          workOnsite,
-          workRemote,
-          courses,
-          meetings,
-          webinars,
-          birthdays: mockBirthdays.length,
-          holidays: mockHolidays.length
-        }
-      };
-
-      setData(weeklyData);
-    } catch (err) {
-      console.error('Erro ao carregar dados semanais:', err);
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      
-      // Fallback com dados mínimos
-      setData({
-        weekStart,
-        weekEnd,
-        weekNumber: getWeek(currentDate, { weekStartsOn: 0, locale: ptBR }),
-        year: currentDate.getFullYear(),
-        events: [],
-        summary: {
-          totalEvents: 0,
-          workDays: 0,
-          workOnsite: 0,
-          workRemote: 0,
-          courses: 0,
-          meetings: 0,
-          webinars: 0,
-          birthdays: 0,
-          holidays: 0
-        }
-      });
-    } finally {
-      setLoading(false);
+  // Computar dados automaticamente quando dados estão prontos
+  const data = useMemo(() => {
+    // Se ainda está carregando, retornar null
+    if (customLoading || workLoading || calendarLoading) {
+      return null;
     }
-  }, [currentDate, weekStart, weekEnd]);
+      
+    const allEvents: WeeklyCalendarEvent[] = [];
+    
+    // 1. Processar eventos de trabalho (presencial, remoto, férias, folga, plantão)
+    Object.entries(workMarks || {}).forEach(([dateStr, status]) => {
+      const eventDate = parseISO(dateStr);
+      if (isWithinInterval(eventDate, { start: weekStart, end: weekEnd })) {
+        let title = '';
+        let category = '';
+        
+        switch (status) {
+          case 'presencial':
+            title = 'Trabalho Presencial';
+            category = 'work_onsite';
+            break;
+          case 'remoto':
+            title = 'Trabalho Remoto';
+            category = 'work_remote';
+            break;
+          case 'ferias':
+            title = 'Férias';
+            category = 'vacation';
+            break;
+          case 'folga':
+            title = 'Folga';
+            category = 'time_off';
+            break;
+          case 'plantao':
+            title = 'Plantão';
+            category = 'on_call';
+            break;
+        }
+        
+        allEvents.push({
+          id: `work-${dateStr}`,
+          title,
+          date: eventDate,
+          type: 'work',
+          category,
+          allDay: true
+        });
+      }
+    });
 
-  const reset = useCallback(() => {
-    setData(null);
-    setError(null);
-  }, []);
+    // 2. Processar eventos customizados (cursos, reuniões, webinários)
+    (customEvents || []).forEach(event => {
+      const eventDate = parseISO(event.date);
+      if (isWithinInterval(eventDate, { start: weekStart, end: weekEnd })) {
+        allEvents.push({
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          date: eventDate,
+          type: 'custom',
+          category: event.type,
+          time: event.start_time,
+          allDay: !event.start_time
+        });
+      }
+    });
+
+    // 3. Processar feriados e aniversários do calendário
+    (calendarEvents || []).forEach(event => {
+      const eventDate = parseISO(event.date);
+      if (isWithinInterval(eventDate, { start: weekStart, end: weekEnd })) {
+        allEvents.push({
+          id: `calendar-${event.id}`,
+          title: event.title,
+          description: event.description,
+          date: eventDate,
+          type: event.type === 'feriado' ? 'holiday' : 'birthday',
+          allDay: true
+        });
+      }
+    });
+
+    // Ordenar eventos por data
+    allEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    // Calcular resumo com dados reais
+    const workOnsite = allEvents.filter(e => e.category === 'work_onsite').length;
+    const workRemote = allEvents.filter(e => e.category === 'work_remote').length;
+    const vacation = allEvents.filter(e => e.category === 'vacation').length;
+    const timeOff = allEvents.filter(e => e.category === 'time_off').length;
+    const onCall = allEvents.filter(e => e.category === 'on_call').length;
+    const courses = allEvents.filter(e => e.category === 'curso').length;
+    const meetings = allEvents.filter(e => e.category === 'reuniao').length;
+    const webinars = allEvents.filter(e => e.category === 'webinario').length;
+    const birthdays = allEvents.filter(e => e.type === 'birthday').length;
+    const holidays = allEvents.filter(e => e.type === 'holiday').length;
+
+    return {
+      weekStart,
+      weekEnd,
+      weekNumber: getWeek(currentDate, { weekStartsOn: 0, locale: ptBR }),
+      year: currentDate.getFullYear(),
+      events: allEvents,
+      summary: {
+        totalEvents: allEvents.length,
+        workDays: workOnsite + workRemote + vacation + timeOff + onCall,
+        workOnsite,
+        workRemote,
+        vacation,
+        timeOff,
+        onCall,
+        courses,
+        meetings,
+        webinars,
+        birthdays,
+        holidays
+      }
+    };
+  }, [customEvents, workMarks, calendarEvents, weekStart, weekEnd, currentDate]);
+
+  const loading = customLoading || workLoading || calendarLoading;
+  const hasError = false; // Os hooks individuais lidam com seus próprios erros
 
   return {
     data,
     loading,
-    error,
-    loadWeeklyData,
-    reset
+    error: hasError ? 'Erro ao carregar dados' : null
   };
 };
