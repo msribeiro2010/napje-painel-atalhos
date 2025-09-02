@@ -67,20 +67,44 @@ export const useWeeklyPlanningLazy = (targetDate?: Date) => {
 
       const results = await Promise.race([dataPromise, timeoutPromise]) as any;
       
-      // Mock data para desenvolvimento - remover em produção
+      // Mock data para desenvolvimento - dados atualizados conforme realidade
       const mockWorkEvents = [
         {
           id: 'work-1',
           title: 'Trabalho Presencial',
-          date: addDays(weekStart, 1),
+          date: addDays(weekStart, 1), // Segunda
           type: 'work',
           category: 'work_onsite',
           allDay: true
         },
         {
-          id: 'work-2', 
+          id: 'work-2',
+          title: 'Trabalho Presencial',
+          date: addDays(weekStart, 2), // Terça
+          type: 'work',
+          category: 'work_onsite',
+          allDay: true
+        },
+        {
+          id: 'work-3',
+          title: 'Trabalho Presencial',
+          date: addDays(weekStart, 3), // Quarta
+          type: 'work',
+          category: 'work_onsite',
+          allDay: true
+        },
+        {
+          id: 'work-4',
+          title: 'Trabalho Presencial',
+          date: addDays(weekStart, 4), // Quinta
+          type: 'work',
+          category: 'work_onsite',
+          allDay: true
+        },
+        {
+          id: 'work-5', 
           title: 'Trabalho Remoto',
-          date: addDays(weekStart, 3),
+          date: addDays(weekStart, 5), // Sexta
           type: 'work',
           category: 'work_remote',
           allDay: true

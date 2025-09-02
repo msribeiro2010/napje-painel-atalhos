@@ -183,43 +183,80 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Resumo da Semana */}
-          <Card className="border-2 border-blue-200 bg-blue-50">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-blue-900">
-                <Users className="h-5 w-5" />
-                <span>Resumo da Semana</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-slate-600">{totalEvents}</div>
-                  <div className="text-sm text-gray-600">Total de Eventos</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{workOnsite}</div>
-                  <div className="text-sm text-gray-600">Presencial</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{workRemote}</div>
-                  <div className="text-sm text-gray-600">Remoto</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">{courses}</div>
-                  <div className="text-sm text-gray-600">Cursos</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-pink-600">{birthdays}</div>
-                  <div className="text-sm text-gray-600">Aniversários</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{holidays}</div>
-                  <div className="text-sm text-gray-600">Feriados</div>
-                </div>
+          {/* Resumo da Semana - Design Moderno */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg">
+                <Users className="h-5 w-5 text-white" />
               </div>
-            </CardContent>
-          </Card>
+              Resumo da Semana
+            </h2>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {/* Total de Eventos */}
+              <Card className="border-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardContent className="p-4 text-center">
+                  <div className="text-3xl font-bold text-slate-700 dark:text-slate-200 mb-1">{totalEvents}</div>
+                  <div className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Total de Eventos</div>
+                </CardContent>
+              </Card>
+
+              {/* Trabalho Presencial */}
+              <Card className="border-0 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="text-3xl font-bold text-blue-700 dark:text-blue-300 mb-1">{workOnsite}</div>
+                  <div className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">Presencial</div>
+                </CardContent>
+              </Card>
+
+              {/* Trabalho Remoto */}
+              <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <Home className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="text-3xl font-bold text-green-700 dark:text-green-300 mb-1">{workRemote}</div>
+                  <div className="text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wide">Remoto</div>
+                </CardContent>
+              </Card>
+
+              {/* Cursos */}
+              <Card className="border-0 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <GraduationCap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="text-3xl font-bold text-purple-700 dark:text-purple-300 mb-1">{courses}</div>
+                  <div className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide">Cursos</div>
+                </CardContent>
+              </Card>
+
+              {/* Aniversários */}
+              <Card className="border-0 bg-gradient-to-br from-pink-50 to-rose-100 dark:from-pink-900/30 dark:to-rose-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <Gift className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                  </div>
+                  <div className="text-3xl font-bold text-pink-700 dark:text-pink-300 mb-1">{birthdays}</div>
+                  <div className="text-xs font-medium text-pink-600 dark:text-pink-400 uppercase tracking-wide">Aniversários</div>
+                </CardContent>
+              </Card>
+
+              {/* Feriados */}
+              <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/30 dark:to-amber-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <Star className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div className="text-3xl font-bold text-orange-700 dark:text-orange-300 mb-1">{holidays}</div>
+                  <div className="text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wide">Feriados</div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
 
           {/* Eventos por Dia */}
           <Card>
