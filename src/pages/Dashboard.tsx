@@ -11,6 +11,8 @@ import { ModernButton } from '@/components/ui/modern-button';
 import { ModernLayout } from '@/components/layout/ModernLayout';
 import { ModernCard, ModernCardContent, ModernCardHeader } from '@/components/ui/modern-card';
 import { ModernGrid, ModernGridItem } from '@/components/layout/ModernGrid';
+import { NextOnCallPanel } from '@/components/dashboard/NextOnCallPanel';
+import { MonthlyBirthdaysPanel } from '@/components/dashboard/MonthlyBirthdaysPanel';
 
 import PostitNotes from '@/components/PostitNotes';
 import { useChamadosRecentes } from '@/hooks/useChamadosRecentes';
@@ -556,9 +558,11 @@ const Dashboard = () => {
           {/* Coluna Lateral - Painéis Verticais */}
           <ModernGridItem span={1}>
             <div className="space-y-6 sticky top-6">
-              {/* Seção de Insights de IA removida para interface mais limpa */}
+              {/* Próximo Plantão */}
+              <NextOnCallPanel />
 
-              {/* Alertas de plantão removidos - mantendo apenas eventos da semana */}
+              {/* Aniversariantes do Mês */}
+              <MonthlyBirthdaysPanel />
 
 
 
