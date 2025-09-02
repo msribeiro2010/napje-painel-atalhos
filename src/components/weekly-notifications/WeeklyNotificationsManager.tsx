@@ -146,17 +146,13 @@ export const WeeklyNotificationsManager = () => {
         const weekdays = [1, 2, 3, 4, 5]; // Segunda a Sexta
         
         if (editingNotification) {
-          // Para edição, apenas atualizar o registro existente
-          await updateNotification(editingNotification.id, {
-            titulo: currentFormData.titulo.trim(),
-            mensagem: currentFormData.mensagem.trim(),
-            ativo: currentFormData.ativo,
-            dayofweek: 1, // Segunda-feira como representativo
-            time: currentFormData.time
-          });
-        } else {
-          // Para criação, criar uma notificação para cada dia da semana
-          console.log('Criando notificações para seg-sex...'); // Debug
+          // Para edição de uma notificação existente para período seg-sex:
+          // 1. Excluir a notificação original
+          console.log('Convertendo notificação única para período seg-sex. Excluindo original...'); // Debug
+          await deleteNotification(editingNotification.id);
+          
+          // 2. Criar 5 novas notificações (uma para cada dia)
+          console.log('Criando 5 notificações para seg-sex (edição)...'); // Debug
           for (const day of weekdays) {
             const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
             const notificationData = {
@@ -166,7 +162,22 @@ export const WeeklyNotificationsManager = () => {
               dayofweek: day,
               time: currentFormData.time
             };
-            console.log(`Criando notificação para ${dayNames[day]}:`, notificationData); // Debug
+            console.log(`Criando notificação para ${dayNames[day]} (edição):`, notificationData); // Debug
+            await createNotification(notificationData);
+          }
+        } else {
+          // Para criação, criar uma notificação para cada dia da semana
+          console.log('Criando notificações para seg-sex (nova)...'); // Debug
+          for (const day of weekdays) {
+            const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            const notificationData = {
+              titulo: `${currentFormData.titulo.trim()} - ${dayNames[day]}`,
+              mensagem: currentFormData.mensagem.trim(),
+              ativo: currentFormData.ativo,
+              dayofweek: day,
+              time: currentFormData.time
+            };
+            console.log(`Criando notificação para ${dayNames[day]} (nova):`, notificationData); // Debug
             await createNotification(notificationData);
           }
         }
@@ -176,6 +187,22 @@ export const WeeklyNotificationsManager = () => {
         console.log('Criando notificações para dias individuais:', sortedDays); // Debug
         
         if (editingNotification) {
+          // Verificar se a notificação sendo editada fazia parte de um grupo seg-sex
+          const baseTitle = editingNotification.titulo.replace(/ - (Seg|Ter|Qua|Qui|Sex|Sáb|Dom)$/, '');
+          const relatedNotifications = notifications.filter(n => 
+            n.id !== editingNotification.id && 
+            n.titulo.startsWith(baseTitle) && 
+            n.titulo.match(/ - (Seg|Ter|Qua|Qui|Sex|Sáb|Dom)$/)
+          );
+          
+          if (relatedNotifications.length > 0) {
+            console.log(`Detectado grupo seg-sex relacionado (${relatedNotifications.length} notificações). Excluindo...`); // Debug
+            // Excluir todas as notificações relacionadas do grupo
+            for (const related of relatedNotifications) {
+              await deleteNotification(related.id);
+            }
+          }
+          
           await updateNotification(editingNotification.id, {
             titulo: currentFormData.titulo.trim(),
             mensagem: currentFormData.mensagem.trim(),
