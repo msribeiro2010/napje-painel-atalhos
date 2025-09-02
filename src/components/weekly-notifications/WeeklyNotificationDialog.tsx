@@ -130,6 +130,9 @@ export const WeeklyNotificationDialog = ({
       return;
     }
     
+    console.log('Dialog - extendedFormData:', extendedFormData); // Debug
+    console.log('Dialog - isWeekdayRange:', extendedFormData.isWeekdayRange); // Debug
+    
     // Incluir informações de período seg-sex para o manager processar
     const updatedFormData = {
       ...formData,
@@ -141,11 +144,21 @@ export const WeeklyNotificationDialog = ({
         : (extendedFormData.selectedDays?.[0] || formData.dayofweek || 1)
     };
     
+    console.log('Dialog - updatedFormData:', updatedFormData); // Debug
+    
     // Atualizar formData
     setFormData(updatedFormData);
     
-    // Chamar onSubmit com dados completos
-    await onSubmit(e);
+    // Aguardar um tick para garantir que o formData foi atualizado
+    setTimeout(async () => {
+      // Criar evento com formData atualizado
+      const fakeEvent = {
+        preventDefault: () => {},
+        target: { formData: updatedFormData }
+      } as any;
+      
+      await onSubmit(fakeEvent);
+    }, 10);
   };
 
   return (

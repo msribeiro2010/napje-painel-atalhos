@@ -126,68 +126,77 @@ export const WeeklyNotificationsManager = () => {
     setIsNotificationDialogOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent | any) => {
     e.preventDefault();
     
+    // Tentar pegar formData atualizado do evento, se disponível
+    const currentFormData = (e.target?.formData) || formData;
+    
+    console.log('FormData recebido:', currentFormData); // Debug
+    console.log('É weekday range?', currentFormData.isWeekdayRange); // Debug
+    
     // Validação mais flexível - só precisa de título e mensagem
-    if (!formData.titulo.trim() || !formData.mensagem.trim()) {
+    if (!currentFormData.titulo.trim() || !currentFormData.mensagem.trim()) {
       return;
     }
 
     try {
-      console.log('FormData recebido:', formData); // Debug
-      console.log('É weekday range?', formData.isWeekdayRange); // Debug
-      
       // Se for período seg-sex, criar uma notificação para cada dia
-      if (formData.isWeekdayRange) {
+      if (currentFormData.isWeekdayRange) {
         const weekdays = [1, 2, 3, 4, 5]; // Segunda a Sexta
         
         if (editingNotification) {
           // Para edição, apenas atualizar o registro existente
           await updateNotification(editingNotification.id, {
-            titulo: formData.titulo.trim(),
-            mensagem: formData.mensagem.trim(),
-            ativo: formData.ativo,
+            titulo: currentFormData.titulo.trim(),
+            mensagem: currentFormData.mensagem.trim(),
+            ativo: currentFormData.ativo,
             dayofweek: 1, // Segunda-feira como representativo
-            time: formData.time
+            time: currentFormData.time
           });
         } else {
           // Para criação, criar uma notificação para cada dia da semana
+          console.log('Criando notificações para seg-sex...'); // Debug
           for (const day of weekdays) {
             const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-            await createNotification({
-              titulo: `${formData.titulo.trim()} - ${dayNames[day]}`,
-              mensagem: formData.mensagem.trim(),
-              ativo: formData.ativo,
+            const notificationData = {
+              titulo: `${currentFormData.titulo.trim()} - ${dayNames[day]}`,
+              mensagem: currentFormData.mensagem.trim(),
+              ativo: currentFormData.ativo,
               dayofweek: day,
-              time: formData.time
-            });
+              time: currentFormData.time
+            };
+            console.log(`Criando notificação para ${dayNames[day]}:`, notificationData); // Debug
+            await createNotification(notificationData);
           }
         }
       } else {
         // Lógica normal para dias individuais
-        const sortedDays = (formData.selectedDays || [formData.dayofweek]).sort((a, b) => a - b);
+        const sortedDays = (currentFormData.selectedDays || [currentFormData.dayofweek]).sort((a, b) => a - b);
+        console.log('Criando notificações para dias individuais:', sortedDays); // Debug
         
         if (editingNotification) {
           await updateNotification(editingNotification.id, {
-            titulo: formData.titulo.trim(),
-            mensagem: formData.mensagem.trim(),
-            ativo: formData.ativo,
+            titulo: currentFormData.titulo.trim(),
+            mensagem: currentFormData.mensagem.trim(),
+            ativo: currentFormData.ativo,
             dayofweek: sortedDays[0] || 1,
-            time: formData.time
+            time: currentFormData.time
           });
         } else {
           // Criar uma notificação para cada dia selecionado
           for (const day of sortedDays) {
             const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
             const suffix = sortedDays.length > 1 ? ` - ${dayNames[day]}` : '';
-            await createNotification({
-              titulo: `${formData.titulo.trim()}${suffix}`,
-              mensagem: formData.mensagem.trim(),
-              ativo: formData.ativo,
+            const notificationData = {
+              titulo: `${currentFormData.titulo.trim()}${suffix}`,
+              mensagem: currentFormData.mensagem.trim(),
+              ativo: currentFormData.ativo,
               dayofweek: day,
-              time: formData.time
-            });
+              time: currentFormData.time
+            };
+            console.log(`Criando notificação para ${dayNames[day]}:`, notificationData); // Debug
+            await createNotification(notificationData);
           }
         }
       }
