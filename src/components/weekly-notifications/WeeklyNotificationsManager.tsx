@@ -133,21 +133,58 @@ export const WeeklyNotificationsManager = () => {
     }
 
     try {
-      // Garantir que selectedDays está ordenado e não vazio
-      const sortedDays = (formData.selectedDays || [formData.dayofweek]).sort((a, b) => a - b);
-      
-      const notificationData = {
-        titulo: formData.titulo.trim(),
-        mensagem: formData.mensagem.trim(),
-        ativo: formData.ativo,
-        dayofweek: sortedDays[0] || 1, // Primeiro dia como fallback
-        time: formData.time
-      };
-
-      if (editingNotification) {
-        await updateNotification(editingNotification.id, notificationData);
+      // Se for período seg-sex, criar uma notificação para cada dia
+      if (formData.isWeekdayRange) {
+        const weekdays = [1, 2, 3, 4, 5]; // Segunda a Sexta
+        
+        if (editingNotification) {
+          // Para edição, apenas atualizar o registro existente
+          await updateNotification(editingNotification.id, {
+            titulo: formData.titulo.trim(),
+            mensagem: formData.mensagem.trim(),
+            ativo: formData.ativo,
+            dayofweek: 1, // Segunda-feira como representativo
+            time: formData.time
+          });
+        } else {
+          // Para criação, criar uma notificação para cada dia da semana
+          for (const day of weekdays) {
+            const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            await createNotification({
+              titulo: `${formData.titulo.trim()} - ${dayNames[day]}`,
+              mensagem: formData.mensagem.trim(),
+              ativo: formData.ativo,
+              dayofweek: day,
+              time: formData.time
+            });
+          }
+        }
       } else {
-        await createNotification(notificationData);
+        // Lógica normal para dias individuais
+        const sortedDays = (formData.selectedDays || [formData.dayofweek]).sort((a, b) => a - b);
+        
+        if (editingNotification) {
+          await updateNotification(editingNotification.id, {
+            titulo: formData.titulo.trim(),
+            mensagem: formData.mensagem.trim(),
+            ativo: formData.ativo,
+            dayofweek: sortedDays[0] || 1,
+            time: formData.time
+          });
+        } else {
+          // Criar uma notificação para cada dia selecionado
+          for (const day of sortedDays) {
+            const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            const suffix = sortedDays.length > 1 ? ` - ${dayNames[day]}` : '';
+            await createNotification({
+              titulo: `${formData.titulo.trim()}${suffix}`,
+              mensagem: formData.mensagem.trim(),
+              ativo: formData.ativo,
+              dayofweek: day,
+              time: formData.time
+            });
+          }
+        }
       }
       
       setIsNotificationDialogOpen(false);
