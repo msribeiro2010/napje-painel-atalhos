@@ -130,9 +130,11 @@ export const WeeklyNotificationDialog = ({
       return;
     }
     
-    // Usar apenas campos básicos que existem no banco
+    // Incluir informações de período seg-sex para o manager processar
     const updatedFormData = {
       ...formData,
+      selectedDays: extendedFormData.selectedDays,
+      isWeekdayRange: extendedFormData.isWeekdayRange,
       // Usar o primeiro dia selecionado ou segunda-feira se for período seg-sex
       dayofweek: extendedFormData.isWeekdayRange 
         ? 1 // Segunda-feira para período seg-sex
@@ -142,7 +144,7 @@ export const WeeklyNotificationDialog = ({
     // Atualizar formData
     setFormData(updatedFormData);
     
-    // Chamar onSubmit com dados básicos
+    // Chamar onSubmit com dados completos
     await onSubmit(e);
   };
 

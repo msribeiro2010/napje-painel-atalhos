@@ -101,6 +101,7 @@ export const WeeklyNotificationsManager = () => {
       ativo: true,
       dayofweek: 1,
       selectedDays: [],
+      isWeekdayRange: false,
       time: '09:00'
     });
     setEditingNotification(null);
@@ -119,6 +120,7 @@ export const WeeklyNotificationsManager = () => {
       ativo: notification.ativo,
       dayofweek: notification.dayofweek,
       selectedDays: notification.selectedDays || [notification.dayofweek],
+      isWeekdayRange: notification.isWeekdayRange || false,
       time: notification.time
     });
     setIsNotificationDialogOpen(true);
@@ -133,6 +135,9 @@ export const WeeklyNotificationsManager = () => {
     }
 
     try {
+      console.log('FormData recebido:', formData); // Debug
+      console.log('É weekday range?', formData.isWeekdayRange); // Debug
+      
       // Se for período seg-sex, criar uma notificação para cada dia
       if (formData.isWeekdayRange) {
         const weekdays = [1, 2, 3, 4, 5]; // Segunda a Sexta
