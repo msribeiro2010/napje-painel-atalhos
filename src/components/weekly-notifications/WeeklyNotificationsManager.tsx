@@ -405,16 +405,23 @@ export const WeeklyNotificationsManager = () => {
                                   <span className="text-gray-400 mx-2">•</span>
                                   <Calendar className="h-4 w-4 text-blue-500" />
                                   <span className="font-medium text-blue-700 dark:text-blue-300">
-                                    {notification.isWeekdayRange 
-                                      ? 'Segunda a Sexta-feira'
-                                      : (notification.selectedDays || [notification.dayofweek])
-                                          .sort((a, b) => a - b)
-                                          .map(day => {
-                                            const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                                            return dayLabels[day] || 'N/A';
-                                          })
-                                          .join(', ')
-                                    }
+                                    {(() => {
+                                      // Verificar se tem dados de múltiplos dias
+                                      if (notification.isWeekdayRange) {
+                                        return 'Segunda a Sexta-feira';
+                                      }
+                                      
+                                      // Usar selectedDays se existir, senão usar dayofweek
+                                      const days = notification.selectedDays?.length 
+                                        ? notification.selectedDays 
+                                        : [notification.dayofweek];
+                                      
+                                      const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                                      return days
+                                        .sort((a, b) => a - b)
+                                        .map(day => dayLabels[day] || 'N/A')
+                                        .join(', ');
+                                    })()}
                                   </span>
                                 </div>
                               </div>
