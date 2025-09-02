@@ -28,6 +28,8 @@ export const useWeeklyNotifications = () => {
     isWeekdayRange: false
   });
   const [notificationItems, setNotificationItems] = useState<NotificationItem[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [pendingNotifications, setPendingNotifications] = useState<NotificationItem[]>([]);
 
   // Carregar configurações
   useEffect(() => {
@@ -98,26 +100,19 @@ export const useWeeklyNotifications = () => {
     return settings.lastNotificationDate !== todayString;
   }, [settings.enabled, settings.notificationDay, settings.notificationDays, settings.notificationTime, settings.lastNotificationDate, settings.isWeekdayRange, notificationItems.length]);
 
-  // Mostrar notificações
+  // Mostrar notificações no modal
   const showWeeklyNotifications = useCallback(() => {
     if (!shouldShowNotifications()) return;
-
-    notificationItems.forEach((item, index) => {
-       setTimeout(() => {
-          const message = `📋 Lembrete: ${item.titulo} - Verifique os procedimentos relacionados a ${item.categoria || 'este item'}.`;
-          
-          toast({
-            title: "🔔 Notificação Semanal",
-            description: message,
-            duration: 8000,
-          });
-        }, index * 2000);
-    });
-
-    const now = new Date();
-    const todayString = now.toISOString().split('T')[0];
-    setSettings(prev => ({ ...prev, lastNotificationDate: todayString }));
-  }, [notificationItems, shouldShowNotifications, toast]);
+    
+    if (notificationItems.length > 0) {
+      setPendingNotifications([...notificationItems]);
+      setShowModal(true);
+      
+      const now = new Date();
+      const todayString = now.toISOString().split('T')[0];
+      setSettings(prev => ({ ...prev, lastNotificationDate: todayString }));
+    }
+  }, [notificationItems, shouldShowNotifications]);
 
   // Forçar notificação
   const forceNotification = useCallback(() => {
@@ -130,17 +125,9 @@ export const useWeeklyNotifications = () => {
       return;
     }
 
-    notificationItems.forEach((item, index) => {
-       setTimeout(() => {
-          const message = `Lembrete: ${item.titulo} - Verifique os procedimentos necessários`;
-          
-          toast({
-            title: "📅 Lembrete Semanal (Teste)",
-            description: message,
-            duration: 8000,
-          });
-        }, index * 1500);
-     });
+    // Usar modal para teste também
+    setPendingNotifications([...notificationItems]);
+    setShowModal(true);
   }, [notificationItems, toast]);
 
   // Atualizar configurações
@@ -200,6 +187,12 @@ export const useWeeklyNotifications = () => {
     };
   }, [settings.enabled, showWeeklyNotifications]);
 
+  // Fechar modal e marcar como lida
+  const handleModalClose = useCallback(() => {
+    setShowModal(false);
+    setPendingNotifications([]);
+  }, []);
+
   return {
     settings,
     updateSettings,
@@ -207,6 +200,10 @@ export const useWeeklyNotifications = () => {
     fetchNotificationItems,
     forceNotification,
     getDayName,
-    getActiveDaysText
+    getActiveDaysText,
+    // Modal state
+    showModal,
+    pendingNotifications,
+    handleModalClose
   };
 };

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useWeeklyNotifications } from '@/hooks/useWeeklyNotifications';
+import { WeeklyNotificationModal } from '@/components/weekly-notifications/WeeklyNotificationModal';
 
 export const WeeklyNotificationSettings = () => {
   const {
@@ -16,7 +17,10 @@ export const WeeklyNotificationSettings = () => {
     notificationItems,
     fetchNotificationItems,
     forceNotification,
-    getDayName
+    getDayName,
+    showModal,
+    pendingNotifications,
+    handleModalClose
   } = useWeeklyNotifications();
   
   const [isOpen, setIsOpen] = useState(false);
@@ -220,6 +224,14 @@ export const WeeklyNotificationSettings = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Notificações */}
+      <WeeklyNotificationModal
+        isOpen={showModal}
+        onOpenChange={(open) => !open && handleModalClose()}
+        notifications={pendingNotifications}
+        onMarkAsRead={handleModalClose}
+      />
     </>
   );
 };
