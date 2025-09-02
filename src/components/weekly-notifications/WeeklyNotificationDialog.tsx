@@ -130,28 +130,20 @@ export const WeeklyNotificationDialog = ({
       return;
     }
     
-    // Criar formData atualizado com dados de dias selecionados
+    // Usar apenas campos básicos que existem no banco
     const updatedFormData = {
       ...formData,
-      selectedDays: extendedFormData.isWeekdayRange 
-        ? [1, 2, 3, 4, 5] // Segunda a Sexta ordenados
-        : (extendedFormData.selectedDays || []).sort((a, b) => a - b), // Ordenar dias selecionados
-      isWeekdayRange: extendedFormData.isWeekdayRange,
+      // Usar o primeiro dia selecionado ou segunda-feira se for período seg-sex
       dayofweek: extendedFormData.isWeekdayRange 
-        ? 1 // Segunda-feira como padrão para compatibilidade
-        : (extendedFormData.selectedDays?.[0] || formData.dayofweek)
+        ? 1 // Segunda-feira para período seg-sex
+        : (extendedFormData.selectedDays?.[0] || formData.dayofweek || 1)
     };
     
-    // Atualizar formData e chamar onSubmit diretamente
+    // Atualizar formData
     setFormData(updatedFormData);
     
-    // Criar evento simulado com formData atualizado
-    const fakeEvent = { 
-      preventDefault: () => {},
-      target: { formData: updatedFormData }
-    } as any;
-    
-    await onSubmit(fakeEvent);
+    // Chamar onSubmit com dados básicos
+    await onSubmit(e);
   };
 
   return (

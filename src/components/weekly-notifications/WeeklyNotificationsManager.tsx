@@ -101,7 +101,6 @@ export const WeeklyNotificationsManager = () => {
       ativo: true,
       dayofweek: 1,
       selectedDays: [],
-      isWeekdayRange: false,
       time: '09:00'
     });
     setEditingNotification(null);
@@ -120,7 +119,6 @@ export const WeeklyNotificationsManager = () => {
       ativo: notification.ativo,
       dayofweek: notification.dayofweek,
       selectedDays: notification.selectedDays || [notification.dayofweek],
-      isWeekdayRange: notification.isWeekdayRange || false,
       time: notification.time
     });
     setIsNotificationDialogOpen(true);
@@ -143,8 +141,6 @@ export const WeeklyNotificationsManager = () => {
         mensagem: formData.mensagem.trim(),
         ativo: formData.ativo,
         dayofweek: sortedDays[0] || 1, // Primeiro dia como fallback
-        selectedDays: sortedDays,
-        isWeekdayRange: formData.isWeekdayRange || false,
         time: formData.time
       };
 
@@ -407,7 +403,7 @@ export const WeeklyNotificationsManager = () => {
                                   <span className="font-medium text-blue-700 dark:text-blue-300">
                                     {(() => {
                                       // Verificar se tem dados de múltiplos dias
-                                      if (notification.isWeekdayRange) {
+                                      if (notification.isWeekdayRange || false) {
                                         return 'Segunda a Sexta-feira';
                                       }
                                       
