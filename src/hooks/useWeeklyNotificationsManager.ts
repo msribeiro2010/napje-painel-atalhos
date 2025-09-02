@@ -209,9 +209,18 @@ export const useWeeklyNotificationsManager = () => {
 
   // Test notification (simulate sending)
   const testNotification = (notification: WeeklyNotification) => {
-    toast.info(`Teste: ${notification.titulo}`, {
-      description: notification.mensagem,
-      duration: 5000
+    const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const dayName = dayNames[notification.dayofweek] || 'N/A';
+    
+    toast.success(`🎯 ${notification.titulo}`, {
+      description: `${notification.mensagem}\n📅 ${dayName} • 🕘 ${notification.time}`,
+      duration: 6000,
+      style: {
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+        color: 'white',
+      },
     });
   };
 

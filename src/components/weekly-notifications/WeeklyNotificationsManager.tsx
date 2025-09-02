@@ -567,19 +567,30 @@ export const WeeklyNotificationsManager = () => {
                 )}
               </div>
               
-              <Button 
-                onClick={() => {
-                  if (activeNotifications.length > 0) {
-                    testNotification(activeNotifications[0]);
-                  }
-                }}
-                variant="outline"
-                className="flex items-center gap-2"
-                disabled={!settings.enabled || activeNotifications.length === 0}
-              >
-                <TestTube className="h-4 w-4" />
-                Testar Notificação
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={() => {
+                    if (activeNotifications.length > 0) {
+                      testNotification(activeNotifications[0]);
+                    }
+                  }}
+                  variant="outline"
+                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border-emerald-200 hover:border-emerald-300 text-emerald-700 hover:text-emerald-800 shadow-sm hover:shadow-md transition-all duration-200"
+                  disabled={!settings.enabled || activeNotifications.length === 0}
+                >
+                  <TestTube className="h-4 w-4" />
+                  Testar Notificação
+                </Button>
+                
+                {settings.enabled && activeNotifications.length > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                    <Sparkles className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-700">
+                      Próxima verificação em {Math.ceil((2 * 60 * 60 * 1000) / (60 * 1000))} min
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </DialogContent>

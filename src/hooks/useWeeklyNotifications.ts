@@ -48,87 +48,148 @@ export const useWeeklyNotifications = () => {
     localStorage.setItem('weekly-notification-settings', JSON.stringify(settings));
   }, [settings]);
 
-  // Buscar itens da base de conhecimento (sem filtro de notificação)
+  // Buscar notificações ativas configuradas
   const fetchNotificationItems = useCallback(async () => {
     try {
-      // Timeout mais agressivo de 5 segundos
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Timeout: Operação demorou mais de 5 segundos')), 5000)
       );
 
       const queryPromise = supabase
-        .from('base_conhecimento')
-        .select('id, titulo, categoria')
+        .from('weekly_notifications')
+        .select('id, titulo, mensagem')
+        .eq('ativo', true)
         .order('created_at', { ascending: false })
-        .limit(5) // Reduzir ainda mais o limite
-        .abortSignal(AbortSignal.timeout(4000)); // Timeout nativo do navegador
+        .abortSignal(AbortSignal.timeout(4000));
 
       const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) {
-        console.warn('Erro na consulta Supabase:', error);
+        console.warn('Erro na consulta de notificações:', error);
         setNotificationItems([]);
         return;
       }
       
-      setNotificationItems(data || []);
-    } catch (error) {
-      console.warn('Erro ao buscar itens (fallback para vazio):', error);
+      // Transformar para o formato esperado
+      const transformedItems = (data || []).map(item => ({
+        id: item.id,
+        titulo: item.titulo,
+        categoria: 'notification'
+      }));
       
-      // Sempre definir como vazio em caso de qualquer erro
+      setNotificationItems(transformedItems);
+    } catch (error) {
+      console.warn('Erro ao buscar notificações ativas:', error);
       setNotificationItems([]);
     }
   }, []);
 
-  // Verificar se deve notificar
-  const shouldShowNotifications = useCallback((): boolean => {
-    if (!settings.enabled || notificationItems.length === 0) return false;
+  // Verificar se há notificações para o horário atual
+  const shouldShowNotifications = useCallback(async (): Promise<boolean> => {
+    if (!settings.enabled) return false;
 
     const now = new Date();
     const today = now.getDay();
     const currentTime = now.toTimeString().slice(0, 5);
-    
-    // Verificar se hoje é um dos dias configurados
-    const activeDays = settings.isWeekdayRange 
-      ? [1, 2, 3, 4, 5] // Segunda a Sexta
-      : (settings.notificationDays?.length > 0 ? settings.notificationDays : [settings.notificationDay]);
-    
-    if (!activeDays.includes(today)) return false;
-    if (currentTime < settings.notificationTime) return false;
-
     const todayString = now.toISOString().split('T')[0];
-    return settings.lastNotificationDate !== todayString;
-  }, [settings.enabled, settings.notificationDay, settings.notificationDays, settings.notificationTime, settings.lastNotificationDate, settings.isWeekdayRange, notificationItems.length]);
+    
+    // Se já notificou hoje, não notificar novamente
+    if (settings.lastNotificationDate === todayString) return false;
+
+    try {
+      // Buscar notificações ativas para hoje e horário atual
+      const { data: activeNotifications, error } = await supabase
+        .from('weekly_notifications')
+        .select('*')
+        .eq('ativo', true)
+        .eq('dayofweek', today)
+        .lte('time', currentTime);
+
+      if (error) {
+        console.warn('Erro ao verificar notificações agendadas:', error);
+        return false;
+      }
+
+      return (activeNotifications?.length || 0) > 0;
+    } catch (error) {
+      console.warn('Erro na verificação de agendamento:', error);
+      return false;
+    }
+  }, [settings.enabled, settings.lastNotificationDate]);
 
   // Mostrar notificações no modal
-  const showWeeklyNotifications = useCallback(() => {
-    if (!shouldShowNotifications()) return;
+  const showWeeklyNotifications = useCallback(async () => {
+    const shouldShow = await shouldShowNotifications();
+    if (!shouldShow) return;
     
-    if (notificationItems.length > 0) {
-      setPendingNotifications([...notificationItems]);
-      setShowModal(true);
-      
+    // Buscar notificações ativas para mostrar
+    try {
       const now = new Date();
-      const todayString = now.toISOString().split('T')[0];
-      setSettings(prev => ({ ...prev, lastNotificationDate: todayString }));
-    }
-  }, [notificationItems, shouldShowNotifications]);
+      const today = now.getDay();
+      const currentTime = now.toTimeString().slice(0, 5);
+      
+      const { data: activeNotifications, error } = await supabase
+        .from('weekly_notifications')
+        .select('*')
+        .eq('ativo', true)
+        .eq('dayofweek', today)
+        .lte('time', currentTime);
 
-  // Forçar notificação
-  const forceNotification = useCallback(() => {
-    if (notificationItems.length === 0) {
+      if (!error && activeNotifications && activeNotifications.length > 0) {
+        // Transformar para o formato do modal
+        const notificationItems = activeNotifications.map(notif => ({
+          id: notif.id,
+          titulo: notif.titulo,
+          categoria: 'notification'
+        }));
+        
+        setPendingNotifications(notificationItems);
+        setShowModal(true);
+        
+        const todayString = now.toISOString().split('T')[0];
+        setSettings(prev => ({ ...prev, lastNotificationDate: todayString }));
+      }
+    } catch (error) {
+      console.warn('Erro ao carregar notificações para exibir:', error);
+    }
+  }, [shouldShowNotifications]);
+
+  // Forçar notificação (para teste)
+  const forceNotification = useCallback(async () => {
+    try {
+      // Buscar notificações ativas diretamente
+      const { data: activeNotifications, error } = await supabase
+        .from('weekly_notifications')
+        .select('*')
+        .eq('ativo', true);
+
+      if (error || !activeNotifications || activeNotifications.length === 0) {
+        toast({
+          title: "ℹ️ Nenhuma notificação ativa",
+          description: "Não há notificações semanais ativas configuradas.",
+          duration: 5000,
+        });
+        return;
+      }
+
+      // Mostrar todas as notificações ativas como teste
+      const testItems = activeNotifications.map(notif => ({
+        id: notif.id,
+        titulo: notif.titulo,
+        categoria: 'notification'
+      }));
+      
+      setPendingNotifications(testItems);
+      setShowModal(true);
+    } catch (error) {
+      console.warn('Erro ao forçar notificação:', error);
       toast({
-        title: "ℹ️ Nenhum item configurado",
-        description: "Não há itens com notificação semanal ativada.",
+        title: "❌ Erro",
+        description: "Não foi possível carregar as notificações para teste.",
         duration: 5000,
       });
-      return;
     }
-
-    // Usar modal para teste também
-    setPendingNotifications([...notificationItems]);
-    setShowModal(true);
-  }, [notificationItems, toast]);
+  }, [toast]);
 
   // Atualizar configurações
   const updateSettings = useCallback((newSettings: Partial<WeeklyNotificationSettings>) => {
