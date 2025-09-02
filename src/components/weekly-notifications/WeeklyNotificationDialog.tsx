@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { WeeklyNotification, WeeklyNotificationFormData } from '@/hooks/useWeeklyNotificationsManager';
 import { cn } from '@/lib/utils';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 interface WeeklyNotificationDialogProps {
   isOpen: boolean;
@@ -37,21 +37,33 @@ export const WeeklyNotificationDialog = ({
   onSubmit,
   onCancel
 }: WeeklyNotificationDialogProps) => {
-  const [extendedFormData, setExtendedFormData] = useState<ExtendedFormData>({
+  const [extendedFormData, setExtendedFormData] = useState<ExtendedFormData>(() => ({
     ...formData,
     selectedDays: formData.selectedDays || [],
     isWeekdayRange: formData.isWeekdayRange || false
-  });
+  }));
 
-  // Sincronizar extendedFormData quando formData mudar (para edição)
+  // Sincronizar extendedFormData quando formData mudar (para edição) - otimizado
   useEffect(() => {
-    setExtendedFormData({
-      ...formData,
-      selectedDays: formData.selectedDays || [],
-      isWeekdayRange: formData.isWeekdayRange || false
-    });
-  }, [formData, editingNotification]);
-  const timeOptions = [
+    if (editingNotification) {
+      setExtendedFormData(prev => {
+        const newData = {
+          ...formData,
+          selectedDays: formData.selectedDays || [],
+          isWeekdayRange: formData.isWeekdayRange || false
+        };
+        
+        // Só atualizar se realmente mudou para evitar re-renders
+        if (JSON.stringify(prev) !== JSON.stringify(newData)) {
+          return newData;
+        }
+        return prev;
+      });
+    }
+  }, [formData.titulo, formData.mensagem, formData.ativo, formData.time, editingNotification]);
+  
+  // Memoizar opções estáticas para evitar re-renders
+  const timeOptions = useMemo(() => [
     { value: '07:00', label: '07:00' },
     { value: '08:00', label: '08:00' },
     { value: '09:00', label: '09:00' },
@@ -64,9 +76,9 @@ export const WeeklyNotificationDialog = ({
     { value: '16:00', label: '16:00' },
     { value: '17:00', label: '17:00' },
     { value: '18:00', label: '18:00' },
-  ];
+  ], []);
 
-  const dayOptions = [
+  const dayOptions = useMemo(() => [
     { value: 0, label: 'Domingo', short: 'Dom' },
     { value: 1, label: 'Segunda-feira', short: 'Seg' },
     { value: 2, label: 'Terça-feira', short: 'Ter' },
@@ -74,44 +86,49 @@ export const WeeklyNotificationDialog = ({
     { value: 4, label: 'Quinta-feira', short: 'Qui' },
     { value: 5, label: 'Sexta-feira', short: 'Sex' },
     { value: 6, label: 'Sábado', short: 'Sáb' },
-  ];
+  ], []);
 
-  const weekdayOptions = [1, 2, 3, 4, 5]; // Segunda a Sexta
+  const weekdayOptions = useMemo(() => [1, 2, 3, 4, 5], []); // Segunda a Sexta
 
-  const toggleWeekdayRange = () => {
-    if (extendedFormData.isWeekdayRange) {
-      // Desativar período seg-sex
-      setExtendedFormData(prev => ({
+  // Otimizar callbacks para evitar re-renders
+  const toggleWeekdayRange = useCallback(() => {
+    setExtendedFormData(prev => {
+      if (prev.isWeekdayRange) {
+        // Desativar período seg-sex
+        return {
+          ...prev,
+          isWeekdayRange: false,
+          selectedDays: []
+        };
+      } else {
+        // Ativar período seg-sex
+        return {
+          ...prev,
+          isWeekdayRange: true,
+          selectedDays: [1, 2, 3, 4, 5] // Direto sem spread para melhor performance
+        };
+      }
+    });
+  }, []);
+
+  const toggleDay = useCallback((dayValue: number) => {
+    setExtendedFormData(prev => {
+      if (prev.isWeekdayRange) return prev; // Não permitir alteração quando período ativo
+      
+      const currentDays = prev.selectedDays || [];
+      const newDays = currentDays.includes(dayValue)
+        ? currentDays.filter(d => d !== dayValue)
+        : [...currentDays, dayValue].sort((a, b) => a - b);
+      
+      return {
         ...prev,
-        isWeekdayRange: false,
-        selectedDays: []
-      }));
-      setFormData(prev => ({ ...prev, dayofweek: 1 }));
-    } else {
-      // Ativar período seg-sex
-      setExtendedFormData(prev => ({
-        ...prev,
-        isWeekdayRange: true,
-        selectedDays: [...weekdayOptions].sort((a, b) => a - b)
-      }));
-    }
-  };
+        selectedDays: newDays
+      };
+    });
+  }, []);
 
-  const toggleDay = (dayValue: number) => {
-    if (extendedFormData.isWeekdayRange) return; // Não permitir alteração individual quando período está ativo
-    
-    const currentDays = extendedFormData.selectedDays || [];
-    const newDays = currentDays.includes(dayValue)
-      ? currentDays.filter(d => d !== dayValue)
-      : [...currentDays, dayValue].sort((a, b) => a - b);
-    
-    setExtendedFormData(prev => ({
-      ...prev,
-      selectedDays: newDays
-    }));
-  };
-
-  const getSelectedDaysText = () => {
+  // Memoizar texto dos dias selecionados
+  const selectedDaysText = useMemo(() => {
     if (extendedFormData.isWeekdayRange) {
       return 'Segunda a Sexta-feira';
     }
@@ -122,16 +139,13 @@ export const WeeklyNotificationDialog = ({
       .sort((a, b) => a - b)
       .map(day => dayOptions.find(d => d.value === day)?.short)
       .join(', ');
-  };
+  }, [extendedFormData.isWeekdayRange, extendedFormData.selectedDays, dayOptions]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.titulo.trim() || !formData.mensagem.trim()) {
       return;
     }
-    
-    console.log('Dialog - extendedFormData:', extendedFormData); // Debug
-    console.log('Dialog - isWeekdayRange:', extendedFormData.isWeekdayRange); // Debug
     
     // Incluir informações de período seg-sex para o manager processar
     const updatedFormData = {
@@ -144,13 +158,11 @@ export const WeeklyNotificationDialog = ({
         : (extendedFormData.selectedDays?.[0] || formData.dayofweek || 1)
     };
     
-    console.log('Dialog - updatedFormData:', updatedFormData); // Debug
-    
-    // Atualizar formData
+    // Atualizar formData primeiro
     setFormData(updatedFormData);
     
-    // Aguardar um tick para garantir que o formData foi atualizado
-    setTimeout(async () => {
+    // Usar requestAnimationFrame para melhor performance que setTimeout
+    requestAnimationFrame(async () => {
       // Criar evento com formData atualizado
       const fakeEvent = {
         preventDefault: () => {},
@@ -158,8 +170,8 @@ export const WeeklyNotificationDialog = ({
       } as any;
       
       await onSubmit(fakeEvent);
-    }, 10);
-  };
+    });
+  }, [formData, extendedFormData, setFormData, onSubmit]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -295,7 +307,7 @@ export const WeeklyNotificationDialog = ({
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground dark:text-gray-400">
-                    Selecionados: {getSelectedDaysText()}
+                    Selecionados: {selectedDaysText}
                   </p>
                 </div>
               )}
