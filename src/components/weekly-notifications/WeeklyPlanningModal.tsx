@@ -223,12 +223,15 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                     {(() => {
                       const onsiteDays = events.filter(e => e.category === 'work_onsite');
                       if (onsiteDays.length > 0) {
-                        const firstDay = onsiteDays[0];
                         return (
-                          <div className="text-xs text-blue-500 dark:text-blue-400">
-                            {format(firstDay.date, 'EEEE', { locale: ptBR })}
-                            <br />
-                            {format(firstDay.date, 'dd/MM', { locale: ptBR })}
+                          <div className="text-xs text-blue-500 dark:text-blue-400 space-y-1">
+                            {onsiteDays.map((day, idx) => (
+                              <div key={idx}>
+                                {format(day.date, 'EEEE', { locale: ptBR })}
+                                <br />
+                                {format(day.date, 'dd/MM', { locale: ptBR })}
+                              </div>
+                            ))}
                           </div>
                         );
                       }
@@ -250,12 +253,15 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                     {(() => {
                       const remoteDays = events.filter(e => e.category === 'work_remote');
                       if (remoteDays.length > 0) {
-                        const firstDay = remoteDays[0];
                         return (
-                          <div className="text-xs text-green-500 dark:text-green-400">
-                            {format(firstDay.date, 'EEEE', { locale: ptBR })}
-                            <br />
-                            {format(firstDay.date, 'dd/MM', { locale: ptBR })}
+                          <div className="text-xs text-green-500 dark:text-green-400 space-y-1">
+                            {remoteDays.map((day, idx) => (
+                              <div key={idx}>
+                                {format(day.date, 'EEEE', { locale: ptBR })}
+                                <br />
+                                {format(day.date, 'dd/MM', { locale: ptBR })}
+                              </div>
+                            ))}
                           </div>
                         );
                       }
@@ -277,12 +283,15 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                     {(() => {
                       const courseDays = events.filter(e => e.category === 'curso');
                       if (courseDays.length > 0) {
-                        const firstDay = courseDays[0];
                         return (
-                          <div className="text-xs text-purple-500 dark:text-purple-400">
-                            {format(firstDay.date, 'EEEE', { locale: ptBR })}
-                            <br />
-                            {format(firstDay.date, 'dd/MM', { locale: ptBR })}
+                          <div className="text-xs text-purple-500 dark:text-purple-400 space-y-1">
+                            {courseDays.map((day, idx) => (
+                              <div key={idx}>
+                                {format(day.date, 'EEEE', { locale: ptBR })}
+                                <br />
+                                {format(day.date, 'dd/MM', { locale: ptBR })}
+                              </div>
+                            ))}
                           </div>
                         );
                       }
@@ -303,14 +312,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                     <div className="text-3xl font-bold text-red-700 dark:text-red-300 mb-1">{vacation}</div>
                     <div className="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wide mb-2">Férias</div>
                     {(() => {
-                      const vacationDays = events.filter(e => e.type === 'vacation');
+                      const vacationDays = events.filter(e => e.category === 'vacation');
                       if (vacationDays.length > 0) {
-                        const firstDay = vacationDays[0];
                         return (
-                          <div className="text-xs text-red-500 dark:text-red-400">
-                            {format(firstDay.date, 'EEEE', { locale: ptBR })}
-                            <br />
-                            {format(firstDay.date, 'dd/MM', { locale: ptBR })}
+                          <div className="text-xs text-red-500 dark:text-red-400 space-y-1">
+                            {vacationDays.map((day, idx) => (
+                              <div key={idx}>
+                                {format(day.date, 'EEEE', { locale: ptBR })}
+                                <br />
+                                {format(day.date, 'dd/MM', { locale: ptBR })}
+                              </div>
+                            ))}
                           </div>
                         );
                       }
@@ -330,14 +342,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                     <div className="text-3xl font-bold text-gray-700 dark:text-gray-300 mb-1">{timeOff}</div>
                     <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">Folgas</div>
                     {(() => {
-                      const timeOffDays = events.filter(e => e.type === 'time_off');
+                      const timeOffDays = events.filter(e => e.category === 'time_off');
                       if (timeOffDays.length > 0) {
-                        const firstDay = timeOffDays[0];
                         return (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {format(firstDay.date, 'EEEE', { locale: ptBR })}
-                            <br />
-                            {format(firstDay.date, 'dd/MM', { locale: ptBR })}
+                          <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                            {timeOffDays.map((day, idx) => (
+                              <div key={idx}>
+                                {format(day.date, 'EEEE', { locale: ptBR })}
+                                <br />
+                                {format(day.date, 'dd/MM', { locale: ptBR })}
+                              </div>
+                            ))}
                           </div>
                         );
                       }
@@ -357,14 +372,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                     <div className="text-3xl font-bold text-yellow-700 dark:text-yellow-300 mb-1">{onCall}</div>
                     <div className="text-xs font-medium text-yellow-600 dark:text-yellow-400 uppercase tracking-wide mb-2">Plantão</div>
                     {(() => {
-                      const onCallDays = events.filter(e => e.type === 'on_call');
+                      const onCallDays = events.filter(e => e.category === 'on_call');
                       if (onCallDays.length > 0) {
-                        const firstDay = onCallDays[0];
                         return (
-                          <div className="text-xs text-yellow-500 dark:text-yellow-400">
-                            {format(firstDay.date, 'EEEE', { locale: ptBR })}
-                            <br />
-                            {format(firstDay.date, 'dd/MM', { locale: ptBR })}
+                          <div className="text-xs text-yellow-500 dark:text-yellow-400 space-y-1">
+                            {onCallDays.map((day, idx) => (
+                              <div key={idx}>
+                                {format(day.date, 'EEEE', { locale: ptBR })}
+                                <br />
+                                {format(day.date, 'dd/MM', { locale: ptBR })}
+                              </div>
+                            ))}
                           </div>
                         );
                       }
@@ -386,12 +404,15 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                     {(() => {
                       const meetingDays = events.filter(e => e.category === 'reuniao');
                       if (meetingDays.length > 0) {
-                        const firstDay = meetingDays[0];
                         return (
-                          <div className="text-xs text-indigo-500 dark:text-indigo-400">
-                            {format(firstDay.date, 'EEEE', { locale: ptBR })}
-                            <br />
-                            {format(firstDay.date, 'dd/MM', { locale: ptBR })}
+                          <div className="text-xs text-indigo-500 dark:text-indigo-400 space-y-1">
+                            {meetingDays.map((day, idx) => (
+                              <div key={idx}>
+                                {format(day.date, 'EEEE', { locale: ptBR })}
+                                <br />
+                                {format(day.date, 'dd/MM', { locale: ptBR })}
+                              </div>
+                            ))}
                           </div>
                         );
                       }
@@ -413,12 +434,15 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                     {(() => {
                       const webinarDays = events.filter(e => e.category === 'webinario');
                       if (webinarDays.length > 0) {
-                        const firstDay = webinarDays[0];
                         return (
-                          <div className="text-xs text-teal-500 dark:text-teal-400">
-                            {format(firstDay.date, 'EEEE', { locale: ptBR })}
-                            <br />
-                            {format(firstDay.date, 'dd/MM', { locale: ptBR })}
+                          <div className="text-xs text-teal-500 dark:text-teal-400 space-y-1">
+                            {webinarDays.map((day, idx) => (
+                              <div key={idx}>
+                                {format(day.date, 'EEEE', { locale: ptBR })}
+                                <br />
+                                {format(day.date, 'dd/MM', { locale: ptBR })}
+                              </div>
+                            ))}
                           </div>
                         );
                       }
@@ -440,12 +464,15 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                     {(() => {
                       const holidayDays = events.filter(e => e.type === 'holiday');
                       if (holidayDays.length > 0) {
-                        const firstDay = holidayDays[0];
                         return (
-                          <div className="text-xs text-orange-500 dark:text-orange-400">
-                            {format(firstDay.date, 'EEEE', { locale: ptBR })}
-                            <br />
-                            {format(firstDay.date, 'dd/MM', { locale: ptBR })}
+                          <div className="text-xs text-orange-500 dark:text-orange-400 space-y-1">
+                            {holidayDays.map((day, idx) => (
+                              <div key={idx}>
+                                {format(day.date, 'EEEE', { locale: ptBR })}
+                                <br />
+                                {format(day.date, 'dd/MM', { locale: ptBR })}
+                              </div>
+                            ))}
                           </div>
                         );
                       }
@@ -467,12 +494,15 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                     {(() => {
                       const birthdayDays = events.filter(e => e.type === 'birthday');
                       if (birthdayDays.length > 0) {
-                        const firstDay = birthdayDays[0];
                         return (
-                          <div className="text-xs text-pink-500 dark:text-pink-400">
-                            {format(firstDay.date, 'EEEE', { locale: ptBR })}
-                            <br />
-                            {format(firstDay.date, 'dd/MM', { locale: ptBR })}
+                          <div className="text-xs text-pink-500 dark:text-pink-400 space-y-1">
+                            {birthdayDays.map((day, idx) => (
+                              <div key={idx}>
+                                {format(day.date, 'EEEE', { locale: ptBR })}
+                                <br />
+                                {format(day.date, 'dd/MM', { locale: ptBR })}
+                              </div>
+                            ))}
                           </div>
                         );
                       }
