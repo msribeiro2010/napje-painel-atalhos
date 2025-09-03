@@ -241,10 +241,21 @@ export const WeeklyNotificationsManager = () => {
   };
 
   const handleToggleNotification = async (notification: WeeklyNotification) => {
-    await updateNotification(notification.id, {
-      ...notification,
-      ativo: !notification.ativo
-    });
+    try {
+      console.log('Toggling notification:', notification.id, 'from', notification.ativo, 'to', !notification.ativo);
+      const success = await updateNotification(notification.id, {
+        ...notification,
+        ativo: !notification.ativo
+      });
+      
+      if (success) {
+        console.log('Notification toggle successful');
+      } else {
+        console.error('Notification toggle failed');
+      }
+    } catch (error) {
+      console.error('Error toggling notification:', error);
+    }
   };
 
   const handleDelete = async (id: string) => {
