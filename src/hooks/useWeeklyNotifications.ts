@@ -97,20 +97,28 @@ export const useWeeklyNotifications = () => {
     if (settings.lastNotificationDate === todayString) return false;
 
     try {
-      // Buscar notificações ativas para hoje e horário atual
+      // Buscar notificações ativas para hoje
       const { data: activeNotifications, error } = await supabase
         .from('weekly_notifications')
         .select('*')
         .eq('ativo', true)
-        .eq('dayofweek', today)
-        .lte('time', currentTime);
+        .eq('dayofweek', today);
 
       if (error) {
         console.warn('Erro ao verificar notificações agendadas:', error);
         return false;
       }
 
-      return (activeNotifications?.length || 0) > 0;
+      if (!activeNotifications || activeNotifications.length === 0) return false;
+
+      // Verificar se alguma notificação deve ser exibida agora (com tolerância de 5 minutos)
+      const currentMinutes = parseInt(currentTime.split(':')[0]) * 60 + parseInt(currentTime.split(':')[1]);
+      
+      return activeNotifications.some(notif => {
+        const notifMinutes = parseInt(notif.time.split(':')[0]) * 60 + parseInt(notif.time.split(':')[1]);
+        // Mostrar notificação se estamos no horário correto (com tolerância de 5 minutos após)
+        return currentMinutes >= notifMinutes && currentMinutes <= notifMinutes + 5;
+      });
     } catch (error) {
       console.warn('Erro na verificação de agendamento:', error);
       return false;
@@ -127,27 +135,35 @@ export const useWeeklyNotifications = () => {
       const now = new Date();
       const today = now.getDay();
       const currentTime = now.toTimeString().slice(0, 5);
+      const currentMinutes = parseInt(currentTime.split(':')[0]) * 60 + parseInt(currentTime.split(':')[1]);
       
       const { data: activeNotifications, error } = await supabase
         .from('weekly_notifications')
         .select('*')
         .eq('ativo', true)
-        .eq('dayofweek', today)
-        .lte('time', currentTime);
+        .eq('dayofweek', today);
 
       if (!error && activeNotifications && activeNotifications.length > 0) {
-        // Transformar para o formato do modal
-        const notificationItems = activeNotifications.map(notif => ({
-          id: notif.id,
-          titulo: notif.titulo,
-          categoria: 'notification'
-        }));
-        
-        setPendingNotifications(notificationItems);
-        setShowModal(true);
-        
-        const todayString = now.toISOString().split('T')[0];
-        setSettings(prev => ({ ...prev, lastNotificationDate: todayString }));
+        // Filtrar notificações que devem ser exibidas agora
+        const notificationsToShow = activeNotifications.filter(notif => {
+          const notifMinutes = parseInt(notif.time.split(':')[0]) * 60 + parseInt(notif.time.split(':')[1]);
+          return currentMinutes >= notifMinutes && currentMinutes <= notifMinutes + 5;
+        });
+
+        if (notificationsToShow.length > 0) {
+          // Transformar para o formato do modal
+          const notificationItems = notificationsToShow.map(notif => ({
+            id: notif.id,
+            titulo: notif.titulo,
+            categoria: 'notification'
+          }));
+          
+          setPendingNotifications(notificationItems);
+          setShowModal(true);
+          
+          const todayString = now.toISOString().split('T')[0];
+          setSettings(prev => ({ ...prev, lastNotificationDate: todayString }));
+        }
       }
     } catch (error) {
       console.warn('Erro ao carregar notificações para exibir:', error);
@@ -230,17 +246,17 @@ export const useWeeklyNotifications = () => {
     fetchNotificationItems();
   }, [fetchNotificationItems]);
 
-  // Configurar intervalo de verificação apenas quando habilitado (reduzido para 2 horas)
+  // Configurar intervalo de verificação apenas quando habilitado (verificação a cada 1 minuto)
   useEffect(() => {
     if (!settings.enabled) return;
     
-    // Reduzir polling de 30 minutos para 2 horas para diminuir requisições
+    // Verificar a cada 1 minuto para maior precisão nos horários
     const interval = setInterval(() => {
       showWeeklyNotifications();
-    }, 2 * 60 * 60 * 1000); // 2 horas
+    }, 60 * 1000); // 1 minuto
 
-    // Verificação inicial após 10 segundos (aumentado de 5 segundos)
-    const timeout = setTimeout(showWeeklyNotifications, 10000);
+    // Verificação inicial após 5 segundos
+    const timeout = setTimeout(showWeeklyNotifications, 5000);
 
     return () => {
       clearInterval(interval);

@@ -305,7 +305,7 @@ export const WeeklyNotificationsManager = () => {
       </div>
       
       <Dialog open={isMainDialogOpen} onOpenChange={setIsMainDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
           <DialogHeader className="space-y-3 pb-4">
             <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
               <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
@@ -319,52 +319,56 @@ export const WeeklyNotificationsManager = () => {
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Status e Controles */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Status das Notificações */}
-              <Card className="border-green-200 bg-green-50/50 dark:border-green-700 dark:bg-green-900/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                      <span className="font-semibold text-green-700 dark:text-green-300">
-                        {activeNotifications.length} ativas
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <XCircle className="h-5 w-5 text-gray-400" />
-                      <span className="text-gray-600 dark:text-gray-400">
-                        {notifications.length - activeNotifications.length} inativas
-                      </span>
-                    </div>
+            {/* Header com Status e Controles em formato placar */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Status Global */}
+              <Card className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-100 dark:border-green-700 dark:from-green-900/20 dark:to-emerald-800/20">
+                <CardContent className="p-4 text-center">
+                  <div className="text-3xl font-bold text-green-700 dark:text-green-300 mb-1 font-roboto">
+                    {activeNotifications.length}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-300">Sistema Global</span>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={settings.enabled}
-                        onCheckedChange={(checked) => updateSettings({ enabled: checked })}
-                        disabled={isLoading}
-                      />
-                      <Label className="text-sm font-medium">
-                        {settings.enabled ? 'Ativo' : 'Inativo'}
-                      </Label>
-                    </div>
+                  <div className="text-sm font-medium text-green-600 dark:text-green-400 uppercase tracking-wide mb-2">
+                    Ativas
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <Switch
+                      checked={settings.enabled}
+                      onCheckedChange={(checked) => updateSettings({ enabled: checked })}
+                      disabled={isLoading}
+                    />
+                    <span className="text-xs text-green-600 dark:text-green-400">
+                      {settings.enabled ? 'Sistema On' : 'Sistema Off'}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
-              
-              {/* Ações Rápidas */}
-              <Card className="border-purple-200 bg-purple-50/50 dark:border-purple-700 dark:bg-purple-900/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-semibold text-purple-700 dark:text-purple-300">Ações Rápidas</span>
+
+              {/* Total de Notificações */}
+              <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-100 dark:border-blue-700 dark:from-blue-900/20 dark:to-indigo-800/20">
+                <CardContent className="p-4 text-center">
+                  <div className="text-3xl font-bold text-blue-700 dark:text-blue-300 mb-1 font-roboto">
+                    {notifications.length}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="text-sm font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">
+                    Total
+                  </div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">
+                    {notifications.length - activeNotifications.length} inativas
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Ações Rápidas */}
+              <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-100 dark:border-purple-700 dark:from-purple-900/20 dark:to-pink-800/20">
+                <CardContent className="p-4">
+                  <div className="text-sm font-medium text-purple-700 dark:text-purple-300 uppercase tracking-wide mb-3 text-center">
+                    Ações
+                  </div>
+                  <div className="space-y-2">
                     <Button
                       onClick={handleCreate}
                       size="sm"
-                      className="flex-1 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white"
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white"
                     >
                       <Plus className="h-4 w-4 mr-1" />
                       Nova
@@ -377,6 +381,7 @@ export const WeeklyNotificationsManager = () => {
                       }}
                       variant="outline"
                       size="sm"
+                      className="w-full"
                       disabled={!settings.enabled || activeNotifications.length === 0}
                     >
                       <TestTube className="h-4 w-4 mr-1" />
@@ -385,19 +390,55 @@ export const WeeklyNotificationsManager = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Dias da Semana - Distribuição */}
+              <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-100 dark:border-orange-700 dark:from-orange-900/20 dark:to-amber-800/20">
+                <CardContent className="p-4">
+                  <div className="text-sm font-medium text-orange-700 dark:text-orange-300 uppercase tracking-wide mb-3 text-center">
+                    Distribuição Semanal
+                  </div>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-7 gap-1 text-xs">
+                      {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((day, index) => {
+                        const dayIndex = index === 6 ? 0 : index + 1; // Ajustar domingo para 0
+                        const count = notifications.filter(n => n.dayofweek === dayIndex && n.ativo).length;
+                        const hasNotifications = count > 0;
+                        return (
+                          <div key={day} className="text-center">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mb-1 ${
+                              hasNotifications 
+                                ? 'bg-orange-600 text-white' 
+                                : 'bg-orange-200 text-orange-600 dark:bg-orange-800 dark:text-orange-400'
+                            }`}>
+                              {count}
+                            </div>
+                            <div className={`text-xs font-medium ${
+                              hasNotifications 
+                                ? 'text-orange-800 dark:text-orange-200' 
+                                : 'text-orange-500 dark:text-orange-500'
+                            }`}>
+                              {day}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="text-center pt-2 border-t border-orange-200 dark:border-orange-700">
+                      <div className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                        {activeNotifications.length} ativas de {notifications.length} total
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Lista de Notificações */}
+            {/* Lista de Notificações em Grid */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-purple-600" />
-                  Suas Notificações
-                  <Badge variant="outline" className="ml-2">
-                    {notifications.length}
-                  </Badge>
-                </h3>
-              </div>
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-purple-600" />
+                Configurações por Dia
+              </h3>
 
               {notifications.length === 0 ? (
                 <div className="flex items-center justify-center py-12">
@@ -425,7 +466,7 @@ export const WeeklyNotificationsManager = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {(notifications || []).sort((a, b) => a.dayofweek - b.dayofweek).map((notification) => {
                     const isActive = notification.ativo;
                     const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -433,80 +474,81 @@ export const WeeklyNotificationsManager = () => {
 
                     return (
                       <Card key={notification.id} className={cn(
-                        "transition-all duration-200 hover:shadow-md border-l-4",
+                        "transition-all duration-200 hover:shadow-lg border-l-4 h-fit",
                         isActive 
                           ? "border-l-green-500 border-green-200 bg-green-50/50 dark:border-green-700 dark:bg-green-900/20" 
                           : "border-l-gray-400 border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/50"
                       )}>
                         <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h4 className="font-semibold text-base text-gray-900 dark:text-gray-100 font-roboto">
-                                  {(() => {
-                                    // Remover duplicação de dias no título (ex: "Relatório - Seg - Ter" → "Relatório - Ter")
-                                    const titulo = notification.titulo;
-                                    const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                                    const currentDay = dayLabels[notification.dayofweek] || 'N/A';
-                                    
-                                    // Padrão para capturar e usar o segundo dia (correto)
-                                    const anyDayPattern = / - (Dom|Seg|Ter|Qua|Qui|Sex|Sáb) - (Dom|Seg|Ter|Qua|Qui|Sex|Sáb)$/;
-                                    const match = titulo.match(anyDayPattern);
-                                    if (match) {
-                                      // Usar o segundo dia capturado (match[2]) que é o correto
-                                      return titulo.replace(anyDayPattern, ` - ${match[2]}`);
-                                    }
-                                    
-                                    return titulo;
-                                  })()}
-                                </h4>
-                                <Badge variant={isActive ? "default" : "secondary"} className={cn(
-                                  "text-xs",
-                                  isActive ? "bg-green-500 text-white" : "bg-gray-400 text-white"
-                                )}>
-                                  {isActive ? 'Ativa' : 'Inativa'}
-                                </Badge>
-                              </div>
-                              <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm font-roboto">
-                                {notification.mensagem}
-                              </p>
-                              <div className="flex items-center gap-4 text-sm">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-4 w-4 text-purple-500" />
-                                  <span className="font-medium text-purple-700 dark:text-purple-300 font-roboto">
-                                    {notification.time}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-4 w-4 text-blue-500" />
-                                  <span className="font-medium text-blue-700 dark:text-blue-300 font-roboto">
-                                    {dayName}
-                                  </span>
-                                </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Badge variant={isActive ? "default" : "secondary"} className={cn(
+                                "text-xs",
+                                isActive ? "bg-green-500 text-white" : "bg-gray-400 text-white"
+                              )}>
+                                {isActive ? 'Ativa' : 'Inativa'}
+                              </Badge>
+                              <div className="flex items-center gap-1">
+                                <Switch
+                                  checked={isActive}
+                                  onCheckedChange={() => handleToggleNotification(notification)}
+                                  disabled={isLoading}
+                                />
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Switch
-                                checked={isActive}
-                                onCheckedChange={() => handleToggleNotification(notification)}
-                                disabled={isLoading}
-                              />
+                            
+                            <div>
+                              <h4 className="font-semibold text-base text-gray-900 dark:text-gray-100 font-roboto mb-2">
+                                {(() => {
+                                  // Remover duplicação de dias no título (ex: "Relatório - Seg - Ter" → "Relatório - Ter")
+                                  const titulo = notification.titulo;
+                                  const anyDayPattern = / - (Dom|Seg|Ter|Qua|Qui|Sex|Sáb) - (Dom|Seg|Ter|Qua|Qui|Sex|Sáb)$/;
+                                  const match = titulo.match(anyDayPattern);
+                                  if (match) {
+                                    return titulo.replace(anyDayPattern, ` - ${match[2]}`);
+                                  }
+                                  return titulo;
+                                })()}
+                              </h4>
+                              <p className="text-gray-600 dark:text-gray-300 text-sm font-roboto mb-3">
+                                {notification.mensagem}
+                              </p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Clock className="h-4 w-4 text-purple-500" />
+                                <span className="font-medium text-purple-700 dark:text-purple-300 font-roboto">
+                                  {notification.time}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="h-4 w-4 text-blue-500" />
+                                <span className="font-medium text-blue-700 dark:text-blue-300 font-roboto">
+                                  {dayName}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 pt-2 border-t">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleEdit(notification)}
-                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400"
+                                className="flex-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400"
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-4 w-4 mr-1" />
+                                Editar
                               </Button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400"
+                                    className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Excluir
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>

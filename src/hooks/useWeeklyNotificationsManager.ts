@@ -212,9 +212,23 @@ export const useWeeklyNotificationsManager = () => {
     const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     const dayName = dayNames[notification.dayofweek] || 'N/A';
     
-    toast.success(`🎯 ${notification.titulo}`, {
+    // Limpar título removendo duplicação de dias
+    const cleanTitle = (() => {
+      const titulo = notification.titulo;
+      // Padrão para capturar e usar o segundo dia (correto)
+      const anyDayPattern = / - (Dom|Seg|Ter|Qua|Qui|Sex|Sáb) - (Dom|Seg|Ter|Qua|Qui|Sex|Sáb)$/;
+      const match = titulo.match(anyDayPattern);
+      if (match) {
+        // Usar o segundo dia capturado (match[2]) que é o correto
+        return titulo.replace(anyDayPattern, ` - ${match[2]}`);
+      }
+      return titulo;
+    })();
+    
+    toast.success(`🎯 ${cleanTitle}`, {
       description: `${notification.mensagem}\n📅 ${dayName} • 🕘 ${notification.time}`,
       duration: 6000,
+      position: 'top-left',
       style: {
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         border: '1px solid rgba(255, 255, 255, 0.2)',
