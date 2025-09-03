@@ -444,15 +444,17 @@ export const WeeklyNotificationsManager = () => {
                               <div className="flex items-center gap-3 mb-2">
                                 <h4 className="font-semibold text-base text-gray-900 dark:text-gray-100 font-roboto">
                                   {(() => {
-                                    // Remover duplicação de dias no título (ex: "Relatório - Seg - Seg" → "Relatório - Seg")
+                                    // Remover duplicação de dias no título (ex: "Relatório - Seg - Ter" → "Relatório - Ter")
                                     const titulo = notification.titulo;
                                     const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
                                     const currentDay = dayLabels[notification.dayofweek] || 'N/A';
                                     
-                                    // Verificar se o título termina com " - Dia - Dia" e corrigir
-                                    const duplicatePattern = new RegExp(` - ${currentDay} - ${currentDay}$`);
-                                    if (duplicatePattern.test(titulo)) {
-                                      return titulo.replace(duplicatePattern, ` - ${currentDay}`);
+                                    // Padrão para capturar e usar o segundo dia (correto)
+                                    const anyDayPattern = / - (Dom|Seg|Ter|Qua|Qui|Sex|Sáb) - (Dom|Seg|Ter|Qua|Qui|Sex|Sáb)$/;
+                                    const match = titulo.match(anyDayPattern);
+                                    if (match) {
+                                      // Usar o segundo dia capturado (match[2]) que é o correto
+                                      return titulo.replace(anyDayPattern, ` - ${match[2]}`);
                                     }
                                     
                                     return titulo;
