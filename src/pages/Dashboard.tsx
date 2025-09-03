@@ -37,6 +37,7 @@ import { SmartSearchDialog } from '@/components/SmartSearchDialog';
 import { SearchResult } from '@/hooks/useSmartSearch';
 import { toast } from '@/hooks/use-toast';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { DebugAdmin } from '@/components/DebugAdmin';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -755,6 +756,9 @@ const Dashboard = () => {
       <ModernLayout>
       {/* Container principal com padding responsivo */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-6 space-y-8">
+        {/* Debug Admin - REMOVER EM PRODUÇÃO */}
+        <DebugAdmin />
+
         {/* Header Modernizado */}
         <DashboardHeader 
           user={user} 

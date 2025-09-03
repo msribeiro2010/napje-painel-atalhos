@@ -37,6 +37,19 @@ const UserMenu = () => {
     }
   }, [user]);
 
+  // Debug: Log do status do perfil
+  useEffect(() => {
+    if (profile) {
+      console.log('🔍 UserMenu Debug:', {
+        userId: profile.id,
+        email: profile.email,
+        nome: profile.nome_completo,
+        isAdmin: profile.is_admin,
+        hasAdminAccess: profile.is_admin === true
+      });
+    }
+  }, [profile]);
+
   // Escutar mudanças no perfil para atualizar em tempo real
   useEffect(() => {
     if (!user) return;
@@ -93,6 +106,13 @@ const UserMenu = () => {
   if (!user || !profile) {
     return null;
   }
+
+  // Debug adicional antes do render
+  console.log('🎛️ Renderizando UserMenu:', {
+    profileExists: !!profile,
+    isAdmin: profile.is_admin,
+    adminMenuWillShow: profile.is_admin === true
+  });
 
   return (
     <DropdownMenu>
