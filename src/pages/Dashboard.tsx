@@ -497,15 +497,18 @@ const Dashboard = () => {
         return [
           {
             name: 'Assyst Query 996',
-            url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=996&queryProfileForm.columnProfileId=67'
+            url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=996&queryProfileForm.columnProfileId=67',
+            type: 'url'
           },
           {
             name: 'Gmail',
-            url: 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2F&ifkv=AcMMx-fJZqEhabl9HDEfW2R7SrGxQKLfCcVCZrbfUkrYapnrKOuYor_ptr3gP8dRypgOM6siUZ--&rip=1&sacu=1&service=mail&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-1241181511%3A1732804609017929&ddm=1'
+            url: 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2F&ifkv=AcMMx-fJZqEhabl9HDEfW2R7SrGxQKLfCcVCZrbfUkrYapnrKOuYor_ptr3gP8dRypgOM6siUZ--&rip=1&sacu=1&service=mail&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-1241181511%3A1732804609017929&ddm=1',
+            type: 'url'
           },
           {
             name: 'Assyst Query 423',
-            url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=423&queryProfileForm.columnProfileId=67'
+            url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=423&queryProfileForm.columnProfileId=67',
+            type: 'url'
           }
         ];
       }
@@ -515,59 +518,188 @@ const Dashboard = () => {
     enabled: !!user?.id
   });
 
-  // Função para abrir múltiplas abas (Acesso Rápido)
+  // Buscar configuração dos aplicativos locais
+  const { data: quickAccessApps } = useQuery({
+    queryKey: ['system-config', 'quick_access_apps'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('system_config')
+        .select('value')
+        .eq('key', 'quick_access_apps')
+        .single();
+
+      if (error) {
+        console.warn('Erro ao buscar aplicativos do Acesso Rápido:', error);
+        return [];
+      }
+      
+      // Filtrar apenas aplicativos habilitados
+      return (data?.value || []).filter((app: any) => app.enabled);
+    },
+    enabled: !!user?.id
+  });
+
+  // Função para detectar sistema operacional
+  const getOperatingSystem = () => {
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    if (userAgent.indexOf('win') !== -1) return 'windows';
+    if (userAgent.indexOf('mac') !== -1) return 'mac';
+    if (userAgent.indexOf('linux') !== -1) return 'linux';
+    return 'unknown';
+  };
+
+  // Função para tentar abrir aplicativo local
+  const tryOpenLocalApp = (app: any) => {
+    const os = getOperatingSystem();
+    const paths = app.paths[os] || [];
+    
+    console.log(`🔥 Tentando abrir ${app.name} no ${os}...`);
+    
+    // Para aplicativos locais, tentaremos diferentes abordagens
+    if (os === 'windows') {
+      // No Windows, podemos tentar usar protocolos customizados
+      if (app.executable === 'firefox') {
+        window.open('firefox:', '_blank');
+        return true;
+      } else if (app.executable === 'chrome') {
+        window.open('chrome:', '_blank');
+        return true;
+      } else if (app.executable === 'calc') {
+        window.open('calculator:', '_blank');
+        return true;
+      }
+    } else if (os === 'mac') {
+      // No Mac, podemos tentar usar protocolos de aplicativo
+      if (app.executable === 'firefox') {
+        window.location.href = 'firefox://';
+        return true;
+      }
+    }
+    
+    // Fallback: tentar abrir como URL (pode não funcionar)
+    try {
+      const appUrl = `${app.executable}://`;
+      window.open(appUrl, '_blank');
+      return true;
+    } catch (error) {
+      console.warn(`Não foi possível abrir ${app.name}:`, error);
+      return false;
+    }
+  };
+
+  // Função para abrir múltiplas abas e aplicativos (Acesso Rápido)
   const handleAcessoRapido = () => {
     const links = quickAccessConfig || [];
+    const apps = quickAccessApps || [];
+    const totalItems = links.length + apps.length;
+
+    if (totalItems === 0) {
+      toast({
+        title: "ℹ️ Nenhum item configurado",
+        description: "Configure links e aplicativos na área administrativa.",
+        duration: 3000,
+      });
+      return;
+    }
 
     try {
-      console.log('🚀 Iniciando abertura de abas...');
+      console.log('🚀 Iniciando Acesso Rápido...');
+      console.log(`📊 Total: ${totalItems} itens (${links.length} links + ${apps.length} apps)`);
       
-      // Abrir primeira aba imediatamente
-      const firstWindow = window.open(links[0].url, '_blank', 'noopener,noreferrer');
-      console.log('Primeira aba:', firstWindow ? 'Aberta' : 'Bloqueada');
-      
-      // Para as outras abas, usar uma abordagem diferente
-      // Criar links temporários e simular cliques
-      links.slice(1).forEach((link, index) => {
-        // Criar elemento link temporário
-        const tempLink = document.createElement('a');
-        tempLink.href = link.url;
-        tempLink.target = '_blank';
-        tempLink.rel = 'noopener noreferrer';
-        tempLink.style.display = 'none';
-        
-        // Adicionar ao DOM temporariamente
-        document.body.appendChild(tempLink);
-        
-        // Simular clique com pequeno delay
-        setTimeout(() => {
-          console.log(`Abrindo aba ${index + 2}: ${link.name}`);
-          tempLink.click();
-          document.body.removeChild(tempLink);
-        }, (index + 1) * 50); // 50ms, 100ms entre cada aba
-      });
+      let successCount = 0;
+      let failCount = 0;
+      const results: string[] = [];
 
-      // Toast de feedback
+      // Abrir links web primeiro
+      if (links.length > 0) {
+        // Abrir primeiro link imediatamente
+        const firstWindow = window.open(links[0].url, '_blank', 'noopener,noreferrer');
+        if (firstWindow && !firstWindow.closed) {
+          successCount++;
+          results.push(`✅ ${links[0].name}`);
+          console.log('Primeiro link aberto:', links[0].name);
+        } else {
+          failCount++;
+          results.push(`❌ ${links[0].name}`);
+        }
+        
+        // Abrir outros links com delay
+        links.slice(1).forEach((link, index) => {
+          setTimeout(() => {
+            const tempLink = document.createElement('a');
+            tempLink.href = link.url;
+            tempLink.target = '_blank';
+            tempLink.rel = 'noopener noreferrer';
+            tempLink.style.display = 'none';
+            
+            document.body.appendChild(tempLink);
+            
+            try {
+              tempLink.click();
+              console.log(`Link aberto: ${link.name}`);
+              results.push(`✅ ${link.name}`);
+            } catch (error) {
+              console.warn(`Erro ao abrir link: ${link.name}`, error);
+              results.push(`❌ ${link.name}`);
+            } finally {
+              document.body.removeChild(tempLink);
+            }
+          }, (index + 1) * 100); // 100ms entre cada link
+        });
+      }
+
+      // Tentar abrir aplicativos locais
+      if (apps.length > 0) {
+        apps.forEach((app, index) => {
+          setTimeout(() => {
+            try {
+              const opened = tryOpenLocalApp(app);
+              if (opened) {
+                console.log(`Aplicativo aberto: ${app.name}`);
+                results.push(`🦊 ${app.name}`);
+              } else {
+                console.warn(`Falha ao abrir: ${app.name}`);
+                results.push(`❌ ${app.name} (não disponível)`);
+              }
+            } catch (error) {
+              console.error(`Erro ao abrir aplicativo ${app.name}:`, error);
+              results.push(`❌ ${app.name} (erro)`);
+            }
+          }, links.length * 100 + index * 200); // Delay após os links
+        });
+      }
+
+      // Toast de feedback imediato
       toast({
         title: "🚀 Acesso Rápido Ativado",
-        description: `Abrindo ${links.length} sistemas: ${links.map(l => l.name).join(', ')}`,
+        description: `Abrindo ${totalItems} itens: ${links.length} links + ${apps.length} aplicativos`,
         duration: 4000,
       });
 
-      // Toast adicional com orientação se necessário
+      // Toast com resultados após algum tempo
+      setTimeout(() => {
+        const linkResults = results.filter(r => r.includes('✅')).length;
+        toast({
+          title: "📊 Resultado do Acesso Rápido",
+          description: `${linkResults}/${totalItems} itens abertos com sucesso`,
+          duration: 6000,
+        });
+      }, Math.max(2000, totalItems * 150));
+
+      // Toast com dicas se necessário
       setTimeout(() => {
         toast({
-          title: "💡 Dica",
-          description: "Se algumas abas não abriram, permita pop-ups para este site nas configurações do navegador.",
-          duration: 5000,
+          title: "💡 Dicas",
+          description: "Se alguns itens não abriram: 1) Permita pop-ups no navegador 2) Certifique-se que os aplicativos estão instalados",
+          duration: 7000,
         });
-      }, 2000);
+      }, 3000);
 
     } catch (error) {
-      console.error('Erro ao abrir abas:', error);
+      console.error('Erro geral no Acesso Rápido:', error);
       toast({
-        title: "❌ Erro",
-        description: "Não foi possível abrir as abas. Verifique se pop-ups estão habilitados.",
+        title: "❌ Erro no Acesso Rápido",
+        description: "Ocorreu um erro. Verifique o console para detalhes.",
         duration: 5000,
       });
     }
