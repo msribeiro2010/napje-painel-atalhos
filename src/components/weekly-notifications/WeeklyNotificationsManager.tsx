@@ -306,99 +306,97 @@ export const WeeklyNotificationsManager = () => {
       
       <Dialog open={isMainDialogOpen} onOpenChange={setIsMainDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="space-y-4 pb-6 border-b border-gray-200 dark:border-gray-700">
+          <DialogHeader className="space-y-3 pb-4">
             <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
               <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
                 <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
-              Gerenciar Notificações Semanais
+              Notificações Semanais
             </DialogTitle>
             <DialogDescription className="text-base text-gray-600 dark:text-gray-300">
-              Configure suas notificações semanais para receber lembretes importantes.
+              Configure lembretes automáticos para dias específicos da semana.
             </DialogDescription>
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-gray-600 dark:text-gray-300">
-                  {activeNotifications.length} ativa{activeNotifications.length !== 1 ? 's' : ''}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <XCircle className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-600 dark:text-gray-300">
-                  {notifications.length - activeNotifications.length} inativa{notifications.length - activeNotifications.length !== 1 ? 's' : ''}
-                </span>
-              </div>
-            </div>
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Configurações Globais */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-                  <Settings className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Configurações Globais</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                    Ativar ou desativar todas as notificações semanais
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Switch
-                  checked={settings.enabled}
-                  onCheckedChange={(checked) => updateSettings({ enabled: checked })}
-                  disabled={isLoading}
-                />
-                <Label className="text-sm font-medium">
-                  {settings.enabled ? 'Ativado' : 'Desativado'}
-                </Label>
-              </div>
+            {/* Status e Controles */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Status das Notificações */}
+              <Card className="border-green-200 bg-green-50/50 dark:border-green-700 dark:bg-green-900/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <span className="font-semibold text-green-700 dark:text-green-300">
+                        {activeNotifications.length} ativas
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-5 w-5 text-gray-400" />
+                      <span className="text-gray-600 dark:text-gray-400">
+                        {notifications.length - activeNotifications.length} inativas
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Sistema Global</span>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={settings.enabled}
+                        onCheckedChange={(checked) => updateSettings({ enabled: checked })}
+                        disabled={isLoading}
+                      />
+                      <Label className="text-sm font-medium">
+                        {settings.enabled ? 'Ativo' : 'Inativo'}
+                      </Label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Ações Rápidas */}
+              <Card className="border-purple-200 bg-purple-50/50 dark:border-purple-700 dark:bg-purple-900/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-semibold text-purple-700 dark:text-purple-300">Ações Rápidas</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleCreate}
+                      size="sm"
+                      className="flex-1 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Nova
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (activeNotifications.length > 0) {
+                          testNotification(activeNotifications[0]);
+                        }
+                      }}
+                      variant="outline"
+                      size="sm"
+                      disabled={!settings.enabled || activeNotifications.length === 0}
+                    >
+                      <TestTube className="h-4 w-4 mr-1" />
+                      Testar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {settings.enabled && (
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-green-700 dark:text-green-300">
-                    Sistema de notificações ativo
-                  </p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                    As notificações serão enviadas conforme configurado
-                  </p>
-                </div>
-              </div>
-            )}
-
             {/* Lista de Notificações */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg shadow-lg">
-                    <Calendar className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Suas Notificações</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {notifications.length > 0 
-                        ? `${notifications.length} notificação${notifications.length > 1 ? 'ões' : ''} configurada${notifications.length > 1 ? 's' : ''}`
-                        : 'Nenhuma notificação configurada'
-                      }
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={handleCreate}
-                  className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                  disabled={isLoading}
-                >
-                  <Plus className="h-4 w-4" />
-                  Nova Notificação
-                </Button>
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-purple-600" />
+                  Suas Notificações
+                  <Badge variant="outline" className="ml-2">
+                    {notifications.length}
+                  </Badge>
+                </h3>
               </div>
 
               {notifications.length === 0 ? (
@@ -427,80 +425,52 @@ export const WeeklyNotificationsManager = () => {
                   </div>
                 </div>
               ) : (
-                <div className="grid gap-4">
+                <div className="space-y-3">
                   {(notifications || []).map((notification) => {
                     const isActive = notification.ativo;
-                    const dayNames = {
-                      'segunda': 'Seg',
-                      'terca': 'Ter', 
-                      'quarta': 'Qua',
-                      'quinta': 'Qui',
-                      'sexta': 'Sex',
-                      'sabado': 'Sáb',
-                      'domingo': 'Dom'
-                    };
+                    const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                    const dayName = dayLabels[notification.dayofweek] || 'N/A';
 
                     return (
                       <Card key={notification.id} className={cn(
-                        "transition-all duration-200 hover:shadow-md",
-                        isActive ? "border-green-200 bg-green-50/50 dark:border-green-700 dark:bg-green-900/20" : "border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/50"
+                        "transition-all duration-200 hover:shadow-md border-l-4",
+                        isActive 
+                          ? "border-l-green-500 border-green-200 bg-green-50/50 dark:border-green-700 dark:bg-green-900/20" 
+                          : "border-l-gray-400 border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/50"
                       )}>
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-4 flex-1">
-                              <div className={cn(
-                                "p-2 rounded-lg",
-                                isActive ? "bg-green-100 dark:bg-green-900" : "bg-gray-100 dark:bg-gray-700"
-                              )}>
-                                <Bell className={cn(
-                                  "h-5 w-5",
-                                  isActive ? "text-green-600 dark:text-green-400" : "text-gray-400"
-                                )} />
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className=\"flex items-center gap-3 mb-2\">
+                                <h4 className="font-semibold text-base text-gray-900 dark:text-gray-100 font-roboto">
+                                  {notification.titulo}
+                                </h4>
+                                <Badge variant={isActive ? "default" : "secondary"} className={cn(
+                                  "text-xs",
+                                  isActive ? "bg-green-500 text-white" : "bg-gray-400 text-white"
+                                )}>
+                                  {isActive ? 'Ativa' : 'Inativa'}
+                                </Badge>
                               </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <h4 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
-                                    {notification.titulo}
-                                  </h4>
-                                  <Badge variant={isActive ? "default" : "secondary"} className={cn(
-                                    isActive ? "bg-green-500 hover:bg-green-600 text-white" : "bg-gray-400 text-white"
-                                  )}>
-                                    {isActive ? 'Ativa' : 'Inativa'}
-                                  </Badge>
-                                </div>
-                                <p className="text-gray-600 dark:text-gray-300 mb-3 leading-relaxed">
-                                  {notification.mensagem}
-                                </p>
-                                <div className="flex items-center gap-2 text-sm">
+                              <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm font-roboto">
+                                {notification.mensagem}
+                              </p>
+                              <div className="flex items-center gap-4 text-sm">
+                                <div className="flex items-center gap-1">
                                   <Clock className="h-4 w-4 text-purple-500" />
-                                  <span className="font-medium text-purple-700 dark:text-purple-300">
+                                  <span className="font-medium text-purple-700 dark:text-purple-300 font-roboto">
                                     {notification.time}
                                   </span>
-                                  <span className="text-gray-400 mx-2">•</span>
+                                </div>
+                                <div className="flex items-center gap-1">
                                   <Calendar className="h-4 w-4 text-blue-500" />
-                                  <span className="font-medium text-blue-700 dark:text-blue-300">
-                                    {(() => {
-                                      // Verificar se tem dados de múltiplos dias
-                                      if (notification.isWeekdayRange || false) {
-                                        return 'Segunda a Sexta-feira';
-                                      }
-                                      
-                                      // Usar selectedDays se existir, senão usar dayofweek
-                                      const days = notification.selectedDays?.length 
-                                        ? notification.selectedDays 
-                                        : [notification.dayofweek];
-                                      
-                                      const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                                      return days
-                                        .sort((a, b) => a - b)
-                                        .map(day => dayLabels[day] || 'N/A')
-                                        .join(', ');
-                                    })()}
+                                  <span className="font-medium text-blue-700 dark:text-blue-300 font-roboto">
+                                    {dayName}
                                   </span>
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2 ml-4">
+                            <div className="flex items-center gap-2">
                               <Switch
                                 checked={isActive}
                                 onCheckedChange={() => handleToggleNotification(notification)}
@@ -510,7 +480,7 @@ export const WeeklyNotificationsManager = () => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleEdit(notification)}
-                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -519,7 +489,7 @@ export const WeeklyNotificationsManager = () => {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -528,7 +498,7 @@ export const WeeklyNotificationsManager = () => {
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Tem certeza que deseja excluir a notificação "{notification.titulo}"? Esta ação não pode ser desfeita.
+                                      Tem certeza que deseja excluir a notificação "{notification.titulo}"?
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
@@ -552,46 +522,6 @@ export const WeeklyNotificationsManager = () => {
               )}
             </div>
 
-            {/* Seção de Teste */}
-            <div className="flex justify-between items-center pt-4 border-t">
-              <div className="text-sm text-muted-foreground">
-                {settings.enabled ? (
-                  <span>
-                    {activeNotifications.length > 0 
-                      ? `${activeNotifications.length} notificação${activeNotifications.length > 1 ? 'ões' : ''} ativa${activeNotifications.length > 1 ? 's' : ''}`
-                      : 'Nenhuma notificação ativa'
-                    }
-                  </span>
-                ) : (
-                  <span>Notificações desabilitadas</span>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <Button 
-                  onClick={() => {
-                    if (activeNotifications.length > 0) {
-                      testNotification(activeNotifications[0]);
-                    }
-                  }}
-                  variant="outline"
-                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border-emerald-200 hover:border-emerald-300 text-emerald-700 hover:text-emerald-800 shadow-sm hover:shadow-md transition-all duration-200"
-                  disabled={!settings.enabled || activeNotifications.length === 0}
-                >
-                  <TestTube className="h-4 w-4" />
-                  Testar Notificação
-                </Button>
-                
-                {settings.enabled && activeNotifications.length > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                    <Sparkles className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-700">
-                      Próxima verificação em {Math.ceil((2 * 60 * 60 * 1000) / (60 * 1000))} min
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
