@@ -164,40 +164,30 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
   } = summary || {};
 
   return (
-    <Dialog open={isOpen}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-2xl font-bold text-gray-900">
-                  Planejamento Semanal
-                </DialogTitle>
-                <DialogDescription className="text-lg text-gray-600">
-                  Semana {weekNumber} • {formatDateRange(weekStart, weekEnd)}
-                </DialogDescription>
-              </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-blue-900 border-0 shadow-2xl">
+        <DialogHeader className="space-y-4 pb-6">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+              <Calendar className="h-7 w-7 text-white" />
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex-1">
+              <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-blue-700 dark:from-slate-100 dark:to-blue-300 bg-clip-text text-transparent font-roboto">
+                Planejamento Semanal
+              </DialogTitle>
+              <DialogDescription className="text-xl text-slate-600 dark:text-slate-300 font-medium font-roboto mt-1">
+                Semana {weekNumber} • {formatDateRange(weekStart, weekEnd)}
+              </DialogDescription>
+            </div>
           </div>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Resumo da Semana - Design Moderno */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg">
-                <Users className="h-5 w-5 text-white" />
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-3 font-roboto">
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg">
+                <Users className="h-6 w-6 text-white" />
               </div>
               Resumo da Semana
             </h2>

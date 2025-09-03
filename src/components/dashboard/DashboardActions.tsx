@@ -12,7 +12,8 @@ interface DashboardActionsProps {
 export const DashboardActions = ({ actions, favorites, onToggleFavorite }: DashboardActionsProps) => {
   return (
     <ModernCard className="h-full backdrop-blur-sm bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-orange-900/20 border border-amber-200/50 dark:border-amber-700/30 shadow-xl" style={{ fontFamily: 'Roboto, sans-serif' }}>
-      <ModernCardHeader title="Ações Rápidas">
+      <ModernCardHeader title="Ações Rápidas" />
+      <div className="px-6 pb-2">
         <div className="text-center">
           <h3 className="text-xl font-bold bg-gradient-to-r from-amber-800 to-orange-700 bg-clip-text text-transparent" style={{ fontFamily: 'Roboto, sans-serif' }}>
             Ações Rápidas
@@ -21,7 +22,7 @@ export const DashboardActions = ({ actions, favorites, onToggleFavorite }: Dashb
             Acesse rapidamente as funcionalidades mais utilizadas
           </p>
         </div>
-      </ModernCardHeader>
+      </div>
       <ModernCardContent>
         <ModernGrid className="gap-6">
           {actions.map((action, index) => (
