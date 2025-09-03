@@ -611,43 +611,58 @@ const Atalhos = () => {
     }));
   }, [dbGroups, dbShortcuts]);
 
-  // Função para abrir URLs selecionadas - versão otimizada
+  // Função para abrir URLs selecionadas - versão corrigida
   const openSelectedUrls = async () => {
     console.log('=== INICIANDO ABERTURA DE URLs SELECIONADAS ===');
     console.log('Botões selecionados (IDs):', selectedButtons);
-    console.log('Total de botões a abrir:', selectedButtons.length);
+    console.log('Total de IDs únicos a abrir:', selectedButtons.length);
     
     setOpeningUrls(true);
     setOpeningProgress({ current: 0, total: 0 });
     
-    // Buscar todos os botões selecionados (grupos + favoritos)
-    const allButtons: GroupButton[] = [];
-    const addedIds = new Set<string>(); // Para evitar duplicatas
+    // Criar um mapa único de botões baseado nos IDs selecionados
+    const buttonMap = new Map<string, GroupButton>();
     
-    // Buscar nos grupos normais
-    groups.forEach(group => {
+    // Primeiro, mapear todos os botões disponíveis por ID
+    console.log('📋 Mapeando botões dos grupos...');
+    groups.forEach((group, groupIndex) => {
+      console.log(`  Grupo ${groupIndex}: ${group.title} com ${group.buttons.length} botões`);
       group.buttons.forEach(button => {
-        if (selectedButtons.includes(button.id) && !addedIds.has(button.id)) {
-          allButtons.push(button);
-          addedIds.add(button.id);
-        }
+        buttonMap.set(button.id, button);
       });
     });
     
-    // Buscar nos favoritos
-    favoriteButtons.forEach(button => {
-      if (selectedButtons.includes(button.id) && !addedIds.has(button.id)) {
+    console.log(`📋 Total de botões mapeados: ${buttonMap.size}`);
+    console.log('📋 IDs de botões mapeados:', Array.from(buttonMap.keys()));
+    
+    // Agora, filtrar apenas os botões que foram selecionados
+    const allButtons: GroupButton[] = [];
+    console.log('🎯 Filtrando botões selecionados...');
+    
+    selectedButtons.forEach((selectedId, index) => {
+      console.log(`  Buscando botão ${index + 1}: ${selectedId}`);
+      const button = buttonMap.get(selectedId);
+      if (button) {
         allButtons.push(button);
-        addedIds.add(button.id);
+        console.log(`    ✅ Encontrado: ${button.title} - ${button.url}`);
+      } else {
+        console.log(`    ❌ Botão não encontrado: ${selectedId}`);
       }
     });
     
-    console.log('Dados dos botões selecionados:', allButtons.map(b => ({ id: b.id, title: b.title, url: b.url })));
-     
+    console.log('🔍 VERIFICAÇÃO FINAL:');
+    console.log(`  IDs selecionados: ${selectedButtons.length}`);
+    console.log(`  Botões encontrados: ${allButtons.length}`);
+    console.log(`  Botões que serão abertos:`, allButtons.map(b => ({ id: b.id, title: b.title, url: b.url })));
+    
     if (allButtons.length === 0) {
-      console.log('❌ Nenhum botão selecionado');
+      console.log('❌ Nenhum botão válido selecionado');
       setOpeningUrls(false);
       return;
+    }
+    
+    if (allButtons.length !== selectedButtons.length) {
+      console.warn(`⚠️ AVISO: Quantidade divergente - Selecionados: ${selectedButtons.length}, Encontrados: ${allButtons.length}`);
     }
      
     setOpeningProgress({ current: 0, total: allButtons.length });
