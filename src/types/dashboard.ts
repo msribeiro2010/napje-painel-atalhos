@@ -24,6 +24,7 @@ export type ChamadoComPerfil = {
 };
 
 export type DashboardAction = {
+  id?: string;
   title: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;

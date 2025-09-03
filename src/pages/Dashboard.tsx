@@ -41,12 +41,17 @@ import { toast } from '@/hooks/use-toast';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Componente para zona de drop das ações favoritas
+// Função auxiliar para gerar ID consistente
+const getActionId = (action: DashboardAction) => {
+  return action.id || `action-${action.title.toLowerCase().replace(/\s+/g, '-')}`;
+};
+
 const ActionFavoritesDropZone = ({ favorites, actions }: { favorites: string[], actions: DashboardAction[] }) => {
   const { isOver, setNodeRef } = useDroppable({
     id: 'favorites-dropzone'
   });
 
-  const favoriteActions = actions.filter(action => favorites.includes(action.id));
+  const favoriteActions = actions.filter(action => favorites.includes(getActionId(action)));
 
   return (
     <ModernCard variant="glass" className={`transition-all duration-200 ${
@@ -70,12 +75,12 @@ const ActionFavoritesDropZone = ({ favorites, actions }: { favorites: string[], 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {favoriteActions.map((action) => (
                 <div
-                  key={action.id}
+                  key={getActionId(action)}
                   className="flex flex-col items-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors cursor-pointer"
                   onClick={action.onClick}
                 >
                   <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg mb-2">
-                    {action.icon}
+                    <action.icon className="h-4 w-4 text-white" />
                   </div>
                   <span className="text-xs font-medium text-center text-gray-700 dark:text-gray-300">
                     {action.title}

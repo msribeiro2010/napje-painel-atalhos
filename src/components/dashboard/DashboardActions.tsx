@@ -10,9 +10,14 @@ interface DashboardActionsProps {
   onToggleFavorite?: (actionId: string) => void;
 }
 
+// Função auxiliar para gerar ID consistente
+const getActionId = (action: DashboardAction) => {
+  return action.id || `action-${action.title.toLowerCase().replace(/\s+/g, '-')}`;
+};
+
 // Componente para botão draggable
 const DraggableActionButton = ({ action, index }: { action: DashboardAction; index: number }) => {
-  const actionId = `action-${action.title.toLowerCase().replace(/\s+/g, '-')}`;
+  const actionId = getActionId(action);
   
   const {
     attributes,
