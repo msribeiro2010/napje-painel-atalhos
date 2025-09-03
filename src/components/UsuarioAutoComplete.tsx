@@ -46,6 +46,13 @@ export const UsuarioAutoComplete = ({ formData, onInputChange, onMultipleInputCh
 
   useEffect(() => {
     const buscarUsuariosDebounced = async () => {
+      // Não mostrar sugestões se os dados já foram encontrados
+      if (dadosEncontrados) {
+        setUsuarios([]);
+        setShowSuggestions(false);
+        return;
+      }
+      
       if (formData.cpfUsuario.length >= 3 || formData.nomeUsuario.length >= 3) {
         const termo = formData.cpfUsuario || formData.nomeUsuario;
         const resultados = await buscarUsuarios(termo);
@@ -58,7 +65,7 @@ export const UsuarioAutoComplete = ({ formData, onInputChange, onMultipleInputCh
         });
         
         setUsuarios(usuariosComCPFValido);
-        setShowSuggestions(usuariosComCPFValido.length > 0);
+        setShowSuggestions(usuariosComCPFValido.length > 0 && !dadosEncontrados);
       } else {
         setUsuarios([]);
         setShowSuggestions(false);
@@ -67,7 +74,7 @@ export const UsuarioAutoComplete = ({ formData, onInputChange, onMultipleInputCh
 
     const timeout = setTimeout(buscarUsuariosDebounced, 300);
     return () => clearTimeout(timeout);
-  }, [formData.cpfUsuario, formData.nomeUsuario, buscarUsuarios]);
+  }, [formData.cpfUsuario, formData.nomeUsuario, buscarUsuarios, dadosEncontrados]);
 
 
 
@@ -116,7 +123,7 @@ export const UsuarioAutoComplete = ({ formData, onInputChange, onMultipleInputCh
     const cpfLimpo = limparCPF(usuario.cpf);
     const cpfFormatado = formatarCPF(cpfLimpo);
     
-    // Ocultar sugestões imediatamente
+    // Ocultar sugestões imediatamente e limpar lista
     setShowSuggestions(false);
     setUsuarios([]);
     setDadosEncontrados(true);
@@ -135,6 +142,12 @@ export const UsuarioAutoComplete = ({ formData, onInputChange, onMultipleInputCh
       onInputChange('nomeUsuario', usuario.nome_completo);
       onInputChange('perfilUsuario', usuario.perfil || '');
     }
+    
+    // Garantir que as sugestões permaneçam ocultas após um pequeno delay
+    setTimeout(() => {
+      setShowSuggestions(false);
+      setUsuarios([]);
+    }, 100);
   };
 
   return (
