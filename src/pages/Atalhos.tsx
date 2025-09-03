@@ -386,12 +386,20 @@ const SortableItem = ({
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 99 : undefined,
+    opacity: isDragging ? 0.8 : 1,
   };
 
 
 
   return (
     <div ref={setNodeRef} style={mergedStyle} className={(className || '') + ' group relative'} {...attributes} {...listeners}>
+      {isDragging && (
+        <div className="absolute inset-0 rounded-2xl border-4 border-dashed border-blue-400 dark:border-[#bfae7c] bg-blue-50/20 dark:bg-[#bfae7c]/5 z-20 pointer-events-none flex items-center justify-center">
+          <div className="bg-blue-500/20 dark:bg-[#bfae7c]/20 rounded-lg px-3 py-1">
+            <span className="text-xs text-blue-600 dark:text-[#bfae7c] font-medium">Arrastando...</span>
+          </div>
+        </div>
+      )}
       <Button
         variant="outline"
         className={`w-full h-28 p-5 flex flex-col items-center justify-center gap-3
@@ -403,11 +411,13 @@ const SortableItem = ({
                    dark:hover:border-[#bfae7c]/30
                    shadow-lg hover:shadow-2xl
                    transition-all duration-500 ease-out
-                   hover:scale-[1.03] hover:-translate-y-1
+                   ${isDragging ? '' : 'hover:scale-[1.03] hover:-translate-y-1'}
                    rounded-2xl relative overflow-hidden
-                   text-center cursor-pointer ${
+                   text-center ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'} ${
                      isSelected 
                        ? 'border-green-400 dark:border-[#bfae7c] bg-green-50 dark:bg-[#bfae7c]/10' 
+                       : isDragging 
+                       ? 'border-blue-400 dark:border-[#bfae7c] shadow-2xl'
                        : 'border-yellow-300/40 dark:border-[#3a3320]'
                    }`}
         onClick={(e) => {
@@ -423,8 +433,12 @@ const SortableItem = ({
                         dark:from-[#bfae7c] dark:via-[#7c6a3c] dark:to-[#5a4a2a]
                         group-hover:from-yellow-500 group-hover:to-orange-600
                         dark:group-hover:from-[#f8f5e4] dark:group-hover:to-[#bfae7c]
-                        shadow-lg group-hover:shadow-xl transition-all duration-300">
+                        shadow-lg group-hover:shadow-xl transition-all duration-300 relative">
           <button.icon className="h-6 w-6 text-white dark:text-[#23201a] group-hover:text-yellow-200 dark:group-hover:text-[#23201a]" />
+          {/* Handle para drag - só aparece no hover */}
+          <div className="absolute -top-1 -right-1 bg-white dark:bg-[#23201a] rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-md">
+            <GripVertical className="h-3 w-3 text-gray-500 dark:text-[#bfae7c]" />
+          </div>
         </div>
         <span className="text-sm font-medium text-gray-800 dark:text-[#f8f5e4] 
                        group-hover:text-amber-900 dark:group-hover:text-[#bfae7c] 
@@ -480,9 +494,23 @@ const SortableItem = ({
   );
 };
 
-// Adicionar área de drop para favoritos
+// Adicionar área de drop para favoritos com melhorias visuais
 const FavoriteDropZone = ({ children, isOver }: { children: React.ReactNode, isOver: boolean }) => (
-  <div className={`transition-all duration-300 rounded-2xl ${isOver ? 'ring-4 ring-pink-300 dark:ring-[#bfae7c] bg-pink-50/60 dark:bg-[#bfae7c]/10' : ''}`}>
+  <div className={`transition-all duration-300 rounded-2xl relative ${
+    isOver 
+      ? 'ring-4 ring-pink-300 dark:ring-[#bfae7c] bg-pink-50/60 dark:bg-[#bfae7c]/10 scale-[1.02] shadow-2xl' 
+      : ''
+  }`}>
+    {isOver && (
+      <div className="absolute inset-0 pointer-events-none z-10 rounded-2xl border-2 border-dashed border-pink-400 dark:border-[#bfae7c] bg-gradient-to-br from-pink-100/80 to-yellow-100/80 dark:from-[#bfae7c]/20 dark:to-[#7c6a3c]/20 flex items-center justify-center">
+        <div className="bg-white/90 dark:bg-[#23201a]/90 rounded-xl px-4 py-2 shadow-lg border border-pink-200 dark:border-[#bfae7c]/30">
+          <div className="flex items-center gap-2 text-pink-600 dark:text-[#bfae7c] font-medium">
+            <Star className="h-5 w-5 fill-current" />
+            <span className="text-sm">Solte aqui para adicionar aos favoritos</span>
+          </div>
+        </div>
+      </div>
+    )}
     {children}
   </div>
 );
@@ -1008,8 +1036,20 @@ const Atalhos = () => {
     if (over && over.id === 'favorites-dropzone') {
       const activeId = active.id.toString();
       if (!favorites.includes(activeId)) {
+        // Encontrar o nome do botão para o toast
+        let buttonName = 'Botão';
+        groups.forEach(group => {
+          const button = group.buttons.find(b => b.id === activeId);
+          if (button) {
+            buttonName = button.title;
+          }
+        });
+        
         setFavorites([...favorites, activeId]);
         updateFavoriteButtonsOrder([...favorites, activeId]);
+        
+        // Toast de feedback
+        console.log(`✨ "${buttonName}" adicionado aos favoritos!`);
       }
       setIsOverFavorites(false);
       return;
@@ -1343,7 +1383,9 @@ const Atalhos = () => {
                         <div>
                           <span className="text-xl font-bold">Favoritos</span>
                           <p className="text-sm text-muted-foreground dark:text-[#bfae7c] font-normal">
-                            {favoriteButtons.length > 0 ? 'Seus atalhos preferidos' : 'Nenhum favorito selecionado'}
+                            {favoriteButtons.length > 0 
+                              ? `${favoriteButtons.length} atalhos preferidos • Arraste para reordenar` 
+                              : 'Arraste atalhos aqui para adicionar aos favoritos'}
                           </p>
                         </div>
                       </div>
