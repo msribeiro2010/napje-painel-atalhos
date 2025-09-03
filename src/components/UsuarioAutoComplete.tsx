@@ -116,9 +116,11 @@ export const UsuarioAutoComplete = ({ formData, onInputChange, onMultipleInputCh
     const cpfLimpo = limparCPF(usuario.cpf);
     const cpfFormatado = formatarCPF(cpfLimpo);
     
-    // Ocultar sugestões primeiro
+    // Ocultar sugestões imediatamente
     setShowSuggestions(false);
     setUsuarios([]);
+    setDadosEncontrados(true);
+    setErro('');
     
     // Se temos a função de múltiplas atualizações, usar ela
     if (onMultipleInputChange) {
@@ -128,13 +130,11 @@ export const UsuarioAutoComplete = ({ formData, onInputChange, onMultipleInputCh
         perfilUsuario: usuario.perfil || ''
       });
     } else {
-      // Fallback para chamadas individuais com delays
-      setTimeout(() => onInputChange('cpfUsuario', cpfFormatado), 10);
-      setTimeout(() => onInputChange('nomeUsuario', usuario.nome_completo), 20);
-      setTimeout(() => onInputChange('perfilUsuario', usuario.perfil || ''), 30);
+      // Fallback para chamadas individuais
+      onInputChange('cpfUsuario', cpfFormatado);
+      onInputChange('nomeUsuario', usuario.nome_completo);
+      onInputChange('perfilUsuario', usuario.perfil || '');
     }
-    
-    setTimeout(() => setDadosEncontrados(true), 50);
   };
 
   return (

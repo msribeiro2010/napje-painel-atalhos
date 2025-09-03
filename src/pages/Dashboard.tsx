@@ -28,6 +28,7 @@ import { ChatAssistant } from '@/components/ChatAssistant';
 // import { useEventReminders } from '@/hooks/useEventReminders';
 import { useChatAssistant } from '@/hooks/useChatAssistant';
 import { usePostItNotes } from '@/hooks/usePostItNotes';
+import { useWeeklyNotifications } from '@/hooks/useWeeklyNotifications';
 
 
 import { ptBR } from 'date-fns/locale';
@@ -48,6 +49,9 @@ const Dashboard = () => {
   // const { modalOpen, setModalOpen } = useEventNotifications();
   // useEventReminders(); // Hook de lembretes
   const { notes: postItNotes, loading: notesLoading, stats: notesStats, latestNote } = usePostItNotes();
+  
+  // Hook para notificações semanais automáticas
+  const { showModal, pendingNotifications, handleModalClose } = useWeeklyNotifications();
   
   // Alertas automáticos removidos - mantendo apenas eventos da semana via botão
 
@@ -935,6 +939,27 @@ const Dashboard = () => {
       {/* Upcoming Events Modal - REMOVIDO */}
       
       {/* Weekly Planning Modal - REMOVIDO - Mantendo apenas eventos via botão */}
+      
+      {/* Modal de Notificações Semanais */}
+      {showModal && (
+        <Dialog open={showModal} onOpenChange={handleModalClose}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>📅 Notificações Semanais</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {pendingNotifications.map((notification) => (
+                <div key={notification.id} className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-medium text-blue-900">{notification.titulo}</h4>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={handleModalClose}>Entendi</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       </ModernLayout>
     </ErrorBoundary>
   );

@@ -797,36 +797,7 @@ const CriarChamado = () => {
             {!isGenerated && (
               <ModernCard variant="glass">
                 <ModernCardContent className="p-6">
-                  <ModernGrid>
-                    <ModernGridItem span={12}>
-                      <div className="flex justify-end gap-4">
-                        <ModernButton
-                          variant="outline"
-                          onClick={() => navigate('/dashboard')}
-                          disabled={chamadosLoading}
-                          className="px-6 py-2"
-                        >
-                          Cancelar
-                        </ModernButton>
-                        <ModernButton
-                          variant="gradient"
-                          onClick={handleGenerateDescription}
-                          disabled={chamadosLoading || !isFormValid(formData)}
-                          icon={chamadosLoading ? 
-                            <RefreshCw className="h-4 w-4 animate-spin" /> : 
-                            <Sparkles className="h-4 w-4" />
-                          }
-                          className="px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-200"
-                          loading={chamadosLoading}
-                        >
-                          {chamadosLoading ? 
-                            'Gerando...' : 
-                            'Gerar Descrição'
-                          }
-                        </ModernButton>
-                      </div>
-                    </ModernGridItem>
-                  </ModernGrid>
+
                 </ModernCardContent>
               </ModernCard>
             )}

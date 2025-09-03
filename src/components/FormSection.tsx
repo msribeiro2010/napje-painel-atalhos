@@ -275,7 +275,7 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
                 value={formData.notas}
                 onChange={(e) => onInputChange('notas', e.target.value)}
                 placeholder="Descreva detalhadamente o problema relatado pelo usuário..."
-                className={`min-h-[120px] resize-none pr-20 ${validationErrors.notas ? 'border-red-500' : ''}`}
+                className={`min-h-[200px] resize-none pr-20 ${validationErrors.notas ? 'border-red-500' : ''}`}
               />
               {formData.notas && onOptimizeText && (
                 <Button
