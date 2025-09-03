@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, Plus, StickyNote, Scale, Calendar, Zap, Building2, Home } from 'lucide-react';
+import { BookOpen, Plus, StickyNote, Scale, Calendar, Zap, Building2, Home, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -481,7 +481,28 @@ const Dashboard = () => {
     }
   };
 
+  // Função para abrir múltiplas abas (Acesso Rápido)
+  const handleAcessoRapido = () => {
+    const links = [
+      'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=423&queryProfileForm.columnProfileId=67',
+      'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2F&ifkv=AcMMx-fJZqEhabl9HDEfW2R7SrGxQKLfCcVCZrbfUkrYapnrKOuYor_ptr3gP8dRypgOM6siUZ--&rip=1&sacu=1&service=mail&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-1241181511%3A1732804609017929&ddm=1',
+      'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=996&queryProfileForm.columnProfileId=67'
+    ];
 
+    // Abrir cada link em uma nova aba
+    links.forEach((link, index) => {
+      // Pequeno delay entre abertura das abas para evitar bloqueio do navegador
+      setTimeout(() => {
+        window.open(link, '_blank', 'noopener,noreferrer');
+      }, index * 100);
+    });
+
+    toast({
+      title: "🚀 Acesso Rápido Ativado",
+      description: `Abrindo ${links.length} abas do sistema...`,
+      duration: 3000,
+    });
+  };
 
   const actions: DashboardAction[] = [
     {
@@ -518,6 +539,13 @@ const Dashboard = () => {
       description: "Consultar órgãos",
       onClick: () => navigate('/orgaos-julgadores'),
       color: "bg-gradient-to-r from-orange-500 to-orange-600"
+    },
+    {
+      icon: ExternalLink,
+      title: "Acesso Rápido",
+      description: "Abrir sistemas principais",
+      onClick: handleAcessoRapido,
+      color: "bg-gradient-to-r from-green-500 to-green-600"
     }
   ];
 
