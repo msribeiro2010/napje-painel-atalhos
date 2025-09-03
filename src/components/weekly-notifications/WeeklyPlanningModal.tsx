@@ -164,7 +164,7 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
   } = summary || {};
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-3">
           <div className="flex items-center justify-between">
