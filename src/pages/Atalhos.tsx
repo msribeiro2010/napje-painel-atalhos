@@ -13,7 +13,7 @@ import {
   Database, Briefcase, HelpCircle as QuestionCircle, MessageSquare as ChatBubbleIcon, AlertTriangle as ExclamationTriangle,
   Building2, CheckCircle, Bug, Network as Diagram3, ExternalLink as BoxArrowUpRight, Landmark as Bank,
   User, UserPlus, FileBarChart as FileEarmarkText, Globe as Globe2, CreditCard as Bank2, GripVertical, Heart,
-  Square, CheckSquare, ExternalLink, Settings
+  Square, CheckSquare, ExternalLink, Settings, Trash2
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { useShortcutsPreferences } from '@/hooks/useShortcutsPreferences';
@@ -487,7 +487,7 @@ const SortableItem = ({
           }}
           title="Remover dos Favoritos"
         >
-          <Heart className="h-5 w-5 fill-white text-white transition-all duration-200" />
+          <Trash2 className="h-5 w-5 text-white transition-all duration-200" />
         </Button>
       )}
     </div>
@@ -687,7 +687,7 @@ const Atalhos = () => {
     });
     
     // 2. Botões dos resultados de busca (se houver busca ativa)
-    if (searchQuery && searchResults.length > 0) {
+    if (searchTerm && searchResults.length > 0) {
       console.log(`  Resultados de busca: ${searchResults.length} botões`);
       searchResults.forEach(button => {
         if (!buttonMap.has(button.id)) {
