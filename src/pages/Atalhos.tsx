@@ -12,7 +12,7 @@ import {
   Star, Clock, Gift, Phone, Mail, Bot, Kanban, Shield,
   Database, Briefcase, HelpCircle as QuestionCircle, MessageSquare as ChatBubbleIcon, AlertTriangle as ExclamationTriangle,
   Building2, CheckCircle, Bug, Network as Diagram3, ExternalLink as BoxArrowUpRight, Landmark as Bank,
-  User, UserPlus, FileBarChart as FileEarmarkText, Globe as Globe2, CreditCard as Bank2, GripVertical, Heart,
+  User, UserPlus, FileBarChart as FileEarmarkText, Globe as Globe2, CreditCard as Bank2, GripVertical, Heart, Trash2,
   Square, CheckSquare, ExternalLink, Settings
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
@@ -487,7 +487,7 @@ const SortableItem = ({
           }}
           title="Remover dos Favoritos"
         >
-          <Heart className="h-5 w-5 fill-white text-white transition-all duration-200" />
+          <Trash2 className="h-5 w-5 text-white transition-all duration-200" />
         </Button>
       )}
     </div>

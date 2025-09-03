@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { BookOpen, Plus, StickyNote, Scale, Calendar, Zap, Building2, Home, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { DndContext, closestCenter, DragOverEvent, DragEndEvent } from '@dnd-kit/core';
+import { useShortcutsPreferences } from '@/hooks/useShortcutsPreferences';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ModernButton } from '@/components/ui/modern-button';
@@ -50,6 +52,17 @@ const Dashboard = () => {
 
   const [postItOpen, setPostItOpen] = useState(false);
   const [smartSearchOpen, setSmartSearchOpen] = useState(false);
+  
+  // Estado e hooks para favoritos das ações rápidas
+  const [actionFavorites, setActionFavorites] = useState<string[]>([]);
+  const { preferences, updatePreferences } = useShortcutsPreferences();
+  
+  // Carregar favoritos das ações do localStorage/preferências
+  useEffect(() => {
+    if (!preferences.loading && preferences.actionFavorites) {
+      setActionFavorites(preferences.actionFavorites);
+    }
+  }, [preferences.actionFavorites, preferences.loading]);
   
   // Atalho de teclado para busca (Ctrl/Cmd + K)
   useEffect(() => {
@@ -705,6 +718,42 @@ const Dashboard = () => {
     }
   };
 
+  // Funções para gerenciar favoritos das ações rápidas
+  const toggleActionFavorite = (actionId: string) => {
+    console.log('🔄 Toggle favorite action:', actionId);
+    setActionFavorites(prev => {
+      const newFavorites = prev.includes(actionId) 
+        ? prev.filter(id => id !== actionId)
+        : [...prev, actionId];
+      
+      console.log('📊 Favoritos das ações atualizados:', newFavorites);
+      
+      // Salvar nas preferências
+      updatePreferences({ actionFavorites: newFavorites });
+      
+      return newFavorites;
+    });
+  };
+
+  // Handler para drag and drop das ações rápidas
+  const handleActionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    console.log('Drag end da ação:', { active: active.id, over: over?.id });
+    
+    // Se foi arrastado para a área de favoritos
+    if (over && over.id === 'favorites-dropzone') {
+      const actionId = active.id.toString();
+      if (!actionFavorites.includes(actionId)) {
+        // Encontrar o nome da ação para feedback
+        const actionTitle = actionId.replace('action-', '').replace(/-/g, ' ');
+        
+        toggleActionFavorite(actionId);
+        console.log(`✨ "${actionTitle}" adicionada aos favoritos!`);
+      }
+    }
+  };
+
   const actions: DashboardAction[] = [
     {
       icon: Plus,
@@ -764,14 +813,22 @@ const Dashboard = () => {
 
 
         {/* Grid Principal */}
-        <ModernGrid cols={4} gap="lg">
-          {/* Coluna Principal */}
-          <ModernGridItem span={3}>
-            <div className="space-y-8">
-              {/* Eventos e Notificações */}
-              
-              {/* Ações Rápidas Compactas */}
-              <DashboardActions actions={actions} />
+        <DndContext 
+          collisionDetection={closestCenter}
+          onDragEnd={handleActionDragEnd}
+        >
+          <ModernGrid cols={4} gap="lg">
+            {/* Coluna Principal */}
+            <ModernGridItem span={3}>
+              <div className="space-y-8">
+                {/* Eventos e Notificações */}
+                
+                {/* Ações Rápidas Compactas com Drag & Drop */}
+                <DashboardActions 
+                  actions={actions}
+                  favorites={actionFavorites}
+                  onToggleFavorite={toggleActionFavorite}
+                />
 
               {/* Chamados Recentes Modernos */}
               <RecentChamados 
@@ -854,7 +911,8 @@ const Dashboard = () => {
               </ModernCard> */}
             </div>
           </ModernGridItem>
-        </ModernGrid>
+          </ModernGrid>
+        </DndContext>
 
         {/* Footer Elegante */}
         <DashboardFooter />
