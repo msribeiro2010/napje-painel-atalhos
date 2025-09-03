@@ -484,34 +484,64 @@ const Dashboard = () => {
   // Função para abrir múltiplas abas (Acesso Rápido)
   const handleAcessoRapido = () => {
     const links = [
-      'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=423&queryProfileForm.columnProfileId=67',
-      'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2F&ifkv=AcMMx-fJZqEhabl9HDEfW2R7SrGxQKLfCcVCZrbfUkrYapnrKOuYor_ptr3gP8dRypgOM6siUZ--&rip=1&sacu=1&service=mail&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-1241181511%3A1732804609017929&ddm=1',
-      'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=996&queryProfileForm.columnProfileId=67'
+      {
+        url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=423&queryProfileForm.columnProfileId=67',
+        name: 'Assyst Query 423'
+      },
+      {
+        url: 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2F&ifkv=AcMMx-fJZqEhabl9HDEfW2R7SrGxQKLfCcVCZrbfUkrYapnrKOuYor_ptr3gP8dRypgOM6siUZ--&rip=1&sacu=1&service=mail&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-1241181511%3A1732804609017929&ddm=1',
+        name: 'Gmail'
+      },
+      {
+        url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=996&queryProfileForm.columnProfileId=67',
+        name: 'Assyst Query 996'
+      }
     ];
 
-    // Abrir todas as abas imediatamente para evitar bloqueio de pop-up
-    // Navegadores bloqueiam pop-ups quando não são abertas no contexto direto do clique
     try {
-      const openedWindows = links.map(link => {
-        return window.open(link, '_blank', 'noopener,noreferrer');
+      console.log('🚀 Iniciando abertura de abas...');
+      
+      // Abrir primeira aba imediatamente
+      const firstWindow = window.open(links[0].url, '_blank', 'noopener,noreferrer');
+      console.log('Primeira aba:', firstWindow ? 'Aberta' : 'Bloqueada');
+      
+      // Para as outras abas, usar uma abordagem diferente
+      // Criar links temporários e simular cliques
+      links.slice(1).forEach((link, index) => {
+        // Criar elemento link temporário
+        const tempLink = document.createElement('a');
+        tempLink.href = link.url;
+        tempLink.target = '_blank';
+        tempLink.rel = 'noopener noreferrer';
+        tempLink.style.display = 'none';
+        
+        // Adicionar ao DOM temporariamente
+        document.body.appendChild(tempLink);
+        
+        // Simular clique com pequeno delay
+        setTimeout(() => {
+          console.log(`Abrindo aba ${index + 2}: ${link.name}`);
+          tempLink.click();
+          document.body.removeChild(tempLink);
+        }, (index + 1) * 50); // 50ms, 100ms entre cada aba
       });
 
-      // Verificar se alguma aba foi bloqueada
-      const blockedCount = openedWindows.filter(w => !w || w.closed).length;
-      
-      if (blockedCount > 0) {
+      // Toast de feedback
+      toast({
+        title: "🚀 Acesso Rápido Ativado",
+        description: `Abrindo ${links.length} sistemas: ${links.map(l => l.name).join(', ')}`,
+        duration: 4000,
+      });
+
+      // Toast adicional com orientação se necessário
+      setTimeout(() => {
         toast({
-          title: "⚠️ Pop-ups Bloqueados",
-          description: `${blockedCount} abas foram bloqueadas. Permita pop-ups para este site e tente novamente.`,
+          title: "💡 Dica",
+          description: "Se algumas abas não abriram, permita pop-ups para este site nas configurações do navegador.",
           duration: 5000,
         });
-      } else {
-        toast({
-          title: "🚀 Acesso Rápido Ativado",
-          description: `Abrindo ${links.length} abas do sistema...`,
-          duration: 3000,
-        });
-      }
+      }, 2000);
+
     } catch (error) {
       console.error('Erro ao abrir abas:', error);
       toast({
