@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, Plus, StickyNote, Scale, Calendar, Zap, Building2, Home, ExternalLink } from 'lucide-react';
+import { BookOpen, Plus, StickyNote, Scale, Calendar, Zap, Building2, Home, ExternalLink, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { DndContext, closestCenter, DragOverEvent, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, DragOverEvent, DragEndEvent, useDroppable } from '@dnd-kit/core';
 import { useShortcutsPreferences } from '@/hooks/useShortcutsPreferences';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,63 @@ import { SmartSearchDialog } from '@/components/SmartSearchDialog';
 import { SearchResult } from '@/hooks/useSmartSearch';
 import { toast } from '@/hooks/use-toast';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+// Componente para zona de drop das ações favoritas
+const ActionFavoritesDropZone = ({ favorites, actions }: { favorites: string[], actions: DashboardAction[] }) => {
+  const { isOver, setNodeRef } = useDroppable({
+    id: 'favorites-dropzone'
+  });
+
+  const favoriteActions = actions.filter(action => favorites.includes(action.id));
+
+  return (
+    <ModernCard variant="glass" className={`transition-all duration-200 ${
+      isOver ? 'ring-2 ring-purple-400 bg-purple-50/10' : ''
+    }`}>
+      <ModernCardHeader
+        title="Ações Favoritas"
+        description="Arraste suas ações mais usadas aqui"
+        icon={<Star className="h-5 w-5 text-yellow-400" />}
+      />
+      <ModernCardContent>
+        <div 
+          ref={setNodeRef}
+          className={`min-h-[100px] p-4 rounded-lg border-2 border-dashed transition-all duration-200 ${
+            isOver 
+              ? 'border-purple-400 bg-purple-50/20' 
+              : 'border-gray-300 dark:border-gray-600'
+          }`}
+        >
+          {favoriteActions.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {favoriteActions.map((action) => (
+                <div
+                  key={action.id}
+                  className="flex flex-col items-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors cursor-pointer"
+                  onClick={action.onClick}
+                >
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg mb-2">
+                    {action.icon}
+                  </div>
+                  <span className="text-xs font-medium text-center text-gray-700 dark:text-gray-300">
+                    {action.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center py-8">
+              <Star className="h-8 w-8 text-gray-400 mb-2" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {isOver ? 'Solte aqui para adicionar aos favoritos' : 'Arraste ações aqui para marcá-las como favoritas'}
+              </p>
+            </div>
+          )}
+        </div>
+      </ModernCardContent>
+    </ModernCard>
+  );
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -829,6 +886,9 @@ const Dashboard = () => {
                   favorites={actionFavorites}
                   onToggleFavorite={toggleActionFavorite}
                 />
+
+                {/* Zona de Drop para Ações Favoritas */}
+                <ActionFavoritesDropZone favorites={actionFavorites} actions={actions} />
 
               {/* Chamados Recentes Modernos */}
               <RecentChamados 
