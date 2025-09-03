@@ -426,7 +426,7 @@ export const WeeklyNotificationsManager = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {(notifications || []).map((notification) => {
+                  {(notifications || []).sort((a, b) => a.dayofweek - b.dayofweek).map((notification) => {
                     const isActive = notification.ativo;
                     const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
                     const dayName = dayLabels[notification.dayofweek] || 'N/A';
@@ -443,7 +443,20 @@ export const WeeklyNotificationsManager = () => {
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
                                 <h4 className="font-semibold text-base text-gray-900 dark:text-gray-100 font-roboto">
-                                  {notification.titulo}
+                                  {(() => {
+                                    // Remover duplicação de dias no título (ex: "Relatório - Seg - Seg" → "Relatório - Seg")
+                                    const titulo = notification.titulo;
+                                    const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                                    const currentDay = dayLabels[notification.dayofweek] || 'N/A';
+                                    
+                                    // Verificar se o título termina com " - Dia - Dia" e corrigir
+                                    const duplicatePattern = new RegExp(` - ${currentDay} - ${currentDay}$`);
+                                    if (duplicatePattern.test(titulo)) {
+                                      return titulo.replace(duplicatePattern, ` - ${currentDay}`);
+                                    }
+                                    
+                                    return titulo;
+                                  })()}
                                 </h4>
                                 <Badge variant={isActive ? "default" : "secondary"} className={cn(
                                   "text-xs",
