@@ -272,6 +272,15 @@ const UserMenu = () => {
             <span>Administração de Feriados</span>
           </DropdownMenuItem>
         )}
+        {profile.is_admin && (
+          <DropdownMenuItem 
+            onClick={() => navigate('/admin/configuracoes')}
+            className="cursor-pointer hover:bg-gradient-accent"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Configurações do Sistema</span>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           onClick={handleSignOut}

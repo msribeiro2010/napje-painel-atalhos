@@ -21,6 +21,7 @@ const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const AdminShortcuts = lazy(() => import("./pages/AdminShortcuts"));
 const AdminMetrics = lazy(() => import("./pages/AdminMetrics"));
 const AdminHolidays = lazy(() => import("./pages/AdminHolidays"));
+const AdminSystemConfig = lazy(() => import("./pages/AdminSystemConfig"));
 const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const OrgaosJulgadores = lazy(() => import("./pages/OrgaosJulgadores"));
 const ImportantMemories = lazy(() => import("./pages/ImportantMemories"));
@@ -132,6 +133,14 @@ const App = () => (
                   element={
                     <ProtectedRoute requireAdmin={true}>
                       <AdminHolidays />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/configuracoes"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <AdminSystemConfig />
                     </ProtectedRoute>
                   }
                 />

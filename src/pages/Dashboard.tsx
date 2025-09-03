@@ -481,22 +481,43 @@ const Dashboard = () => {
     }
   };
 
+  // Buscar configuração dos links do Acesso Rápido
+  const { data: quickAccessConfig } = useQuery({
+    queryKey: ['system-config', 'quick_access_links'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('system_config')
+        .select('value')
+        .eq('key', 'quick_access_links')
+        .single();
+
+      if (error) {
+        console.warn('Erro ao buscar configuração do Acesso Rápido:', error);
+        // Retornar configuração padrão se falhar
+        return [
+          {
+            name: 'Assyst Query 996',
+            url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=996&queryProfileForm.columnProfileId=67'
+          },
+          {
+            name: 'Gmail',
+            url: 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2F&ifkv=AcMMx-fJZqEhabl9HDEfW2R7SrGxQKLfCcVCZrbfUkrYapnrKOuYor_ptr3gP8dRypgOM6siUZ--&rip=1&sacu=1&service=mail&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-1241181511%3A1732804609017929&ddm=1'
+          },
+          {
+            name: 'Assyst Query 423',
+            url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=423&queryProfileForm.columnProfileId=67'
+          }
+        ];
+      }
+      
+      return data?.value || [];
+    },
+    enabled: !!user?.id
+  });
+
   // Função para abrir múltiplas abas (Acesso Rápido)
   const handleAcessoRapido = () => {
-    const links = [
-      {
-        url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=996&queryProfileForm.columnProfileId=67',
-        name: 'Assyst Query 996'
-      },
-      {
-        url: 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2F&ifkv=AcMMx-fJZqEhabl9HDEfW2R7SrGxQKLfCcVCZrbfUkrYapnrKOuYor_ptr3gP8dRypgOM6siUZ--&rip=1&sacu=1&service=mail&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-1241181511%3A1732804609017929&ddm=1',
-        name: 'Gmail'
-      },
-      {
-        url: 'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=423&queryProfileForm.columnProfileId=67',
-        name: 'Assyst Query 423'
-      }
-    ];
+    const links = quickAccessConfig || [];
 
     try {
       console.log('🚀 Iniciando abertura de abas...');
