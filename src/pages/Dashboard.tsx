@@ -489,19 +489,37 @@ const Dashboard = () => {
       'https://assyst.trt15.jus.br/assystweb/application.do#eventsearch%2FEventSearchDelegatingDispatchAction.do?dispatch=loadQuery&showInMonitor=true&context=select&queryProfileForm.queryProfileId=996&queryProfileForm.columnProfileId=67'
     ];
 
-    // Abrir cada link em uma nova aba
-    links.forEach((link, index) => {
-      // Pequeno delay entre abertura das abas para evitar bloqueio do navegador
-      setTimeout(() => {
-        window.open(link, '_blank', 'noopener,noreferrer');
-      }, index * 100);
-    });
+    // Abrir todas as abas imediatamente para evitar bloqueio de pop-up
+    // Navegadores bloqueiam pop-ups quando não são abertas no contexto direto do clique
+    try {
+      const openedWindows = links.map(link => {
+        return window.open(link, '_blank', 'noopener,noreferrer');
+      });
 
-    toast({
-      title: "🚀 Acesso Rápido Ativado",
-      description: `Abrindo ${links.length} abas do sistema...`,
-      duration: 3000,
-    });
+      // Verificar se alguma aba foi bloqueada
+      const blockedCount = openedWindows.filter(w => !w || w.closed).length;
+      
+      if (blockedCount > 0) {
+        toast({
+          title: "⚠️ Pop-ups Bloqueados",
+          description: `${blockedCount} abas foram bloqueadas. Permita pop-ups para este site e tente novamente.`,
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "🚀 Acesso Rápido Ativado",
+          description: `Abrindo ${links.length} abas do sistema...`,
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao abrir abas:', error);
+      toast({
+        title: "❌ Erro",
+        description: "Não foi possível abrir as abas. Verifique se pop-ups estão habilitados.",
+        duration: 5000,
+      });
+    }
   };
 
   const actions: DashboardAction[] = [
