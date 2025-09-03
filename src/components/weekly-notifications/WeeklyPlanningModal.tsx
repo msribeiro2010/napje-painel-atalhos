@@ -119,6 +119,20 @@ const formatDateRange = (start: Date, end: Date): string => {
   return `${start.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} - ${end.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
 };
 
+// Componente elegante para exibir dia da semana com borda
+const DayWithBorder: React.FC<{ date: Date; colorClass: string }> = ({ date, colorClass }) => {
+  return (
+    <div className={`inline-block px-3 py-2 rounded-lg border-2 ${colorClass} bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-200 font-roboto`}>
+      <div className="text-xs font-semibold uppercase tracking-wide">
+        {format(date, 'EEEE', { locale: ptBR })}
+      </div>
+      <div className="text-sm font-bold mt-1">
+        {format(date, 'dd/MM', { locale: ptBR })}
+      </div>
+    </div>
+  );
+};
+
 const groupEventsByDay = (events: WeeklyCalendarEvent[]) => {
   const grouped: { [key: string]: WeeklyCalendarEvent[] } = {};
   
@@ -214,13 +228,13 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                       const onsiteDays = events.filter(e => e.category === 'work_onsite');
                       if (onsiteDays.length > 0) {
                         return (
-                          <div className="text-sm text-blue-500 dark:text-blue-400 space-y-1 font-roboto">
+                          <div className="flex flex-wrap gap-2 justify-center">
                             {onsiteDays.map((day, idx) => (
-                              <div key={idx}>
-                                {format(day.date, 'EEEE', { locale: ptBR })}
-                                <br />
-                                {format(day.date, 'dd/MM', { locale: ptBR })}
-                              </div>
+                              <DayWithBorder 
+                                key={idx} 
+                                date={day.date} 
+                                colorClass="border-blue-300 text-blue-600 dark:border-blue-500 dark:text-blue-400" 
+                              />
                             ))}
                           </div>
                         );
@@ -244,13 +258,13 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                       const remoteDays = events.filter(e => e.category === 'work_remote');
                       if (remoteDays.length > 0) {
                         return (
-                          <div className="text-sm text-green-500 dark:text-green-400 space-y-1 font-roboto">
+                          <div className="flex flex-wrap gap-2 justify-center">
                             {remoteDays.map((day, idx) => (
-                              <div key={idx}>
-                                {format(day.date, 'EEEE', { locale: ptBR })}
-                                <br />
-                                {format(day.date, 'dd/MM', { locale: ptBR })}
-                              </div>
+                              <DayWithBorder 
+                                key={idx} 
+                                date={day.date} 
+                                colorClass="border-green-300 text-green-600 dark:border-green-500 dark:text-green-400" 
+                              />
                             ))}
                           </div>
                         );
@@ -274,13 +288,13 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                       const courseDays = events.filter(e => e.category === 'curso');
                       if (courseDays.length > 0) {
                         return (
-                          <div className="text-sm text-purple-500 dark:text-purple-400 space-y-1 font-roboto">
+                          <div className="flex flex-wrap gap-2 justify-center">
                             {courseDays.map((day, idx) => (
-                              <div key={idx}>
-                                {format(day.date, 'EEEE', { locale: ptBR })}
-                                <br />
-                                {format(day.date, 'dd/MM', { locale: ptBR })}
-                              </div>
+                              <DayWithBorder 
+                                key={idx} 
+                                date={day.date} 
+                                colorClass="border-purple-300 text-purple-600 dark:border-purple-500 dark:text-purple-400" 
+                              />
                             ))}
                           </div>
                         );
@@ -395,13 +409,13 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                       const meetingDays = events.filter(e => e.category === 'reuniao');
                       if (meetingDays.length > 0) {
                         return (
-                          <div className="text-sm text-indigo-500 dark:text-indigo-400 space-y-1 font-roboto">
+                          <div className="flex flex-wrap gap-2 justify-center">
                             {meetingDays.map((day, idx) => (
-                              <div key={idx}>
-                                {format(day.date, 'EEEE', { locale: ptBR })}
-                                <br />
-                                {format(day.date, 'dd/MM', { locale: ptBR })}
-                              </div>
+                              <DayWithBorder 
+                                key={idx} 
+                                date={day.date} 
+                                colorClass="border-indigo-300 text-indigo-600 dark:border-indigo-500 dark:text-indigo-400" 
+                              />
                             ))}
                           </div>
                         );
@@ -425,13 +439,13 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                       const webinarDays = events.filter(e => e.category === 'webinario');
                       if (webinarDays.length > 0) {
                         return (
-                          <div className="text-sm text-teal-500 dark:text-teal-400 space-y-1 font-roboto">
+                          <div className="flex flex-wrap gap-2 justify-center">
                             {webinarDays.map((day, idx) => (
-                              <div key={idx}>
-                                {format(day.date, 'EEEE', { locale: ptBR })}
-                                <br />
-                                {format(day.date, 'dd/MM', { locale: ptBR })}
-                              </div>
+                              <DayWithBorder 
+                                key={idx} 
+                                date={day.date} 
+                                colorClass="border-teal-300 text-teal-600 dark:border-teal-500 dark:text-teal-400" 
+                              />
                             ))}
                           </div>
                         );
@@ -455,13 +469,13 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                       const holidayDays = events.filter(e => e.type === 'holiday');
                       if (holidayDays.length > 0) {
                         return (
-                          <div className="text-sm text-orange-500 dark:text-orange-400 space-y-1 font-roboto">
+                          <div className="flex flex-wrap gap-2 justify-center">
                             {holidayDays.map((day, idx) => (
-                              <div key={idx}>
-                                {format(day.date, 'EEEE', { locale: ptBR })}
-                                <br />
-                                {format(day.date, 'dd/MM', { locale: ptBR })}
-                              </div>
+                              <DayWithBorder 
+                                key={idx} 
+                                date={day.date} 
+                                colorClass="border-orange-300 text-orange-600 dark:border-orange-500 dark:text-orange-400" 
+                              />
                             ))}
                           </div>
                         );
@@ -485,13 +499,13 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
                       const birthdayDays = events.filter(e => e.type === 'birthday');
                       if (birthdayDays.length > 0) {
                         return (
-                          <div className="text-sm text-pink-500 dark:text-pink-400 space-y-1 font-roboto">
+                          <div className="flex flex-wrap gap-2 justify-center">
                             {birthdayDays.map((day, idx) => (
-                              <div key={idx}>
-                                {format(day.date, 'EEEE', { locale: ptBR })}
-                                <br />
-                                {format(day.date, 'dd/MM', { locale: ptBR })}
-                              </div>
+                              <DayWithBorder 
+                                key={idx} 
+                                date={day.date} 
+                                colorClass="border-pink-300 text-pink-600 dark:border-pink-500 dark:text-pink-400" 
+                              />
                             ))}
                           </div>
                         );
