@@ -740,46 +740,46 @@ const Dashboard = () => {
 
   const actions: DashboardAction[] = [
     {
-      icon: Plus,
-      title: "Novo Chamado",
-      description: "Criar um novo chamado",
-      onClick: () => navigate('/criar-chamado'),
-      color: "bg-gradient-to-r from-blue-500 to-blue-600"
-    },
-    {
-      icon: Calendar,
-      title: "Calendário",
-      description: "Agendar compromissos",
-      onClick: () => navigate('/calendario'),
-      color: "bg-gradient-to-r from-indigo-500 to-indigo-600"
+      icon: ExternalLink,
+      title: "Atalhos Rápidos",
+      description: "Abrir sistemas principais",
+      onClick: handleAcessoRapido,
+      color: "bg-gradient-to-r from-emerald-500 to-teal-600"
     },
     {
       icon: Zap,
       title: "Atalhos",
       description: "Gerenciar atalhos",
       onClick: () => navigate('/atalhos'),
-      color: "bg-gradient-to-r from-yellow-500 to-orange-600"
+      color: "bg-gradient-to-r from-amber-500 to-orange-600"
+    },
+    {
+      icon: Plus,
+      title: "Abrir Chamado",
+      description: "Criar um novo chamado",
+      onClick: () => navigate('/criar-chamado'),
+      color: "bg-gradient-to-r from-blue-500 to-cyan-600"
+    },
+    {
+      icon: Calendar,
+      title: "Calendário",
+      description: "Agendar compromissos",
+      onClick: () => navigate('/calendario'),
+      color: "bg-gradient-to-r from-indigo-500 to-purple-600"
     },
     {
       icon: BookOpen,
       title: "Base de Conhecimento",
       description: "Consultar documentos",
       onClick: () => navigate('/base-conhecimento'),
-      color: "bg-gradient-to-r from-purple-500 to-purple-600"
+      color: "bg-gradient-to-r from-violet-500 to-purple-600"
     },
     {
       icon: Scale,
       title: "Órgãos Julgadores",
       description: "Consultar órgãos",
       onClick: () => navigate('/orgaos-julgadores'),
-      color: "bg-gradient-to-r from-orange-500 to-orange-600"
-    },
-    {
-      icon: ExternalLink,
-      title: "Acesso Rápido",
-      description: "Abrir sistemas principais",
-      onClick: handleAcessoRapido,
-      color: "bg-gradient-to-r from-green-500 to-green-600"
+      color: "bg-gradient-to-r from-rose-500 to-pink-600"
     }
   ];
 
