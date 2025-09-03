@@ -202,29 +202,29 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               Resumo da Semana
             </h2>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Total de Eventos */}
               <Card className="border-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 shadow-lg hover:shadow-xl transition-all duration-300">
-                <CardContent className="p-4 text-center">
-                  <div className="text-3xl font-bold text-slate-700 dark:text-slate-200 mb-1">{totalEvents}</div>
-                  <div className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Total de Eventos</div>
+                <CardContent className="p-6 text-center">
+                  <div className="text-4xl font-bold text-slate-700 dark:text-slate-200 mb-2 font-roboto">{totalEvents}</div>
+                  <div className="text-sm font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide font-roboto">Total de Eventos</div>
                 </CardContent>
               </Card>
 
               {/* Trabalho Presencial */}
               {workOnsite > 0 && (
                 <Card className="border-0 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-6 text-center">
                     <div className="flex items-center justify-center mb-2">
                       <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <div className="text-3xl font-bold text-blue-700 dark:text-blue-300 mb-1">{workOnsite}</div>
-                    <div className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">Presencial</div>
+                    <div className="text-4xl font-bold text-blue-700 dark:text-blue-300 mb-2 font-roboto">{workOnsite}</div>
+                    <div className="text-sm font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-3 font-roboto">Presencial</div>
                     {(() => {
                       const onsiteDays = events.filter(e => e.category === 'work_onsite');
                       if (onsiteDays.length > 0) {
                         return (
-                          <div className="text-xs text-blue-500 dark:text-blue-400 space-y-1">
+                          <div className="text-sm text-blue-500 dark:text-blue-400 space-y-1 font-roboto">
                             {onsiteDays.map((day, idx) => (
                               <div key={idx}>
                                 {format(day.date, 'EEEE', { locale: ptBR })}
@@ -244,17 +244,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               {/* Trabalho Remoto */}
               {workRemote > 0 && (
                 <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-6 text-center">
                     <div className="flex items-center justify-center mb-2">
                       <Home className="h-5 w-5 text-green-600 dark:text-green-400" />
                     </div>
-                    <div className="text-3xl font-bold text-green-700 dark:text-green-300 mb-1">{workRemote}</div>
-                    <div className="text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wide mb-2">Remoto</div>
+                    <div className="text-4xl font-bold text-green-700 dark:text-green-300 mb-2 font-roboto">{workRemote}</div>
+                    <div className="text-sm font-medium text-green-600 dark:text-green-400 uppercase tracking-wide mb-3 font-roboto">Remoto</div>
                     {(() => {
                       const remoteDays = events.filter(e => e.category === 'work_remote');
                       if (remoteDays.length > 0) {
                         return (
-                          <div className="text-xs text-green-500 dark:text-green-400 space-y-1">
+                          <div className="text-sm text-green-500 dark:text-green-400 space-y-1 font-roboto">
                             {remoteDays.map((day, idx) => (
                               <div key={idx}>
                                 {format(day.date, 'EEEE', { locale: ptBR })}
@@ -274,17 +274,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               {/* Cursos */}
               {courses > 0 && (
                 <Card className="border-0 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-6 text-center">
                     <div className="flex items-center justify-center mb-2">
                       <GraduationCap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                     </div>
-                    <div className="text-3xl font-bold text-purple-700 dark:text-purple-300 mb-1">{courses}</div>
-                    <div className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2">Cursos</div>
+                    <div className="text-4xl font-bold text-purple-700 dark:text-purple-300 mb-2 font-roboto">{courses}</div>
+                    <div className="text-sm font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-3 font-roboto">Cursos</div>
                     {(() => {
                       const courseDays = events.filter(e => e.category === 'curso');
                       if (courseDays.length > 0) {
                         return (
-                          <div className="text-xs text-purple-500 dark:text-purple-400 space-y-1">
+                          <div className="text-sm text-purple-500 dark:text-purple-400 space-y-1 font-roboto">
                             {courseDays.map((day, idx) => (
                               <div key={idx}>
                                 {format(day.date, 'EEEE', { locale: ptBR })}
@@ -305,17 +305,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               {/* Férias */}
               {vacation > 0 && (
                 <Card className="border-0 bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-900/30 dark:to-rose-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-6 text-center">
                     <div className="flex items-center justify-center mb-2">
                       <Umbrella className="h-5 w-5 text-red-600 dark:text-red-400" />
                     </div>
-                    <div className="text-3xl font-bold text-red-700 dark:text-red-300 mb-1">{vacation}</div>
-                    <div className="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wide mb-2">Férias</div>
+                    <div className="text-4xl font-bold text-red-700 dark:text-red-300 mb-2 font-roboto">{vacation}</div>
+                    <div className="text-sm font-medium text-red-600 dark:text-red-400 uppercase tracking-wide mb-3 font-roboto">Férias</div>
                     {(() => {
                       const vacationDays = events.filter(e => e.category === 'vacation');
                       if (vacationDays.length > 0) {
                         return (
-                          <div className="text-xs text-red-500 dark:text-red-400 space-y-1">
+                          <div className="text-sm text-red-500 dark:text-red-400 space-y-1 font-roboto">
                             {vacationDays.map((day, idx) => (
                               <div key={idx}>
                                 {format(day.date, 'EEEE', { locale: ptBR })}
@@ -335,17 +335,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               {/* Folgas */}
               {timeOff > 0 && (
                 <Card className="border-0 bg-gradient-to-br from-gray-50 to-slate-100 dark:from-gray-800/30 dark:to-slate-700/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-6 text-center">
                     <div className="flex items-center justify-center mb-2">
                       <Sun className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                     </div>
-                    <div className="text-3xl font-bold text-gray-700 dark:text-gray-300 mb-1">{timeOff}</div>
-                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">Folgas</div>
+                    <div className="text-4xl font-bold text-gray-700 dark:text-gray-300 mb-2 font-roboto">{timeOff}</div>
+                    <div className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-3 font-roboto">Folgas</div>
                     {(() => {
                       const timeOffDays = events.filter(e => e.category === 'time_off');
                       if (timeOffDays.length > 0) {
                         return (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                          <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1 font-roboto">
                             {timeOffDays.map((day, idx) => (
                               <div key={idx}>
                                 {format(day.date, 'EEEE', { locale: ptBR })}
@@ -365,17 +365,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               {/* Plantão */}
               {onCall > 0 && (
                 <Card className="border-0 bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-900/30 dark:to-amber-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-6 text-center">
                     <div className="flex items-center justify-center mb-2">
                       <Shield className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                     </div>
-                    <div className="text-3xl font-bold text-yellow-700 dark:text-yellow-300 mb-1">{onCall}</div>
-                    <div className="text-xs font-medium text-yellow-600 dark:text-yellow-400 uppercase tracking-wide mb-2">Plantão</div>
+                    <div className="text-4xl font-bold text-yellow-700 dark:text-yellow-300 mb-2 font-roboto">{onCall}</div>
+                    <div className="text-sm font-medium text-yellow-600 dark:text-yellow-400 uppercase tracking-wide mb-3 font-roboto">Plantão</div>
                     {(() => {
                       const onCallDays = events.filter(e => e.category === 'on_call');
                       if (onCallDays.length > 0) {
                         return (
-                          <div className="text-xs text-yellow-500 dark:text-yellow-400 space-y-1">
+                          <div className="text-sm text-yellow-500 dark:text-yellow-400 space-y-1 font-roboto">
                             {onCallDays.map((day, idx) => (
                               <div key={idx}>
                                 {format(day.date, 'EEEE', { locale: ptBR })}
@@ -395,17 +395,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               {/* Reuniões */}
               {meetings > 0 && (
                 <Card className="border-0 bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-indigo-900/30 dark:to-blue-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-6 text-center">
                     <div className="flex items-center justify-center mb-2">
                       <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                     </div>
-                    <div className="text-3xl font-bold text-indigo-700 dark:text-indigo-300 mb-1">{meetings}</div>
-                    <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-2">Reuniões</div>
+                    <div className="text-4xl font-bold text-indigo-700 dark:text-indigo-300 mb-2 font-roboto">{meetings}</div>
+                    <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-3 font-roboto">Reuniões</div>
                     {(() => {
                       const meetingDays = events.filter(e => e.category === 'reuniao');
                       if (meetingDays.length > 0) {
                         return (
-                          <div className="text-xs text-indigo-500 dark:text-indigo-400 space-y-1">
+                          <div className="text-sm text-indigo-500 dark:text-indigo-400 space-y-1 font-roboto">
                             {meetingDays.map((day, idx) => (
                               <div key={idx}>
                                 {format(day.date, 'EEEE', { locale: ptBR })}
@@ -425,17 +425,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               {/* Webinários */}
               {webinars > 0 && (
                 <Card className="border-0 bg-gradient-to-br from-teal-50 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-6 text-center">
                     <div className="flex items-center justify-center mb-2">
                       <Video className="h-5 w-5 text-teal-600 dark:text-teal-400" />
                     </div>
-                    <div className="text-3xl font-bold text-teal-700 dark:text-teal-300 mb-1">{webinars}</div>
-                    <div className="text-xs font-medium text-teal-600 dark:text-teal-400 uppercase tracking-wide mb-2">Webinários</div>
+                    <div className="text-4xl font-bold text-teal-700 dark:text-teal-300 mb-2 font-roboto">{webinars}</div>
+                    <div className="text-sm font-medium text-teal-600 dark:text-teal-400 uppercase tracking-wide mb-3 font-roboto">Webinários</div>
                     {(() => {
                       const webinarDays = events.filter(e => e.category === 'webinario');
                       if (webinarDays.length > 0) {
                         return (
-                          <div className="text-xs text-teal-500 dark:text-teal-400 space-y-1">
+                          <div className="text-sm text-teal-500 dark:text-teal-400 space-y-1 font-roboto">
                             {webinarDays.map((day, idx) => (
                               <div key={idx}>
                                 {format(day.date, 'EEEE', { locale: ptBR })}
@@ -455,17 +455,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               {/* Feriados */}
               {holidays > 0 && (
                 <Card className="border-0 bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/30 dark:to-amber-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-6 text-center">
                     <div className="flex items-center justify-center mb-2">
                       <Star className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                     </div>
-                    <div className="text-3xl font-bold text-orange-700 dark:text-orange-300 mb-1">{holidays}</div>
-                    <div className="text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-2">Feriados</div>
+                    <div className="text-4xl font-bold text-orange-700 dark:text-orange-300 mb-2 font-roboto">{holidays}</div>
+                    <div className="text-sm font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-3 font-roboto">Feriados</div>
                     {(() => {
                       const holidayDays = events.filter(e => e.type === 'holiday');
                       if (holidayDays.length > 0) {
                         return (
-                          <div className="text-xs text-orange-500 dark:text-orange-400 space-y-1">
+                          <div className="text-sm text-orange-500 dark:text-orange-400 space-y-1 font-roboto">
                             {holidayDays.map((day, idx) => (
                               <div key={idx}>
                                 {format(day.date, 'EEEE', { locale: ptBR })}
@@ -485,17 +485,17 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
               {/* Aniversários */}
               {birthdays > 0 && (
                 <Card className="border-0 bg-gradient-to-br from-pink-50 to-rose-100 dark:from-pink-900/30 dark:to-rose-800/30 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-6 text-center">
                     <div className="flex items-center justify-center mb-2">
                       <Gift className="h-5 w-5 text-pink-600 dark:text-pink-400" />
                     </div>
-                    <div className="text-3xl font-bold text-pink-700 dark:text-pink-300 mb-1">{birthdays}</div>
-                    <div className="text-xs font-medium text-pink-600 dark:text-pink-400 uppercase tracking-wide mb-2">Aniversários</div>
+                    <div className="text-4xl font-bold text-pink-700 dark:text-pink-300 mb-2 font-roboto">{birthdays}</div>
+                    <div className="text-sm font-medium text-pink-600 dark:text-pink-400 uppercase tracking-wide mb-3 font-roboto">Aniversários</div>
                     {(() => {
                       const birthdayDays = events.filter(e => e.type === 'birthday');
                       if (birthdayDays.length > 0) {
                         return (
-                          <div className="text-xs text-pink-500 dark:text-pink-400 space-y-1">
+                          <div className="text-sm text-pink-500 dark:text-pink-400 space-y-1 font-roboto">
                             {birthdayDays.map((day, idx) => (
                               <div key={idx}>
                                 {format(day.date, 'EEEE', { locale: ptBR })}
@@ -514,90 +514,6 @@ export const WeeklyPlanningModal: React.FC<WeeklyPlanningModalProps> = ({
             </div>
           </div>
 
-          {/* Eventos por Dia */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5" />
-                <span>Agenda da Semana</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {sortedDates.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    Nenhum evento encontrado para esta semana
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {sortedDates.map((dateKey, index) => {
-                    const date = new Date(dateKey);
-                    const dayEvents = groupedEvents[dateKey];
-                    
-                    return (
-                      <div key={dateKey}>
-                        {index > 0 && <Separator className="my-4" />}
-                        <div className="space-y-3">
-                          <h3 className="font-semibold text-lg text-gray-900 capitalize">
-                            {formatDate(date)}
-                          </h3>
-                          <div className="grid gap-3">
-                            {dayEvents.map((event, eventIndex) => (
-                              <div
-                                key={eventIndex}
-                                className={`p-3 rounded-lg border ${getEventColor(event)}`}
-                              >
-                                <div className="flex items-start space-x-3">
-                                  <div className="mt-0.5">
-                                    {getEventIcon(event)}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium">{event.title}</div>
-                                    {event.description && (
-                                      <div className="text-sm opacity-80 mt-1">
-                                        {event.description}
-                                      </div>
-                                    )}
-                                    {event.time && (
-                                      <div className="flex items-center space-x-1 text-xs opacity-70 mt-1">
-                                        <Clock className="h-3 w-3" />
-                                        <span>{event.time}</span>
-                                      </div>
-                                    )}
-                                    {event.location && (
-                                      <div className="flex items-center space-x-1 text-xs opacity-70 mt-1">
-                                        <MapPin className="h-3 w-3" />
-                                        <span>{event.location}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="flex flex-col items-end gap-1">
-                                    <Badge variant="secondary" className="text-xs">
-                                      {event.type === 'custom' ? event.category : 
-                                       event.type === 'work' ? (
-                                         event.category === 'work_onsite' ? 'Presencial' :
-                                         event.category === 'work_remote' ? 'Remoto' : 'Trabalho'
-                                       ) : event.type}
-                                    </Badge>
-                                    {event.allDay && (
-                                      <Badge variant="outline" className="text-xs">
-                                        Dia inteiro
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
         </div>
       </DialogContent>
