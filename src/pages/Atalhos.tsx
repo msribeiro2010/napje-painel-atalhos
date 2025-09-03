@@ -507,11 +507,24 @@ const Atalhos = () => {
   
   // Funções para seleção múltipla - definidas antes dos hooks
   const toggleButtonSelection = (buttonId: string) => {
-    setSelectedButtons(prev => 
-      prev.includes(buttonId) 
-        ? prev.filter(id => id !== buttonId)
-        : [...prev, buttonId]
-    );
+    console.log(`🔄 Toggle seleção do botão: ${buttonId}`);
+    setSelectedButtons(prev => {
+      const isSelected = prev.includes(buttonId);
+      let newSelection;
+      
+      if (isSelected) {
+        // Remover o botão da seleção
+        newSelection = prev.filter(id => id !== buttonId);
+        console.log(`  ❌ Removido da seleção: ${buttonId}`);
+      } else {
+        // Adicionar o botão à seleção, evitando duplicatas
+        newSelection = [...new Set([...prev, buttonId])];
+        console.log(`  ✅ Adicionado à seleção: ${buttonId}`);
+      }
+      
+      console.log(`  📊 Seleção atual: ${newSelection.length} botões:`, newSelection);
+      return newSelection;
+    });
   };
 
   const deselectAll = () => {
@@ -615,7 +628,16 @@ const Atalhos = () => {
   const openSelectedUrls = async () => {
     console.log('=== INICIANDO ABERTURA DE URLs SELECIONADAS ===');
     console.log('Botões selecionados (IDs):', selectedButtons);
-    console.log('Total de IDs únicos a abrir:', selectedButtons.length);
+    
+    // Verificar se há duplicatas nos IDs selecionados
+    const uniqueSelectedIds = [...new Set(selectedButtons)];
+    console.log('Total de IDs únicos selecionados:', uniqueSelectedIds.length);
+    console.log('Total de IDs na lista original:', selectedButtons.length);
+    
+    if (uniqueSelectedIds.length !== selectedButtons.length) {
+      console.warn('⚠️ ATENÇÃO: Duplicatas detectadas nos botões selecionados!');
+      console.warn('IDs duplicados encontrados:', selectedButtons.filter((id, index) => selectedButtons.indexOf(id) !== index));
+    }
     
     setOpeningUrls(true);
     setOpeningProgress({ current: 0, total: 0 });
@@ -623,23 +645,47 @@ const Atalhos = () => {
     // Criar um mapa único de botões baseado nos IDs selecionados
     const buttonMap = new Map<string, GroupButton>();
     
-    // Primeiro, mapear todos os botões disponíveis por ID
-    console.log('📋 Mapeando botões dos grupos...');
+    // Mapear botões de todas as fontes possíveis
+    console.log('📋 Mapeando botões de todas as fontes...');
+    
+    // 1. Botões dos grupos regulares
     groups.forEach((group, groupIndex) => {
       console.log(`  Grupo ${groupIndex}: ${group.title} com ${group.buttons.length} botões`);
       group.buttons.forEach(button => {
-        buttonMap.set(button.id, button);
+        if (!buttonMap.has(button.id)) { // Evitar duplicatas
+          buttonMap.set(button.id, button);
+        }
       });
     });
     
-    console.log(`📋 Total de botões mapeados: ${buttonMap.size}`);
+    // 2. Botões dos resultados de busca (se houver busca ativa)
+    if (searchQuery && searchResults.length > 0) {
+      console.log(`  Resultados de busca: ${searchResults.length} botões`);
+      searchResults.forEach(button => {
+        if (!buttonMap.has(button.id)) {
+          buttonMap.set(button.id, button);
+        }
+      });
+    }
+    
+    // 3. Botões favoritos (caso estejam sendo exibidos)
+    if (favoriteButtons.length > 0) {
+      console.log(`  Botões favoritos: ${favoriteButtons.length} botões`);
+      favoriteButtons.forEach(button => {
+        if (!buttonMap.has(button.id)) {
+          buttonMap.set(button.id, button);
+        }
+      });
+    }
+    
+    console.log(`📋 Total de botões únicos mapeados: ${buttonMap.size}`);
     console.log('📋 IDs de botões mapeados:', Array.from(buttonMap.keys()));
     
-    // Agora, filtrar apenas os botões que foram selecionados
+    // Agora, filtrar apenas os botões que foram selecionados (usando IDs únicos)
     const allButtons: GroupButton[] = [];
-    console.log('🎯 Filtrando botões selecionados...');
+    console.log('🎯 Filtrando botões selecionados únicos...');
     
-    selectedButtons.forEach((selectedId, index) => {
+    uniqueSelectedIds.forEach((selectedId, index) => {
       console.log(`  Buscando botão ${index + 1}: ${selectedId}`);
       const button = buttonMap.get(selectedId);
       if (button) {
@@ -651,7 +697,7 @@ const Atalhos = () => {
     });
     
     console.log('🔍 VERIFICAÇÃO FINAL:');
-    console.log(`  IDs selecionados: ${selectedButtons.length}`);
+    console.log(`  IDs únicos selecionados: ${uniqueSelectedIds.length}`);
     console.log(`  Botões encontrados: ${allButtons.length}`);
     console.log(`  Botões que serão abertos:`, allButtons.map(b => ({ id: b.id, title: b.title, url: b.url })));
     
@@ -661,8 +707,8 @@ const Atalhos = () => {
       return;
     }
     
-    if (allButtons.length !== selectedButtons.length) {
-      console.warn(`⚠️ AVISO: Quantidade divergente - Selecionados: ${selectedButtons.length}, Encontrados: ${allButtons.length}`);
+    if (allButtons.length !== uniqueSelectedIds.length) {
+      console.warn(`⚠️ AVISO: Quantidade divergente - Únicos selecionados: ${uniqueSelectedIds.length}, Encontrados: ${allButtons.length}`);
     }
      
     setOpeningProgress({ current: 0, total: allButtons.length });
