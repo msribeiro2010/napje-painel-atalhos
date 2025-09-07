@@ -11,7 +11,10 @@ const AdminMetrics = () => {
 
   return (
     <ModernLayout>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-6 space-y-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-6 space-y-8 bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 rounded-lg shadow-sm border border-gray-200/50 backdrop-blur-sm relative overflow-hidden">
+        {/* Efeito de textura de jornal */}
+        <div className="absolute inset-0 opacity-[0.02] bg-[radial-gradient(circle_at_25%_25%,#000_1px,transparent_1px),radial-gradient(circle_at_75%_75%,#000_1px,transparent_1px)] bg-[length:20px_20px]"></div>
+        <div className="relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -172,6 +175,7 @@ const AdminMetrics = () => {
             </div>
           </ModernCardContent>
         </ModernCard>
+        </div>
       </div>
     </ModernLayout>
   );
