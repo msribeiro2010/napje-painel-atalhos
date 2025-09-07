@@ -19,6 +19,7 @@ import { useTextEnhancement } from '@/hooks/useTextEnhancement';
 import { PageHeader } from '@/components/PageHeader';
 import { ModernCard, ModernCardHeader, ModernCardContent } from '@/components/ui/modern-card';
 import { ModernGrid, ModernGridItem } from '@/components/layout/ModernGrid';
+import { DateDisplay } from '@/components/ui/date-display';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
