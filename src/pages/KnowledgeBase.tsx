@@ -111,22 +111,22 @@ const KnowledgeBase = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-bg p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-gray-900 dark:via-gray-800/50 dark:to-gray-900 p-4">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-primary rounded-full blur-xl opacity-20"></div>
-              <BookOpen className="relative h-16 w-16 text-primary mr-4" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 dark:from-blue-400/30 dark:to-purple-400/30 rounded-full blur-xl opacity-60"></div>
+              <BookOpen className="relative h-16 w-16 text-blue-600 dark:text-blue-400 mr-4" />
             </div>
             <div>
-              <h1 className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent">
                 Base de Conhecimento
               </h1>
-              <p className="text-xl text-muted-foreground mt-2">Núcleo de Apoio ao PJe - TRT15</p>
+              <p className="text-xl text-gray-600 dark:text-gray-300 mt-2">Núcleo de Apoio ao PJe - TRT15</p>
             </div>
           </div>
-          <Badge variant="secondary" className="mt-2 px-4 py-2 text-sm shadow-soft">
+          <Badge variant="secondary" className="mt-2 px-4 py-2 text-sm bg-blue-100/80 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-200/50 dark:border-blue-700/50 shadow-lg">
             Pesquise soluções antes de abrir chamados
           </Badge>
         </div>
@@ -143,7 +143,7 @@ const KnowledgeBase = () => {
           <Button 
             variant="outline" 
             onClick={() => navigate('/')}
-            className="bg-background/80 hover:bg-background border-border/50 hover:border-border shadow-soft transition-all duration-300 hover:shadow-medium"
+            className="bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 border-gray-200/50 dark:border-gray-700/50 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-200 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar ao Início
@@ -155,7 +155,7 @@ const KnowledgeBase = () => {
               <Button 
                 variant="outline" 
                 onClick={() => setIsBulkUploadOpen(true)}
-                className="flex items-center gap-2 bg-background/80 hover:bg-background border-border/50 hover:border-border shadow-soft transition-all duration-300 hover:shadow-medium"
+                className="flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 border-gray-200/50 dark:border-gray-700/50 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-200 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
               >
                 <Upload className="h-4 w-4" />
                 Upload PDF
@@ -163,7 +163,7 @@ const KnowledgeBase = () => {
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-primary hover:opacity-90 shadow-medium transition-all duration-300 hover:shadow-large hover:scale-105">
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 hover:from-blue-700 hover:to-purple-700 dark:hover:from-blue-400 dark:hover:to-purple-400 text-white border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
                   <Plus className="h-4 w-4 mr-2" />
                   Novo Item
                 </Button>

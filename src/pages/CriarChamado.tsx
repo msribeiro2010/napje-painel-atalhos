@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ModernButton } from '@/components/ui/modern-button';
-import { Save, CheckCircle, AlertCircle, FileText, Sparkles, Clock, Layers, Wand2, Keyboard, RefreshCw, Plus, Zap, Target, Brain } from 'lucide-react';
+import { Save, CheckCircle, AlertCircle, FileText, Sparkles, Clock, Layers, Wand2, Keyboard, RefreshCw, Plus, Zap, Target, Brain, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormData, DescriptionSection } from '@/types/form';
 import { FormSection } from '@/components/FormSection';
@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
 
 const CriarChamado = () => {
   const navigate = useNavigate();
@@ -665,63 +666,80 @@ const CriarChamado = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-slate-100">
-      {/* Cabeçalho Moderno */}
-      <div className="relative overflow-hidden">
-        {/* Background decorativo */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/5 to-indigo-600/10"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.1),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(147,51,234,0.1),transparent_50%)]"></div>
-        
-        <div className="relative">
-          <PageHeader 
-            title={isEditing ? "Editar Chamado" : "Criar Novo Chamado"}
-            subtitle={isEditing ? "Modifique os dados do chamado" : "Preencha os dados para criar um novo chamado"}
-          >
-            <div className="flex items-center gap-3">
-              {/* Status de salvamento modernizado */}
-              <div className="flex items-center gap-3">
-                {autoSaveStatus && (
-                  <Badge 
-                    variant={autoSaveStatus.includes('Erro') ? 'destructive' : autoSaveStatus.includes('Salvando') ? 'secondary' : 'default'} 
-                    className="text-xs flex items-center gap-2 shadow-lg backdrop-blur-sm border-0 px-3 py-1.5"
-                  >
-                    {autoSaveStatus.includes('Salvando') && <Clock className="h-3 w-3 animate-spin" />}
-                    {autoSaveStatus.includes('Salvo') && <CheckCircle className="h-3 w-3" />}
-                    {autoSaveStatus.includes('Erro') && <AlertCircle className="h-3 w-3" />}
-                    {autoSaveStatus}
-                  </Badge>
-                )}
-                {hasUnsavedChanges && !autoSaveStatus && (
-                  <Badge variant="outline" className="text-xs flex items-center gap-2 text-amber-600 border-amber-300/50 shadow-lg backdrop-blur-sm px-3 py-1.5">
-                    <Clock className="h-3 w-3" />
-                    Alterações não salvas
-                  </Badge>
-                )}
-                {lastSaved && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border/20 shadow-sm">
-                    <CheckCircle className="h-3 w-3 text-green-500" />
-                    <span>Último salvamento: {lastSaved.toLocaleTimeString()}</span>
-                  </div>
-                )}
-              </div>
-              
-              {/* Botão de atalhos modernizado */}
-              <ModernButton
-                variant="glass"
-                size="sm"
-                onClick={() => setShowKeyboardHelp(true)}
-                icon={<Keyboard className="h-4 w-4" />}
-                className="shadow-lg backdrop-blur-sm"
-              >
-                Atalhos
-              </ModernButton>
+    <div className="min-h-screen bg-gradient-bg p-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-primary rounded-full blur-xl opacity-20"></div>
+              <FileText className="relative h-16 w-16 text-primary mr-4" />
             </div>
-          </PageHeader>
+            <div>
+              <h1 className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                {isEditing ? "Editar Chamado" : "Criar Novo Chamado"}
+              </h1>
+              <p className="text-xl text-muted-foreground mt-2">Núcleo de Apoio ao PJe - TRT15</p>
+            </div>
+          </div>
+          <Badge variant="secondary" className="mt-2 px-4 py-2 text-sm shadow-soft">
+            Utilize templates inteligentes e IA para criar chamados eficientes
+          </Badge>
         </div>
-      </div>
-      
-      <div className="container mx-auto px-4 py-6">
-          <div className="max-w-5xl mx-auto">
+
+        {/* Barra de ações */}
+        <div className="mb-6 flex justify-between items-center">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/dashboard')}
+            className="bg-background/80 hover:bg-background border-border/50 hover:border-border shadow-soft transition-all duration-300 hover:shadow-medium"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao Dashboard
+          </Button>
+          
+          <div className="flex gap-3 items-center">
+            <Clock />
+            <DateDisplay />
+            
+            {/* Status de salvamento */}
+            <div className="flex items-center gap-3">
+              {autoSaveStatus && (
+                <Badge 
+                  variant={autoSaveStatus.includes('Erro') ? 'destructive' : autoSaveStatus.includes('Salvando') ? 'secondary' : 'default'} 
+                  className="text-xs flex items-center gap-2 shadow-soft px-3 py-1.5"
+                >
+                  {autoSaveStatus.includes('Salvando') && <Clock className="h-3 w-3 animate-spin" />}
+                  {autoSaveStatus.includes('Salvo') && <CheckCircle className="h-3 w-3" />}
+                  {autoSaveStatus.includes('Erro') && <AlertCircle className="h-3 w-3" />}
+                  {autoSaveStatus}
+                </Badge>
+              )}
+              {hasUnsavedChanges && !autoSaveStatus && (
+                <Badge variant="outline" className="text-xs flex items-center gap-2 text-amber-600 border-amber-300/50 shadow-soft px-3 py-1.5">
+                  <Clock className="h-3 w-3" />
+                  Alterações não salvas
+                </Badge>
+              )}
+              {lastSaved && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background/80 px-3 py-1.5 rounded-lg border border-border/50 shadow-soft">
+                  <CheckCircle className="h-3 w-3 text-green-500" />
+                  <span>Último salvamento: {lastSaved.toLocaleTimeString()}</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Botão de Atalhos */}
+            <Button
+              variant="outline"
+              onClick={() => setShowKeyboardHelp(true)}
+              className="flex items-center gap-2 bg-background/80 hover:bg-background border-border/50 hover:border-border shadow-soft transition-all duration-300 hover:shadow-medium"
+            >
+              <Keyboard className="h-4 w-4" />
+              Atalhos
+            </Button>
+          </div>
+        </div>
+        <div className="max-w-5xl mx-auto">
             {/* Formulário Principal */}
             <div className="space-y-8">
             <ModernCard variant="glass" className="overflow-hidden">
@@ -731,13 +749,13 @@ const CriarChamado = () => {
                 icon={<FileText className="h-5 w-5 text-white" />}
                 action={
                   <div className="flex items-center gap-3">
-                    {/* Botões de template modernizados */}
+                    {/* Botões de template modernizados - Cores consistentes com dashboard */}
                     <ModernButton
-                      variant="outline"
+                      variant="glass"
                       size="sm"
                       onClick={() => setShowTemplateSelector(true)}
                       icon={<Layers className="h-4 w-4" />}
-                      className="shadow-sm hover:shadow-md transition-all duration-200"
+                      className="shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-500/20 text-purple-700 dark:text-purple-300"
                     >
                       Templates
                     </ModernButton>
@@ -746,7 +764,7 @@ const CriarChamado = () => {
                       size="sm"
                       onClick={() => setShowSmartTemplates(true)}
                       icon={<Brain className="h-4 w-4" />}
-                      className="shadow-sm hover:shadow-lg transition-all duration-200"
+                      className="shadow-sm hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-orange-500 hover:to-red-500"
                     >
                       IA Templates
                     </ModernButton>
@@ -804,7 +822,7 @@ const CriarChamado = () => {
             
 
             </div>
-          </div>
+        </div>
       </div>
       
       {/* Diálogos */}
@@ -815,10 +833,10 @@ const CriarChamado = () => {
       />
       
       <Dialog open={showSmartTemplates} onOpenChange={setShowSmartTemplates}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <DialogHeader>
-             <DialogTitle className="flex items-center gap-2">
-               <Layers className="h-5 w-5" />
+             <DialogTitle className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
+               <Layers className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                Template JIRA
              </DialogTitle>
            </DialogHeader>
