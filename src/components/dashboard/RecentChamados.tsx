@@ -225,6 +225,18 @@ export const RecentChamados = ({
                           {chamado.assunto || 'Chamado sem título'}
                         </h3>
                         
+                        {/* Resumo do chamado */}
+                        {chamado.descricao && (
+                          <div className="bg-muted/30 p-3 rounded-lg border border-border/20">
+                            <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                              {chamado.descricao.length > 120 
+                                ? `${chamado.descricao.substring(0, 120)}...` 
+                                : chamado.descricao
+                              }
+                            </p>
+                          </div>
+                        )}
+                        
                         {/* Informações secundárias */}
                         <div className="space-y-2 text-sm text-muted-foreground">
                           <div className="flex items-center gap-2">
@@ -238,11 +250,29 @@ export const RecentChamados = ({
                             </span>
                           </div>
                           
-                          {chamado.categoria && (
-                            <div className="bg-primary/10 px-3 py-1 rounded-lg text-xs">
-                              <span className="font-medium">Categoria:</span> {chamado.categoria}
-                            </div>
-                          )}
+                          <div className="flex flex-wrap gap-1">
+                            {chamado.categoria && (
+                              <div className="bg-primary/10 px-2 py-1 rounded-md text-xs">
+                                <span className="font-medium">Categoria:</span> {chamado.categoria}
+                              </div>
+                            )}
+                            
+                            {chamado.status && (
+                              <div className="bg-blue-500/10 px-2 py-1 rounded-md text-xs">
+                                <span className="font-medium">Status:</span> {chamado.status}
+                              </div>
+                            )}
+                            
+                            {chamado.prioridade && (
+                              <div className={`px-2 py-1 rounded-md text-xs ${
+                                chamado.prioridade.toLowerCase() === 'alta' ? 'bg-red-500/10 text-red-700 dark:text-red-300' :
+                                chamado.prioridade.toLowerCase() === 'média' ? 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-300' :
+                                'bg-green-500/10 text-green-700 dark:text-green-300'
+                              }`}>
+                                <span className="font-medium">Prioridade:</span> {chamado.prioridade}
+                              </div>
+                            )}
+                          </div>
                           
                           {chamado.usuario_criador_nome && (
                             <div className="bg-purple-500/10 px-3 py-1 rounded-lg text-xs">
