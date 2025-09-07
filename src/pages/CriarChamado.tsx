@@ -665,7 +665,7 @@ const CriarChamado = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-slate-100">
       {/* Cabeçalho Moderno */}
       <div className="relative overflow-hidden">
         {/* Background decorativo */}
