@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { FormData, DescriptionSection } from '@/types/form';
 import { FormSection } from '@/components/FormSection';
 import { GeneratedDescriptionSection } from '@/components/GeneratedDescriptionSection';
-import { TemplateSelector } from '@/components/TemplateSelector';
+import { KnowledgeBaseTemplateSelector } from '@/components/KnowledgeBaseTemplateSelector';
 import { SmartTemplates } from '@/components/SmartTemplates';
 import { useFormKeyboardShortcuts, KeyboardShortcutsHelp } from '@/hooks/useKeyboardShortcuts';
 import { validateForm, isFormValid } from '@/utils/form-validation';
@@ -827,7 +827,7 @@ const CriarChamado = () => {
       </div>
       
       {/* Diálogos */}
-      <TemplateSelector
+      <KnowledgeBaseTemplateSelector
         open={showTemplateSelector}
         onOpenChange={setShowTemplateSelector}
         onSelectTemplate={handleSelectTemplate}
