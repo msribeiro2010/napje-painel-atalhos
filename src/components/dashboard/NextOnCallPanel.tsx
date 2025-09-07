@@ -1,4 +1,4 @@
-import { Shield, Calendar, Clock, AlertCircle } from 'lucide-react';
+import { UserCheck, Calendar, Clock, AlertCircle, Stethoscope } from 'lucide-react';
 import { ModernCard, ModernCardContent, ModernCardHeader } from '@/components/ui/modern-card';
 import { useWorkCalendar } from '@/hooks/useWorkCalendar';
 import { format, isAfter, parseISO } from 'date-fns';
@@ -31,7 +31,7 @@ export const NextOnCallPanel = () => {
         <ModernCardHeader
           title="Próximo Plantão"
           description="Verificando agenda..."
-          icon={<Shield className="h-5 w-5 text-white" />}
+          icon={<UserCheck className="h-5 w-5 text-white" />}
         />
         <ModernCardContent>
           <div className="space-y-3">
@@ -56,7 +56,7 @@ export const NextOnCallPanel = () => {
             <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-900/30 dark:to-amber-800/30 rounded-xl border border-yellow-200 dark:border-yellow-700">
               <div className="flex items-center justify-center mb-3">
                 <div className="p-2 bg-yellow-500 rounded-full">
-                  <Shield className="h-5 w-5 text-white" />
+                  <Stethoscope className="h-5 w-5 text-white" />
                 </div>
               </div>
               <div className="text-2xl font-bold text-yellow-800 dark:text-yellow-200 mb-1">

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePlantaoNotifications } from '@/hooks/usePlantaoNotifications';
-import { Calendar, Clock, AlertTriangle, Settings, X, RotateCcw } from 'lucide-react';
+import { UserCheck, Clock, AlertTriangle, Settings, X, RotateCcw, Stethoscope } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -75,7 +75,7 @@ export const PlantaoPanel: React.FC<PlantaoPanelProps> = ({ className }) => {
     <Card className={cn('w-full', className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg font-semibold flex items-center gap-2 text-foreground">
-          <Calendar className="h-5 w-5" />
+          <UserCheck className="h-5 w-5" />
           Plantões
           {stats.urgent > 0 && (
             <Badge variant="destructive" className="ml-2">
@@ -168,7 +168,7 @@ export const PlantaoPanel: React.FC<PlantaoPanelProps> = ({ className }) => {
       <CardContent>
         {upcomingPlantoes.length === 0 ? (
           <div className="text-center py-4">
-            <Calendar className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+            <Stethoscope className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">Nenhum plantão agendado</p>
             <p className="text-xs text-muted-foreground mt-1">
               Marque seus plantões no calendário
