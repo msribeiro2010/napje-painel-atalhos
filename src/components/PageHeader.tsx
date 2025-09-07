@@ -24,7 +24,7 @@ export const PageHeader = ({
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm border-b border-border/20 shadow-sm mb-8">
+    <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-border/20 shadow-sm mb-8">
       <div className="container mx-auto px-6 py-6">
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           {/* Seção Principal do Cabeçalho */}
@@ -63,7 +63,7 @@ export const PageHeader = ({
             )}
             
             {/* Controles do Sistema */}
-            <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-lg border border-border/20 shadow-sm">
+            <div className="flex items-center gap-3 bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm px-4 py-2 rounded-lg border border-border/20 shadow-sm">
               <Clock />
               <div className="h-4 w-px bg-border/40" />
               <DateDisplay />

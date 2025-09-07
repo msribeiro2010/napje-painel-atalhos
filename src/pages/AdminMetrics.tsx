@@ -11,9 +11,20 @@ const AdminMetrics = () => {
 
   return (
     <ModernLayout>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-6 space-y-8 bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 rounded-lg shadow-sm border border-gray-200/50 backdrop-blur-sm relative overflow-hidden">
-        {/* Efeito de textura de jornal */}
-        <div className="absolute inset-0 opacity-[0.02] bg-[radial-gradient(circle_at_25%_25%,#000_1px,transparent_1px),radial-gradient(circle_at_75%_75%,#000_1px,transparent_1px)] bg-[length:20px_20px]"></div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-6 space-y-8 relative bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-orange-900/20 border border-amber-200/50 dark:border-amber-700/50 shadow-xl backdrop-blur-sm">
+        {/* Papyrus texture overlay */}
+        <div className="absolute inset-0 opacity-[0.08] dark:opacity-[0.15] pointer-events-none">
+          <div 
+            className="w-full h-full"
+            style={{
+              backgroundImage: `
+                linear-gradient(rgba(139,69,19,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139,69,19,0.1) 1px, transparent 1px)
+              `,
+              backgroundSize: '40px 40px'
+            }}
+          />
+        </div>
         <div className="relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between">

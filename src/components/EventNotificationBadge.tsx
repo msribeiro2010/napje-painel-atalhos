@@ -80,7 +80,7 @@ export const EventNotificationBadge = () => {
       </PopoverTrigger>
       
       <PopoverContent className="w-80 p-0" align="end">
-        <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-sm">Eventos Próximos</h3>
             <Badge variant="secondary" className="text-xs">
@@ -96,7 +96,7 @@ export const EventNotificationBadge = () => {
         
         <div className="max-h-64 overflow-y-auto">
           {allEvents.slice(0, 5).map((event) => (
-            <div key={event.id} className="p-3 border-b last:border-b-0 hover:bg-gray-50 transition-colors">
+            <div key={event.id} className="p-3 border-b last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               <div className="flex items-center gap-2">
                 <div className={`p-1.5 rounded-full ${
                   event.type === 'aniversario' 
@@ -149,7 +149,7 @@ export const EventNotificationBadge = () => {
           ))}
           
           {allEvents.length > 5 && (
-            <div className="p-3 text-center border-t bg-gray-50">
+            <div className="p-3 text-center border-t bg-gray-50 dark:bg-gray-700">
               <p className="text-xs text-muted-foreground">
                 +{allEvents.length - 5} mais evento{allEvents.length - 5 !== 1 ? 's' : ''}
               </p>
@@ -157,7 +157,7 @@ export const EventNotificationBadge = () => {
           )}
         </div>
         
-        <div className="p-3 border-t bg-gray-50">
+        <div className="p-3 border-t bg-gray-50 dark:bg-gray-700">
           <Button
             variant="outline"
             size="sm"

@@ -22,9 +22,9 @@ export const AniversarianteItem = ({
   onDelete,
 }: AniversarianteItemProps) => {
   return (
-    <div className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm border border-pink-100">
+    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-pink-100 dark:border-pink-800">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+        <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900 rounded-full flex items-center justify-center">
           <Calendar className="h-5 w-5 text-pink-600" />
         </div>
         <div>

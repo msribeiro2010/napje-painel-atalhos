@@ -220,7 +220,7 @@ const Index = () => {
 
   if (showMainForm || isGenerated) {
     return (
-      <div className="min-h-screen bg-[#f8f5e4] p-2">
+      <div className="min-h-screen bg-[#f8f5e4] dark:bg-gray-900 p-2">
         <div className="max-w-6xl mx-auto">
           {/* Header simplificado */}
           <div className="flex justify-between items-center mb-4">
@@ -299,7 +299,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8f5e4] via-[#f3ecd2] to-[#f8f5e4] p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#f8f5e4] via-[#f3ecd2] to-[#f8f5e4] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header moderno */}
         <div className="flex justify-between items-center mb-8">
@@ -312,7 +312,7 @@ const Index = () => {
                   className="h-12 w-12 cursor-pointer hover:opacity-80 transition-all duration-300 drop-shadow-lg" 
                 />
               </a>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></div>
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-[#7c6a3c] to-[#a68b5b] bg-clip-text text-transparent">
@@ -436,7 +436,7 @@ const Index = () => {
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></div>
                   Sistema Online
                 </span>
               </div>

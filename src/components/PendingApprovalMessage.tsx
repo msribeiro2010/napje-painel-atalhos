@@ -12,8 +12,8 @@ const PendingApprovalMessage = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="bg-yellow-100 p-3 rounded-full">
-              <Clock className="h-6 w-6 text-yellow-600" />
+            <div className="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-full">
+              <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
             </div>
           </div>
           <CardTitle className="text-xl">Aguardando Aprovação</CardTitle>
@@ -22,24 +22,24 @@ const PendingApprovalMessage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
             <div className="flex items-start gap-3">
-              <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
+              <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-blue-900">Status da Conta</h3>
-                <p className="text-sm text-blue-700 mt-1">
+                <h3 className="font-semibold text-blue-900 dark:text-blue-200">Status da Conta</h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                   Por questões de segurança, todas as novas contas precisam ser aprovadas por um administrador do TRT15.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+          <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg border border-green-200 dark:border-green-700">
             <div className="flex items-start gap-3">
-              <Mail className="h-5 w-5 text-green-600 mt-0.5" />
+              <Mail className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-green-900">Próximos Passos</h3>
-                <p className="text-sm text-green-700 mt-1">
+                <h3 className="font-semibold text-green-900 dark:text-green-200">Próximos Passos</h3>
+                <p className="text-sm text-green-700 dark:text-green-300 mt-1">
                   Você receberá um email assim que sua conta for aprovada. Normalmente este processo leva até 24 horas.
                 </p>
               </div>
