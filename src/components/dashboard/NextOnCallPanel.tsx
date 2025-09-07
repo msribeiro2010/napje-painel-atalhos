@@ -48,7 +48,7 @@ export const NextOnCallPanel = () => {
       <ModernCardHeader
         title="Próximo Plantão"
         description="Agenda de plantões"
-        icon={<Shield className="h-5 w-5 text-white" />}
+        icon={<UserCheck className="h-5 w-5 text-white" />}
       />
       <ModernCardContent>
         {nextOnCall ? (
