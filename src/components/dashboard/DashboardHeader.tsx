@@ -38,7 +38,7 @@ export const DashboardHeader = ({ user, isBusinessDay, nextBusinessDay, onSearch
               <div className="flex items-start gap-5">
                 <a href="https://trt15.jus.br/" target="_blank" rel="noopener noreferrer" className="group flex-shrink-0">
                   <div className="relative">
-                    <div className="p-4 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-500 rounded-3xl shadow-2xl group-hover:shadow-3xl transition-all duration-500 group-hover:scale-105 group-hover:rotate-3">
+                    <div className="p-4 bg-gradient-to-br from-amber-100 via-orange-50 to-yellow-100 rounded-3xl shadow-2xl group-hover:shadow-3xl transition-all duration-500 group-hover:scale-105 group-hover:rotate-3 border border-amber-200/50">
                       <img 
                         src="/lovable-uploads/622691d5-a295-40f0-ad0d-cb958024c4ba.png" 
                         alt="Brasão TRT15" 
@@ -51,7 +51,7 @@ export const DashboardHeader = ({ user, isBusinessDay, nextBusinessDay, onSearch
                 
                 <div className="flex flex-col justify-center min-h-[4rem]">
                   <div className="mb-2">
-                    <h1 className="text-2xl lg:text-3xl xl:text-4xl font-black bg-gradient-to-r from-gray-600 via-gray-700 to-gray-800 bg-clip-text text-transparent leading-tight drop-shadow-sm">
+                    <h1 className="text-2xl lg:text-3xl xl:text-4xl font-black bg-gradient-to-r from-gray-400 via-gray-500 to-gray-600 bg-clip-text text-transparent leading-tight drop-shadow-sm">
                       NAPJe - Controle V.10
                     </h1>
                   </div>
