@@ -389,7 +389,7 @@ const CriarChamado = () => {
         clearLocalStorage();
         
         toast.success(isEditing ? 'Chamado atualizado com sucesso!' : 'Chamado salvo com sucesso!');
-        navigate('/dashboard');
+        navigate('/');
       } else {
         toast.error(result.error || 'Erro ao salvar chamado');
       }
@@ -691,7 +691,7 @@ const CriarChamado = () => {
         <div className="mb-6 flex justify-between items-center">
           <Button 
             variant="outline" 
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/')}
             className="bg-background/80 hover:bg-background border-border/50 hover:border-border shadow-soft transition-all duration-300 hover:shadow-medium"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
