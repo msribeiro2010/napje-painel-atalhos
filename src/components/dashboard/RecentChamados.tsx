@@ -227,10 +227,10 @@ export const RecentChamados = ({
                         
                         {/* Resumo do chamado */}
                         {chamado.descricao && (
-                          <div className="bg-muted/30 p-3 rounded-lg border border-border/20">
-                            <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-                              {chamado.descricao.length > 120 
-                                ? `${chamado.descricao.substring(0, 120)}...` 
+                          <div className="bg-muted/30 p-4 rounded-lg border border-border/20">
+                            <p className="text-sm text-muted-foreground line-clamp-4 leading-relaxed">
+                              {chamado.descricao.length > 250 
+                                ? `${chamado.descricao.substring(0, 250)}...` 
                                 : chamado.descricao
                               }
                             </p>
