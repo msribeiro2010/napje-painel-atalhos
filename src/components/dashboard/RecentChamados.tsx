@@ -17,11 +17,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import type { ChamadoComPerfil } from '@/types/dashboard';
 
 interface RecentChamadosProps {
@@ -233,68 +234,62 @@ export const RecentChamados = ({
                         
                         {/* Resumo do chamado */}
                         {chamado.descricao && (
-                          <TooltipProvider delayDuration={200}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="bg-muted/30 p-4 rounded-lg border border-border/20 cursor-help hover:bg-muted/40 transition-colors relative">
-                                  <p className="text-sm text-muted-foreground line-clamp-4 leading-relaxed">
-                                    {chamado.descricao.length > 250 
-                                      ? `${chamado.descricao.substring(0, 250)}...` 
-                                      : chamado.descricao
-                                    }
-                                  </p>
-                                  {chamado.descricao.length > 250 && (
-                                    <div className="absolute top-2 right-2 text-xs text-primary/70 bg-primary/10 px-2 py-1 rounded-full">
-                                      ↗ Ver mais
-                                    </div>
-                                  )}
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent 
-                                side="top" 
-                                align="center"
-                                className="!fixed !z-[999999] max-w-2xl p-0 bg-background border border-border shadow-2xl rounded-xl overflow-hidden backdrop-blur-md"
-                                sideOffset={15}
-                                avoidCollisions={false}
-                                style={{
-                                  position: 'fixed !important',
-                                  zIndex: '999999 !important',
-                                  maxWidth: '600px',
-                                  minWidth: '400px',
-                                  transform: 'translateY(-10px)'
-                                }}
-                              >
-                                <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-4 border-b border-border/30">
-                                  <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-primary rounded-lg shadow-sm">
-                                      <FileText className="h-4 w-4 text-white" />
-                                    </div>
-                                    <div>
-                                      <h4 className="font-semibold text-foreground text-sm">Descrição Completa</h4>
-                                      <p className="text-xs text-primary">Conteúdo integral do chamado</p>
-                                    </div>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <div className="bg-muted/30 p-4 rounded-lg border border-border/20 cursor-pointer hover:bg-muted/40 transition-colors relative group">
+                                <p className="text-sm text-muted-foreground line-clamp-4 leading-relaxed group-hover:text-foreground">
+                                  {chamado.descricao.length > 250 
+                                    ? `${chamado.descricao.substring(0, 250)}...` 
+                                    : chamado.descricao
+                                  }
+                                </p>
+                                {chamado.descricao.length > 250 && (
+                                  <div className="absolute top-2 right-2 text-xs text-primary/70 bg-primary/10 px-2 py-1 rounded-full group-hover:bg-primary/20 transition-colors">
+                                    ↗ Ver completo
                                   </div>
-                                </div>
-                                
-                                <div className="p-4 bg-background">
-                                  <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-border/50 scrollbar-track-transparent pr-2">
+                                )}
+                              </div>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden bg-card/95 backdrop-blur-xl border-border/20">
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-3 text-lg">
+                                  <div className="p-2 bg-primary rounded-lg shadow-sm">
+                                    <FileText className="h-5 w-5 text-white" />
+                                  </div>
+                                  <div>
+                                    <span className="text-foreground">Descrição Completa</span>
+                                    <p className="text-sm text-muted-foreground font-normal mt-1">
+                                      {chamado.assunto || 'Chamado sem título'}
+                                    </p>
+                                  </div>
+                                </DialogTitle>
+                              </DialogHeader>
+                              
+                              <div className="mt-4">
+                                <div className="max-h-96 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-border/50 scrollbar-track-transparent">
+                                  <div className="bg-muted/30 rounded-lg p-4 border border-border/20">
                                     <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap break-words">
                                       {chamado.descricao}
                                     </p>
                                   </div>
-                                  
-                                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-border/30">
-                                    <div className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                                </div>
+                                
+                                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/30">
+                                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                    <span className="bg-muted/50 px-2 py-1 rounded">
                                       {chamado.descricao.length} caracteres
-                                    </div>
-                                    <div className="text-xs text-primary font-medium">
-                                      Clique fora para fechar
-                                    </div>
+                                    </span>
+                                    <span className="bg-muted/50 px-2 py-1 rounded">
+                                      {chamado.descricao.split(' ').length} palavras
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Pressione ESC ou clique fora para fechar
                                   </div>
                                 </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         )}
                         
                         {/* Informações secundárias */}
