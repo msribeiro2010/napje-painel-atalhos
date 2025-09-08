@@ -233,28 +233,44 @@ export const RecentChamados = ({
                         
                         {/* Resumo do chamado */}
                         {chamado.descricao && (
-                          <TooltipProvider>
+                          <TooltipProvider delayDuration={300}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className="bg-muted/30 p-4 rounded-lg border border-border/20 cursor-help hover:bg-muted/40 transition-colors">
+                                <div className="bg-muted/30 p-4 rounded-lg border border-border/20 cursor-help hover:bg-muted/40 transition-colors relative">
                                   <p className="text-sm text-muted-foreground line-clamp-4 leading-relaxed">
                                     {chamado.descricao.length > 250 
                                       ? `${chamado.descricao.substring(0, 250)}...` 
                                       : chamado.descricao
                                     }
                                   </p>
+                                  {chamado.descricao.length > 250 && (
+                                    <div className="absolute top-2 right-2 text-xs text-primary/70 bg-primary/10 px-2 py-1 rounded-full">
+                                      Ver mais
+                                    </div>
+                                  )}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent 
                                 side="top" 
-                                className="max-w-md p-4 bg-popover border border-border shadow-lg rounded-lg"
-                                sideOffset={8}
+                                align="start"
+                                className="max-w-lg p-4 bg-background/95 backdrop-blur-sm border border-border/50 shadow-xl rounded-lg z-[9999]"
+                                sideOffset={12}
+                                avoidCollisions={true}
+                                collisionPadding={16}
                               >
-                                <div className="space-y-2">
-                                  <h4 className="font-semibold text-sm text-foreground">Descrição Completa:</h4>
-                                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                                    {chamado.descricao}
-                                  </p>
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-2">
+                                    <FileText className="h-4 w-4 text-primary" />
+                                    <h4 className="font-semibold text-sm text-foreground">Descrição Completa</h4>
+                                  </div>
+                                  <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap break-words">
+                                      {chamado.descricao}
+                                    </p>
+                                  </div>
+                                  <div className="text-xs text-muted-foreground pt-2 border-t border-border/30">
+                                    {chamado.descricao.length} caracteres
+                                  </div>
                                 </div>
                               </TooltipContent>
                             </Tooltip>
