@@ -16,6 +16,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { ChamadoComPerfil } from '@/types/dashboard';
 
 interface RecentChamadosProps {
@@ -227,14 +233,32 @@ export const RecentChamados = ({
                         
                         {/* Resumo do chamado */}
                         {chamado.descricao && (
-                          <div className="bg-muted/30 p-4 rounded-lg border border-border/20">
-                            <p className="text-sm text-muted-foreground line-clamp-4 leading-relaxed">
-                              {chamado.descricao.length > 250 
-                                ? `${chamado.descricao.substring(0, 250)}...` 
-                                : chamado.descricao
-                              }
-                            </p>
-                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="bg-muted/30 p-4 rounded-lg border border-border/20 cursor-help hover:bg-muted/40 transition-colors">
+                                  <p className="text-sm text-muted-foreground line-clamp-4 leading-relaxed">
+                                    {chamado.descricao.length > 250 
+                                      ? `${chamado.descricao.substring(0, 250)}...` 
+                                      : chamado.descricao
+                                    }
+                                  </p>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent 
+                                side="top" 
+                                className="max-w-md p-4 bg-popover border border-border shadow-lg rounded-lg"
+                                sideOffset={8}
+                              >
+                                <div className="space-y-2">
+                                  <h4 className="font-semibold text-sm text-foreground">Descrição Completa:</h4>
+                                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                                    {chamado.descricao}
+                                  </p>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                         
                         {/* Informações secundárias */}
