@@ -236,7 +236,10 @@ export const RecentChamados = ({
                         {chamado.descricao && (
                           <Dialog>
                             <DialogTrigger asChild>
-                              <div className="bg-muted/30 p-4 rounded-lg border border-border/20 cursor-pointer hover:bg-muted/40 transition-colors relative group">
+                              <div 
+                                className="bg-muted/30 p-4 rounded-lg border border-border/20 cursor-pointer hover:bg-muted/40 transition-colors relative group"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <p className="text-sm text-muted-foreground line-clamp-4 leading-relaxed group-hover:text-foreground">
                                   {chamado.descricao.length > 250 
                                     ? `${chamado.descricao.substring(0, 250)}...` 
