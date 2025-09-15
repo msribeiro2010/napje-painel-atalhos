@@ -287,6 +287,7 @@ const AdminSystemConfig = () => {
       newLinks.push({
         name: linkForm.name.trim(),
         url: linkForm.url.trim(),
+        type: 'url',
         order: newLinks.length + 1
       });
     }
