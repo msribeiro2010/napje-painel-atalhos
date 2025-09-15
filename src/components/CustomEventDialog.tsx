@@ -166,7 +166,12 @@ export function CustomEventDialog({ onAdd }: { onAdd: (event: { date: string, ty
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Link/URL (opcional)</label>
-            <Input value={url} onChange={e => setUrl(e.target.value)} type="url" placeholder="https://exemplo.com" />
+            <Input 
+              value={url} 
+              onChange={(e) => setUrl(e.target.value)} 
+              type="url" 
+              placeholder="https://exemplo.com" 
+            />
           </div>
           <div className="flex justify-end">
             <Button type="submit" disabled={loading || !date || !title} className="bg-primary text-white hover:bg-primary/90">

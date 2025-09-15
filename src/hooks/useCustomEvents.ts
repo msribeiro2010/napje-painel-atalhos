@@ -142,11 +142,15 @@ export const useCustomEvents = (month: Date) => {
       if (event.end_time) {
         eventToInsert.end_time = event.end_time;
       }
-      if (event.url) {
-        eventToInsert.url = event.url;
+      if (event.url && event.url.trim()) {
+        eventToInsert.url = event.url.trim();
       }
       
-      console.log('🔄 Dados completos para inserção:', eventToInsert);
+      // Debug: log apenas se VITE_DEBUG estiver habilitado
+      if (import.meta.env.VITE_DEBUG === 'true') {
+        console.log('🔄 Dados para inserção:', eventToInsert);
+        console.log('🔗 URL presente:', 'url' in eventToInsert ? 'SIM' : 'NÃO');
+      }
       
       const { data, error } = await supabase
         .from('user_custom_events')
@@ -154,9 +158,12 @@ export const useCustomEvents = (month: Date) => {
         .select()
         .single();
         
+      if (import.meta.env.VITE_DEBUG === 'true') {
+        console.log('📥 Resposta do Supabase:', { data, error });
+      }
+        
       if (error) {
         console.error('❌ Erro ao salvar evento:', error);
-        console.error('❌ Detalhes do erro:', { code: error.code, details: error.details, hint: error.hint, message: error.message });
         
         // Verificar tipos específicos de erro
         if (error.code === 'PGRST301') {
@@ -170,9 +177,17 @@ export const useCustomEvents = (month: Date) => {
         throw error;
       }
       
-      console.log('✅ Evento salvo com sucesso:', data);
-      console.log('✅ ID do evento criado:', data.id);
-      console.log('✅ Data do evento salvo:', data.date);
+      // Debug: verificar se o URL foi salvo corretamente
+      if (import.meta.env.VITE_DEBUG === 'true') {
+        console.log('✅ Evento salvo com sucesso:', data);
+        if (eventToInsert.url) {
+          if (data.url === eventToInsert.url) {
+            console.log('🔗 ✅ URL salvo corretamente:', data.url);
+          } else {
+            console.log('🔗 ⚠️ URL não salvo. Esperado:', eventToInsert.url, 'Recebido:', data.url);
+          }
+        }
+      }
       
       // Atualizar lista local
       setCustomEvents(prev => [...prev, data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));

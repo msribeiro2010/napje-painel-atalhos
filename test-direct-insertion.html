@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Direto de Inserção URL</title>
+</head>
+<body>
+    <h1>Teste de Inserção do Campo URL</h1>
+    
+    <form id="eventForm">
+        <div>
+            <label>Título:</label>
+            <input type="text" id="title" value="Evento de Teste" required>
+        </div>
+        <div>
+            <label>Data:</label>
+            <input type="date" id="date" value="2024-12-25" required>
+        </div>
+        <div>
+            <label>Tipo:</label>
+            <select id="type">
+                <option value="reuniao">Reunião</option>
+                <option value="curso">Curso</option>
+            </select>
+        </div>
+        <div>
+            <label>URL:</label>
+            <input type="url" id="url" value="https://example.com/meeting" placeholder="https://exemplo.com">
+        </div>
+        <button type="submit">Testar Inserção</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('eventForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('title').value,
+                date: document.getElementById('date').value,
+                type: document.getElementById('type').value,
+                url: document.getElementById('url').value
+            };
+            
+            console.log('📝 Dados do formulário:', formData);
+            
+            // Simular a lógica do useCustomEvents
+            const eventToInsert = {
+                user_id: 'test-user-id',
+                date: formData.date,
+                type: formData.type,
+                title: formData.title
+            };
+            
+            // Adicionar URL se existir (mesma lógica do hook)
+            if (formData.url && formData.url.trim()) {
+                eventToInsert.url = formData.url.trim();
+                console.log('🔗 URL adicionado aos dados:', formData.url.trim());
+            } else {
+                console.log('⚠️ URL não foi adicionado - valor:', formData.url);
+            }
+            
+            console.log('🔄 Dados preparados para inserção:', eventToInsert);
+            console.log('🔍 URL está presente?', 'url' in eventToInsert ? '✅ SIM' : '❌ NÃO');
+            
+            // Mostrar resultado na página
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h3>Resultado do Teste:</h3>
+                <pre>${JSON.stringify(eventToInsert, null, 2)}</pre>
+                <p><strong>URL presente:</strong> ${'url' in eventToInsert ? '✅ SIM' : '❌ NÃO'}</p>
+                ${eventToInsert.url ? `<p><strong>Valor do URL:</strong> ${eventToInsert.url}</p>` : ''}
+            `;
+        });
+    </script>
+</body>
+</html>
