@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, X, Bell, Sparkles, Play, CheckCircle, AlertCircle, Edit, Trash2, Copy, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, X, Bell, Sparkles, Play, CheckCircle, AlertCircle, Edit, Trash2 } from 'lucide-react';
 import { format, isToday, isTomorrow, addDays, isPast, isAfter, isBefore, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useUpcomingEventsModal, UpcomingEvent } from '@/hooks/useUpcomingEventsModal';
@@ -30,21 +30,7 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
 
-  const handleCopyUrl = async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      toast({
-        title: "Link copiado!",
-        description: "O link do evento foi copiado para a área de transferência.",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao copiar",
-        description: "Não foi possível copiar o link. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
+
 
   const handleEditEvent = (event: UpcomingEvent) => {
     if (event.type === 'custom') {
@@ -317,34 +303,7 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
                             </div>
                           )}
                           
-                          {/* Link do evento */}
-                          {event.url && (
-                            <div className="bg-white/40 backdrop-blur-sm rounded-lg p-3 mb-3 border border-white/30">
-                              <div className="flex items-center gap-2 mb-2">
-                                <ExternalLink className="h-4 w-4 text-blue-600" />
-                                <span className="text-sm font-semibold text-slate-700">Link do evento:</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <a 
-                                  href={event.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-blue-600 hover:text-blue-800 underline truncate flex-1 font-medium"
-                                >
-                                  {event.url}
-                                </a>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleCopyUrl(event.url!)}
-                                  className="flex items-center gap-1 text-xs font-semibold hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 rounded-full px-3 py-1 transition-all duration-200 shadow-sm"
-                                >
-                                  <Copy className="h-3 w-3" />
-                                  Copiar
-                                </Button>
-                              </div>
-                            </div>
-                          )}
+
                           
                           {/* Botões de ação para eventos personalizados */}
                           {event.type === 'custom' && (
