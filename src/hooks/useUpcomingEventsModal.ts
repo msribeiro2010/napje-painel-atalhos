@@ -25,7 +25,6 @@ export interface UpcomingEvent {
   category?: string;
   icon?: string;
   color?: string;
-  url?: string;
 }
 
 export const useUpcomingEventsModal = () => {
@@ -63,8 +62,7 @@ export const useUpcomingEventsModal = () => {
           end_time: event.end_time || undefined,
           category: event.type,
           icon: getCustomEventIcon(event.type),
-          color: getCustomEventColor(event.type),
-          url: event.url || undefined
+          color: getCustomEventColor(event.type)
         });
       }
     });

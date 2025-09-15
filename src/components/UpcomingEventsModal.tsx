@@ -56,8 +56,7 @@ const UpcomingEventsModal: React.FC<UpcomingEventsModalProps> = ({
         title: event.title,
         description: event.description,
         start_time: event.start_time,
-        end_time: event.end_time,
-        url: event.url
+        end_time: event.end_time
       };
       setEditingEvent(customEvent);
       setIsEditDialogOpen(true);

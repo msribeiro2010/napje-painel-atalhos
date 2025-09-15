@@ -13,7 +13,6 @@ export interface CustomEvent {
   description?: string;
   start_time?: string; // HH:MM
   end_time?: string; // HH:MM
-  url?: string; // URL/link do evento
 }
 
 // Cache simples para reduzir consultas
@@ -142,14 +141,10 @@ export const useCustomEvents = (month: Date) => {
       if (event.end_time) {
         eventToInsert.end_time = event.end_time;
       }
-      if (event.url && event.url.trim()) {
-        eventToInsert.url = event.url.trim();
-      }
       
       // Debug: log apenas se VITE_DEBUG estiver habilitado
       if (import.meta.env.VITE_DEBUG === 'true') {
         console.log('🔄 Dados para inserção:', eventToInsert);
-        console.log('🔗 URL presente:', 'url' in eventToInsert ? 'SIM' : 'NÃO');
       }
       
       const { data, error } = await supabase
@@ -177,16 +172,9 @@ export const useCustomEvents = (month: Date) => {
         throw error;
       }
       
-      // Debug: verificar se o URL foi salvo corretamente
+      // Debug: verificar se o evento foi salvo corretamente
       if (import.meta.env.VITE_DEBUG === 'true') {
         console.log('✅ Evento salvo com sucesso:', data);
-        if (eventToInsert.url) {
-          if (data.url === eventToInsert.url) {
-            console.log('🔗 ✅ URL salvo corretamente:', data.url);
-          } else {
-            console.log('🔗 ⚠️ URL não salvo. Esperado:', eventToInsert.url, 'Recebido:', data.url);
-          }
-        }
       }
       
       // Atualizar lista local
