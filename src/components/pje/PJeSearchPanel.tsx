@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, FileText, Users, Building2, Loader2, FileSearch, Upload, Download, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Search, FileText, Users, Building2, Loader2, FileSearch, Upload, Download, CheckCircle2, XCircle, AlertCircle, Scale, BookOpen, FolderOpen, UserCheck, FileCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
+import '@/styles/consultas-pje.css';
 
 export const PJeSearchPanel = () => {
   const { loading, searchOrgaosJulgadores, searchProcessos, searchServidores } = usePJeSearch();
@@ -520,65 +521,76 @@ export const PJeSearchPanel = () => {
   };
 
   return (
-    <>
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Consultas PJe</CardTitle>
-          <CardDescription>
-            Pesquise órgãos julgadores, processos e servidores nas bases do PJe 1º e 2º grau
-          </CardDescription>
+    <div className="pje-container">
+      <Card className="w-full pje-card">
+        <CardHeader className="pje-card-header">
+          <div className="flex items-center gap-3">
+            <Scale className="h-6 w-6 text-amber-700" />
+            <div>
+              <CardTitle className="pje-card-title">Consultas PJe</CardTitle>
+              <CardDescription className="pje-card-description">
+                Sistema de consultas integrado às bases do PJe 1º e 2º grau - TRT 15ª Região
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
         <Tabs defaultValue="ojs" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="ojs" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-5 pje-tabs-list">
+            <TabsTrigger value="ojs" className="flex items-center gap-2 pje-tab-trigger">
               <Building2 className="h-4 w-4" />
-              Órgãos Julgadores
+              <span className="hidden sm:inline">Órgãos Julgadores</span>
+              <span className="sm:hidden">OJs</span>
             </TabsTrigger>
-            <TabsTrigger value="processos" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
+            <TabsTrigger value="processos" className="flex items-center gap-2 pje-tab-trigger">
+              <FolderOpen className="h-4 w-4" />
               Processos
             </TabsTrigger>
-            <TabsTrigger value="servidores" className="flex items-center gap-2">
+            <TabsTrigger value="servidores" className="flex items-center gap-2 pje-tab-trigger">
               <Users className="h-4 w-4" />
               Servidores
             </TabsTrigger>
-            <TabsTrigger value="processos-documento" className="flex items-center gap-2">
-              <FileSearch className="h-4 w-4" />
-              Processos/CPF/CNPJ
+            <TabsTrigger value="processos-documento" className="flex items-center gap-2 pje-tab-trigger">
+              <FileCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">CPF/CNPJ</span>
+              <span className="sm:hidden">Docs</span>
             </TabsTrigger>
-            <TabsTrigger value="servidor-ojs" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Servidor/OJ
+            <TabsTrigger value="servidor-ojs" className="flex items-center gap-2 pje-tab-trigger">
+              <UserCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Servidor/OJ</span>
+              <span className="sm:hidden">S/OJ</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="ojs" className="space-y-4 mt-4">
+          <TabsContent value="ojs" className="space-y-4 mt-6 pje-fade-in">
             <div className="space-y-4">
-              <RadioGroup value={ojGrau} onValueChange={(value) => setOjGrau(value as '1' | '2')}>
-                <div className="flex items-center space-x-4">
-                  <Label>Grau:</Label>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="1" id="oj-grau-1" />
-                    <Label htmlFor="oj-grau-1">1º Grau</Label>
+              <div className="bg-gradient-to-r from-amber-50/50 to-orange-50/30 p-4 rounded-lg border border-amber-200/50">
+                <RadioGroup value={ojGrau} onValueChange={(value) => setOjGrau(value as '1' | '2')} className="pje-radio-group">
+                  <Label className="pje-label text-amber-800">Selecione o Grau de Jurisdição:</Label>
+                  <div className="flex items-center space-x-6 mt-2">
+                    <div className="flex items-center space-x-2 pje-radio-item">
+                      <RadioGroupItem value="1" id="oj-grau-1" className="pje-radio-button" />
+                      <Label htmlFor="oj-grau-1" className="font-medium text-amber-700 cursor-pointer">1º Grau</Label>
+                    </div>
+                    <div className="flex items-center space-x-2 pje-radio-item">
+                      <RadioGroupItem value="2" id="oj-grau-2" className="pje-radio-button" />
+                      <Label htmlFor="oj-grau-2" className="font-medium text-amber-700 cursor-pointer">2º Grau</Label>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="2" id="oj-grau-2" />
-                    <Label htmlFor="oj-grau-2">2º Grau</Label>
-                  </div>
-                </div>
-              </RadioGroup>
+                </RadioGroup>
+              </div>
 
               <div className="space-y-2">
-                <Label htmlFor="oj-cidade">Cidade</Label>
-                <div className="flex gap-2">
+                <Label htmlFor="oj-cidade" className="pje-label">Pesquisar por Município</Label>
+                <div className="flex gap-3">
                   <Input
                     id="oj-cidade"
                     value={ojCidade}
                     onChange={(e) => setOjCidade(e.target.value)}
                     placeholder="Ex: Campinas, São Paulo, Ribeirão Preto..."
+                    className="pje-input flex-1"
                   />
-                  <Button onClick={handleOjSearch} disabled={loadingOj}>
+                  <Button onClick={handleOjSearch} disabled={loadingOj} className="pje-button">
                     <Search className="h-4 w-4 mr-2" />
                     {loadingOj ? 'Buscando...' : 'Buscar OJs'}
                   </Button>
@@ -586,23 +598,37 @@ export const PJeSearchPanel = () => {
               </div>
 
               {ojResults.length > 0 && (
-                <div className="border rounded-lg p-4 space-y-2 max-h-96 overflow-y-auto">
-                  <h4 className="font-medium text-sm text-muted-foreground mb-2">
-                    {ojResults.length} resultado(s) encontrado(s)
-                  </h4>
-                  {ojResults.map((oj) => (
-                    <div key={oj.id} className="p-3 border rounded hover:bg-accent cursor-pointer">
-                      <div className="font-medium">{oj.nome}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Sigla: {oj.sigla} | ID: {oj.id}
-                      </div>
-                      {oj.cidade && (
-                        <div className="text-sm text-muted-foreground">
-                          Cidade: {oj.cidade}{oj.uf ? ` - ${oj.uf}` : ''}
+                <div className="bg-gradient-to-br from-amber-50/30 to-orange-50/20 border border-amber-200/50 rounded-xl p-4 space-y-3 max-h-96 overflow-y-auto pje-scrollbar pje-fade-in">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-amber-800">
+                      {ojResults.length} Órgão(s) Julgador(es) encontrado(s)
+                    </h4>
+                    <Badge className="pje-badge pje-badge-primary">
+                      {ojGrau === '1' ? '1º Grau' : '2º Grau'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {ojResults.map((oj) => (
+                      <div key={oj.id} className="pje-result-card group cursor-pointer">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="font-semibold text-amber-900 group-hover:text-amber-700 transition-colors">
+                              {oj.nome}
+                            </div>
+                            <div className="text-sm text-amber-700/80 mt-1">
+                              <span className="font-medium">Sigla:</span> {oj.sigla} • <span className="font-medium">ID:</span> {oj.id}
+                            </div>
+                            {oj.cidade && (
+                              <div className="text-sm text-amber-600/70 mt-1">
+                                <span className="font-medium">Município:</span> {oj.cidade}{oj.uf ? ` - ${oj.uf}` : ''}
+                              </div>
+                            )}
+                          </div>
+                          <Building2 className="h-5 w-5 text-amber-400 mt-1 group-hover:text-amber-600 transition-colors" />
                         </div>
-                      )}
-                    </div>
-                  ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -1466,6 +1492,6 @@ Vara do Trabalho de Piracicaba`}
         detalhes={processoDetalhes}
         loading={loadingDetalhes}
       />
-    </>
+    </div>
   );
 };
