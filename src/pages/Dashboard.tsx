@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, Plus, StickyNote, Scale, Calendar, Zap, Building2, Home, ExternalLink } from 'lucide-react';
+import { BookOpen, Plus, StickyNote, Scale, Calendar, Zap, Building2, Home, ExternalLink, Database } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useShortcutsPreferences } from '@/hooks/useShortcutsPreferences';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -784,6 +784,13 @@ const Dashboard = () => {
       description: "Consultar órgãos",
       onClick: () => navigate('/orgaos-julgadores'),
       color: "bg-gradient-to-r from-rose-500 to-pink-600"
+    },
+    {
+      icon: Database,
+      title: "Consultas PJe",
+      description: "Buscar no PJe 1º e 2º grau",
+      onClick: () => navigate('/consultas-pje'),
+      color: "bg-gradient-to-r from-indigo-500 to-purple-600"
     }
   ];
 

@@ -25,6 +25,8 @@ const AdminSystemConfig = lazy(() => import("./pages/AdminSystemConfig"));
 const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const OrgaosJulgadores = lazy(() => import("./pages/OrgaosJulgadores"));
 const ImportantMemories = lazy(() => import("./pages/ImportantMemories"));
+const ConsultasPJe = lazy(() => import("./pages/ConsultasPJe"));
+const ConfiguracaoPJe = lazy(() => import("./pages/ConfiguracaoPJe"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -157,6 +159,22 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <ImportantMemories />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/consultas-pje"
+                  element={
+                    <ProtectedRoute>
+                      <ConsultasPJe />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/configuracao-pje"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <ConfiguracaoPJe />
                     </ProtectedRoute>
                   }
                 />
