@@ -211,7 +211,7 @@ export const PJeSearchPanel = () => {
     
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_PJE_API_URL}/servidor-ojs?cpf=${servidorOjCpf}&grau=${servidorOjGrau}`,
+        `http://localhost:3001/api/pje/servidor-ojs?cpf=${servidorOjCpf}&grau=${servidorOjGrau}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -219,17 +219,33 @@ export const PJeSearchPanel = () => {
         }
       );
       
-      if (!response.ok) throw new Error('Erro ao buscar OJs do servidor');
+      if (!response.ok) {
+        // Tenta pegar a mensagem de erro do servidor
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erro ao buscar OJs do servidor');
+        } else {
+          throw new Error('Servidor PJe não está acessível. Verifique se está conectado à rede interna do TRT15.');
+        }
+      }
       
       const data = await response.json();
       setServidorOjResults(data);
       
-      if (data.ojs_localizacoes.length === 0) {
+      if (data.ojs_localizacoes?.length === 0) {
         toast.info('Nenhuma OJ/localidade encontrada para este CPF');
       }
     } catch (error) {
       console.error('Erro ao buscar OJs do servidor:', error);
-      toast.error('Erro ao buscar OJs do servidor');
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        toast.error('Servidor PJe não está rodando. Execute: npm run pje:server');
+      } else if (error instanceof SyntaxError) {
+        toast.error('Erro de conexão com servidor PJe. Verifique se está na rede interna do TRT15.');
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Erro ao buscar OJs do servidor');
+      }
     } finally {
       setLoadingServidorOj(false);
     }
