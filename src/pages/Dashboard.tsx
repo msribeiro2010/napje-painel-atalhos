@@ -8,6 +8,7 @@ import { useShortcutsPreferences } from '@/hooks/useShortcutsPreferences';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ModernButton } from '@/components/ui/modern-button';
+import '@/styles/dashboard-modern.css';
 
 import { ModernLayout } from '@/components/layout/ModernLayout';
 import { ModernCard, ModernCardContent, ModernCardHeader } from '@/components/ui/modern-card';
@@ -798,51 +799,61 @@ const Dashboard = () => {
     <ErrorBoundary>
       <ModernLayout>
       {/* Container principal com padding responsivo */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-6 space-y-8 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-orange-900/20 rounded-lg shadow-sm border border-amber-200/50 dark:border-amber-700/50 backdrop-blur-sm relative overflow-hidden">
+      <div className="dashboard-container container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-6 space-y-8 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-orange-900/20 rounded-lg shadow-sm border border-amber-200/50 dark:border-amber-700/50 backdrop-blur-sm relative overflow-hidden">
         {/* Efeito de textura de papiro */}
         <div className="absolute inset-0 opacity-[0.08] dark:opacity-[0.15] bg-[linear-gradient(rgba(139,69,19,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(139,69,19,0.1)_1px,transparent_1px)] bg-[length:40px_40px]"></div>
         <div className="relative z-10">
         {/* Header Modernizado */}
-        <DashboardHeader 
-          user={user} 
-          onSearch={() => setSmartSearchOpen(true)}
-        />
+        <div className="dashboard-header rounded-xl mb-6">
+          <DashboardHeader 
+            user={user} 
+            onSearch={() => setSmartSearchOpen(true)}
+          />
+        </div>
 
 
 
         {/* Grid Principal */}
-        <ModernGrid cols={4} gap="lg">
+        <div className="dashboard-grid">
           {/* Coluna Principal */}
-          <ModernGridItem span={3}>
+          <div className="dashboard-main-column">
             <div className="space-y-8">
               {/* Eventos e Notificações */}
               
               {/* Ações Rápidas Compactas */}
-              <DashboardActions 
-                actions={actions}
-                favorites={actionFavorites}
-                onToggleFavorite={toggleActionFavorite}
-              />
+              <div className="dashboard-card">
+                <DashboardActions 
+                  actions={actions}
+                  favorites={actionFavorites}
+                  onToggleFavorite={toggleActionFavorite}
+                />
+              </div>
 
             {/* Chamados Recentes Modernos */}
-            <RecentChamados 
-              chamados={chamadosRecentes}
-              isLoading={chamadosLoading}
-              onDuplicar={duplicarChamado}
-              onEditar={editarChamado}
-              onExcluir={handleExcluir}
-            />
+            <div className="dashboard-card">
+              <RecentChamados 
+                chamados={chamadosRecentes}
+                isLoading={chamadosLoading}
+                onDuplicar={duplicarChamado}
+                onEditar={editarChamado}
+                onExcluir={handleExcluir}
+              />
+            </div>
           </div>
-        </ModernGridItem>
+        </div>
 
         {/* Coluna Lateral - Painéis Verticais */}
-        <ModernGridItem span={1}>
+        <div className="dashboard-side-column">
           <div className="space-y-6 sticky top-6">
             {/* Próximo Plantão */}
-            <NextOnCallPanel />
+            <div className="side-panel">
+              <NextOnCallPanel />
+            </div>
 
             {/* Aniversariantes do Mês */}
-            <MonthlyBirthdaysPanel />
+            <div className="side-panel">
+              <MonthlyBirthdaysPanel />
+            </div>
 
 
 
@@ -904,8 +915,8 @@ const Dashboard = () => {
                 </ModernCardContent>
               </ModernCard> */}
           </div>
-        </ModernGridItem>
-        </ModernGrid>
+        </div>
+        </div>
 
         {/* Footer Elegante */}
         <DashboardFooter />
