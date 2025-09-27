@@ -310,6 +310,15 @@ const UserMenu = () => {
             <span>Configurar Banco PJe</span>
           </DropdownMenuItem>
         )}
+        {profile.is_admin && (
+          <DropdownMenuItem 
+            onClick={() => navigate('/analytics-pje')}
+            className="cursor-pointer hover:bg-gradient-accent"
+          >
+            <BarChart3 className="mr-2 h-4 w-4" />
+            <span>Analytics PJe - Big Data</span>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           onClick={handleSignOut}

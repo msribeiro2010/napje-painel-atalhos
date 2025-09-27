@@ -28,6 +28,7 @@ const ImportantMemories = lazy(() => import("./pages/ImportantMemories"));
 const ConsultasPJe = lazy(() => import("./pages/ConsultasPJe"));
 const ConfiguracaoPJe = lazy(() => import("./pages/ConfiguracaoPJe"));
 const ConfiguracaoBanco = lazy(() => import("./pages/ConfiguracaoBanco"));
+const AnalyticsPJe = lazy(() => import("./pages/AnalyticsPJe"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -184,6 +185,14 @@ const App = () => (
                   element={
                     <ProtectedRoute requireAdmin={true}>
                       <ConfiguracaoBanco />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/analytics-pje"
+                  element={
+                    <ProtectedRoute requireAdmin={true}>
+                      <AnalyticsPJe />
                     </ProtectedRoute>
                   }
                 />

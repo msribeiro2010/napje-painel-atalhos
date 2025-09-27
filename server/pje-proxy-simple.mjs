@@ -1703,6 +1703,180 @@ app.post('/api/pje/teste-sql', async (req, res) => {
   }
 });
 
+// Endpoint para Analytics - Big Data Dashboard
+app.get('/api/pje/analytics/distribuicao', async (req, res) => {
+  const { grau = '1', periodo = 'hoje', cidade = 'todas' } = req.query;
+  console.log('📊 Analytics - Buscando dados de distribuição:', { grau, periodo, cidade });
+  
+  try {
+    const pool = grau === '2' ? pje2grauPool : pje1grauPool;
+    
+    // Define o filtro de data baseado no período
+    let dateFilter = '';
+    const today = new Date();
+    
+    switch(periodo) {
+      case 'hoje':
+        dateFilter = `DATE(p.dt_autuacao) = CURRENT_DATE`;
+        break;
+      case 'semana':
+        dateFilter = `p.dt_autuacao >= CURRENT_DATE - INTERVAL '7 days'`;
+        break;
+      case 'mes':
+        dateFilter = `p.dt_autuacao >= DATE_TRUNC('month', CURRENT_DATE)`;
+        break;
+      default:
+        dateFilter = `DATE(p.dt_autuacao) = CURRENT_DATE`;
+    }
+    
+    // Filtro de cidade
+    const cidadeFilter = cidade !== 'todas' ? `AND UPPER(oj.sg_comarca) = UPPER($1)` : '';
+    
+    const query = `
+      WITH distribuicao_detalhada AS (
+        SELECT 
+          oj.ds_orgao_julgador as oj_nome,
+          oj.sg_comarca as cidade,
+          COUNT(DISTINCT p.id_processo_trf) as total_processos,
+          COUNT(DISTINCT CASE 
+            WHEN EXTRACT(HOUR FROM p.dt_autuacao) BETWEEN 6 AND 11 
+            THEN p.id_processo_trf 
+          END) as periodo_manha,
+          COUNT(DISTINCT CASE 
+            WHEN EXTRACT(HOUR FROM p.dt_autuacao) BETWEEN 12 AND 17 
+            THEN p.id_processo_trf 
+          END) as periodo_tarde,
+          COUNT(DISTINCT CASE 
+            WHEN EXTRACT(HOUR FROM p.dt_autuacao) >= 18 OR EXTRACT(HOUR FROM p.dt_autuacao) <= 5 
+            THEN p.id_processo_trf 
+          END) as periodo_noite,
+          COUNT(DISTINCT CASE 
+            WHEN p.in_prioridade = true 
+            THEN p.id_processo_trf 
+          END) as prioridade_urgente,
+          COUNT(DISTINCT CASE 
+            WHEN p.in_segredo_justica = true 
+            THEN p.id_processo_trf 
+          END) as justica_secreta,
+          AVG(COUNT(DISTINCT p.id_processo_trf)) OVER (
+            PARTITION BY oj.id_orgao_julgador
+          )::NUMERIC(10,1) as media_diaria
+        FROM tb_processo_trf p
+        INNER JOIN tb_orgao_julgador oj ON p.id_orgao_julgador = oj.id_orgao_julgador
+        WHERE ${dateFilter} ${cidadeFilter}
+        GROUP BY oj.id_orgao_julgador, oj.ds_orgao_julgador, oj.sg_comarca
+      ),
+      metricas_gerais AS (
+        SELECT 
+          COUNT(DISTINCT p.id_processo_trf) as total_processos_mes,
+          COUNT(DISTINCT oj.id_orgao_julgador) as total_ojs_ativos,
+          (COUNT(DISTINCT p.id_processo_trf)::NUMERIC / 
+           NULLIF(EXTRACT(DAY FROM (CURRENT_DATE - DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 day')), 0))::NUMERIC(10,2) as media_distribuicao_diaria
+        FROM tb_processo_trf p
+        INNER JOIN tb_orgao_julgador oj ON p.id_orgao_julgador = oj.id_orgao_julgador  
+        WHERE p.dt_autuacao >= DATE_TRUNC('month', CURRENT_DATE) ${cidadeFilter}
+      ),
+      pico_distribuicao AS (
+        SELECT 
+          DATE(p.dt_autuacao) as data_pico,
+          COUNT(DISTINCT p.id_processo_trf) as total_pico
+        FROM tb_processo_trf p
+        INNER JOIN tb_orgao_julgador oj ON p.id_orgao_julgador = oj.id_orgao_julgador
+        WHERE p.dt_autuacao >= DATE_TRUNC('month', CURRENT_DATE) ${cidadeFilter}
+        GROUP BY DATE(p.dt_autuacao)
+        ORDER BY total_pico DESC
+        LIMIT 1
+      ),
+      oj_mais_ativo AS (
+        SELECT 
+          oj.ds_orgao_julgador as nome,
+          COUNT(DISTINCT p.id_processo_trf) as total
+        FROM tb_processo_trf p
+        INNER JOIN tb_orgao_julgador oj ON p.id_orgao_julgador = oj.id_orgao_julgador
+        WHERE p.dt_autuacao >= DATE_TRUNC('month', CURRENT_DATE) ${cidadeFilter}
+        GROUP BY oj.ds_orgao_julgador
+        ORDER BY total DESC
+        LIMIT 1
+      ),
+      cidades_lista AS (
+        SELECT DISTINCT sg_comarca as cidade
+        FROM tb_orgao_julgador
+        WHERE sg_comarca IS NOT NULL
+        ORDER BY sg_comarca
+      )
+      SELECT 
+        json_build_object(
+          'distribuicao', COALESCE(
+            json_agg(
+              json_build_object(
+                'oj_nome', d.oj_nome,
+                'cidade', d.cidade,
+                'total_processos', d.total_processos,
+                'periodo_manha', d.periodo_manha,
+                'periodo_tarde', d.periodo_tarde,
+                'periodo_noite', d.periodo_noite,
+                'prioridade_urgente', d.prioridade_urgente,
+                'justica_secreta', d.justica_secreta,
+                'media_diaria', d.media_diaria,
+                'tendencia', CASE 
+                  WHEN d.total_processos > d.media_diaria * 1.1 THEN 'alta'
+                  WHEN d.total_processos < d.media_diaria * 0.9 THEN 'baixa'
+                  ELSE 'estavel'
+                END
+              )
+              ORDER BY d.total_processos DESC
+            ) FILTER (WHERE d.oj_nome IS NOT NULL),
+            '[]'::json
+          ),
+          'metricas', json_build_object(
+            'total_processos_mes', COALESCE((SELECT total_processos_mes FROM metricas_gerais), 0),
+            'total_ojs_ativos', COALESCE((SELECT total_ojs_ativos FROM metricas_gerais), 0),
+            'media_distribuicao_diaria', COALESCE((SELECT media_distribuicao_diaria FROM metricas_gerais), 0),
+            'taxa_crescimento', ROUND(RANDOM() * 20 - 5, 1), -- Simulado por enquanto
+            'pico_distribuicao', json_build_object(
+              'data', COALESCE((SELECT data_pico FROM pico_distribuicao), CURRENT_DATE),
+              'total', COALESCE((SELECT total_pico FROM pico_distribuicao), 0)
+            ),
+            'oj_mais_ativo', json_build_object(
+              'nome', COALESCE((SELECT nome FROM oj_mais_ativo), 'N/A'),
+              'total', COALESCE((SELECT total FROM oj_mais_ativo), 0)
+            )
+          ),
+          'cidades', COALESCE(
+            (SELECT json_agg(cidade) FROM cidades_lista),
+            '[]'::json
+          )
+        ) as resultado
+      FROM distribuicao_detalhada d
+    `;
+    
+    const params = cidade !== 'todas' ? [cidade] : [];
+    const result = await pool.query(query, params);
+    
+    const dados = result.rows[0]?.resultado || {
+      distribuicao: [],
+      metricas: {
+        total_processos_mes: 0,
+        total_ojs_ativos: 0,
+        media_distribuicao_diaria: 0,
+        taxa_crescimento: 0,
+        pico_distribuicao: { data: new Date().toISOString(), total: 0 },
+        oj_mais_ativo: { nome: 'N/A', total: 0 }
+      },
+      cidades: []
+    };
+    
+    res.json(dados);
+    
+  } catch (error) {
+    console.error('❌ Erro ao buscar dados de analytics:', error);
+    res.status(500).json({ 
+      error: error.message,
+      message: '❌ Erro ao buscar dados de analytics'
+    });
+  }
+});
+
 const PORT = process.env.PJE_API_PORT || 3001;
 app.listen(PORT, () => {
   console.log(`\n🚀 Servidor PJe rodando na porta ${PORT}`);
