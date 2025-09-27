@@ -24,7 +24,8 @@ import {
   AlertCircle,
   CheckCircle,
   Server,
-  RefreshCw
+  RefreshCw,
+  ArrowLeft
 } from 'lucide-react';
 import '@/styles/consultas-pje.css';
 
@@ -455,14 +456,23 @@ const ConfiguracaoBanco = () => {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Server className="h-8 w-8 text-primary" />
-              Configuração de Banco de Dados PJe
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Configure a conexão com os bancos de dados do PJe 1º e 2º Grau
-            </p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate(-1)}
+              className="p-2"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold flex items-center gap-2">
+                <Server className="h-8 w-8 text-primary" />
+                Configuração de Banco de Dados PJe
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Configure a conexão com os bancos de dados do PJe 1º e 2º Grau
+              </p>
+            </div>
           </div>
           
           <div className="flex gap-2">
