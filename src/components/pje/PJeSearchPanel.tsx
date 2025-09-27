@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, FileText, Users, Building2, Loader2, FileSearch, Upload, Download, CheckCircle2, XCircle, AlertCircle, Scale, BookOpen, FolderOpen, UserCheck, FileCheck, Settings } from 'lucide-react';
+import { Search, FileText, Users, Building2, Loader2, FileSearch, Upload, Download, CheckCircle2, XCircle, AlertCircle, Scale, BookOpen, FolderOpen, UserCheck, FileCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -18,34 +18,10 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import '@/styles/consultas-pje.css';
 
 export const PJeSearchPanel = () => {
   const { loading, searchOrgaosJulgadores, searchProcessos, searchServidores } = usePJeSearch();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  
-  // Verificar se é admin
-  const { data: isAdmin } = useQuery({
-    queryKey: ['user-admin', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) return false;
-      return data?.is_admin || false;
-    },
-    enabled: !!user?.id
-  });
   
   // Estados de loading separados para cada busca
   const [loadingOj, setLoadingOj] = useState(false);
@@ -548,27 +524,14 @@ export const PJeSearchPanel = () => {
     <div className="pje-container">
       <Card className="w-full pje-card">
         <CardHeader className="pje-card-header">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Scale className="h-6 w-6 text-amber-700" />
-              <div>
-                <CardTitle className="pje-card-title">Consultas PJe</CardTitle>
-                <CardDescription className="pje-card-description">
-                  Sistema de consultas integrado às bases do PJe 1º e 2º grau - TRT 15ª Região
-                </CardDescription>
-              </div>
+          <div className="flex items-center gap-3">
+            <Scale className="h-6 w-6 text-amber-700" />
+            <div>
+              <CardTitle className="pje-card-title">Consultas PJe</CardTitle>
+              <CardDescription className="pje-card-description">
+                Sistema de consultas integrado às bases do PJe 1º e 2º grau - TRT 15ª Região
+              </CardDescription>
             </div>
-            {isAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/configuracao-banco')}
-                className="pje-button-outline flex items-center gap-2"
-              >
-                <Settings className="h-4 w-4" />
-                Configurar Banco
-              </Button>
-            )}
           </div>
         </CardHeader>
         <CardContent className="p-6">
