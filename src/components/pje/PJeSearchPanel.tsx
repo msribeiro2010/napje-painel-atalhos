@@ -18,10 +18,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import '@/styles/consultas-pje.css';
 
 export const PJeSearchPanel = () => {
   const { loading, searchOrgaosJulgadores, searchProcessos, searchServidores } = usePJeSearch();
+  const { toast: showToast } = useToast();
   
   // Estados de loading separados para cada busca
   const [loadingOj, setLoadingOj] = useState(false);
@@ -378,7 +380,7 @@ export const PJeSearchPanel = () => {
       
       if (data.success) {
         setDistribuicaoResultados(data);
-        toast({
+        showToast({
           title: "✅ Distribuição Encontrada",
           description: `${data.total_geral} processos distribuídos em ${data.total_ojs} OJs`,
           duration: 3000,
@@ -388,7 +390,7 @@ export const PJeSearchPanel = () => {
       }
     } catch (error) {
       console.error('Erro ao buscar distribuição:', error);
-      toast({
+      showToast({
         title: "❌ Erro",
         description: "Erro ao buscar distribuição diária",
         variant: "destructive",
