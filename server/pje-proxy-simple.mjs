@@ -11,24 +11,36 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Configuração dos pools de conexão
-const pje1grauPool = new Pool({
-  host: process.env.PJE_DB1_HOST || 'pje-dbpr-a1-replica',
-  database: process.env.PJE_DB1_DATABASE || 'pje_1grau',
-  user: process.env.PJE_DB1_USER || 'msribeiro',
-  password: process.env.PJE_DB1_PASSWORD || 'msrq1w2e3',
-  port: 5432,
+// Configurações dinâmicas dos bancos
+let dbConfigs = {
+  pje1grau: {
+    host: process.env.PJE_DB1_HOST || 'pje-dbpr-a1-replica',
+    database: process.env.PJE_DB1_DATABASE || 'pje_1grau',
+    user: process.env.PJE_DB1_USER || 'msribeiro',
+    password: process.env.PJE_DB1_PASSWORD || 'msrq1w2e3',
+    port: 5432,
+    ssl: false
+  },
+  pje2grau: {
+    host: process.env.PJE_DB2_HOST || 'pje-dbpr-a2-replica',
+    database: process.env.PJE_DB2_DATABASE || 'pje_2grau',
+    user: process.env.PJE_DB2_USER || 'msribeiro',
+    password: process.env.PJE_DB2_PASSWORD || 'msrq1w2e3',
+    port: 5432,
+    ssl: false
+  }
+};
+
+// Pools de conexão (serão recriados quando as configurações mudarem)
+let pje1grauPool = new Pool({
+  ...dbConfigs.pje1grau,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
 });
 
-const pje2grauPool = new Pool({
-  host: process.env.PJE_DB2_HOST || 'pje-dbpr-a2-replica',
-  database: process.env.PJE_DB2_DATABASE || 'pje_2grau',
-  user: process.env.PJE_DB2_USER || 'msribeiro',
-  password: process.env.PJE_DB2_PASSWORD || 'msrq1w2e3',
-  port: 5432,
+let pje2grauPool = new Pool({
+  ...dbConfigs.pje2grau,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
@@ -49,6 +61,156 @@ pje2grauPool.query('SELECT 1', (err) => {
   } else {
     console.log('✅ Conectado ao PJe 2º Grau');
   }
+});
+
+// Endpoint para testar conexão com o banco
+app.post('/api/pje/test-connection', async (req, res) => {
+  const { grau, config } = req.body;
+  console.log('🧪 Testando conexão:', { grau, host: config.host, database: config.database });
+  
+  try {
+    // Criar pool temporário para teste
+    const testPool = new Pool({
+      host: config.host,
+      database: config.database,
+      user: config.user,
+      password: config.password,
+      port: config.port || 5432,
+      ssl: config.ssl || false,
+      connectionTimeoutMillis: 5000,
+      max: 1
+    });
+    
+    // Testar conexão
+    const result = await testPool.query('SELECT NOW() as time, current_database() as database, current_user as user');
+    
+    // Fechar pool de teste
+    await testPool.end();
+    
+    console.log('✅ Teste de conexão bem-sucedido:', grau);
+    res.json({ 
+      success: true, 
+      message: 'Conexão estabelecida com sucesso',
+      details: {
+        database: result.rows[0].database,
+        user: result.rows[0].user,
+        time: result.rows[0].time
+      }
+    });
+  } catch (error) {
+    console.error('❌ Erro no teste de conexão:', error.message);
+    res.json({ 
+      success: false, 
+      error: error.message || 'Não foi possível conectar ao banco de dados'
+    });
+  }
+});
+
+// Endpoint para atualizar configurações dos bancos
+app.post('/api/pje/update-configs', async (req, res) => {
+  const newConfigs = req.body;
+  console.log('🔄 Atualizando configurações dos bancos...');
+  
+  try {
+    // Fechar pools antigos
+    if (pje1grauPool) {
+      await pje1grauPool.end();
+      console.log('✅ Pool 1º Grau fechado');
+    }
+    if (pje2grauPool) {
+      await pje2grauPool.end();
+      console.log('✅ Pool 2º Grau fechado');
+    }
+    
+    // Atualizar configurações
+    dbConfigs = newConfigs;
+    
+    // Criar novos pools com as novas configurações
+    pje1grauPool = new Pool({
+      ...dbConfigs.pje1grau,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
+    
+    pje2grauPool = new Pool({
+      ...dbConfigs.pje2grau,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
+    
+    // Testar novas conexões
+    let status1 = false;
+    let status2 = false;
+    
+    try {
+      await pje1grauPool.query('SELECT 1');
+      status1 = true;
+      console.log('✅ Nova conexão 1º Grau estabelecida');
+    } catch (err) {
+      console.error('❌ Erro na nova conexão 1º Grau:', err.message);
+    }
+    
+    try {
+      await pje2grauPool.query('SELECT 1');
+      status2 = true;
+      console.log('✅ Nova conexão 2º Grau estabelecida');
+    } catch (err) {
+      console.error('❌ Erro na nova conexão 2º Grau:', err.message);
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Configurações atualizadas com sucesso',
+      connections: {
+        pje1grau: status1,
+        pje2grau: status2
+      }
+    });
+  } catch (error) {
+    console.error('❌ Erro ao atualizar configurações:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Erro ao atualizar configurações' 
+    });
+  }
+});
+
+// Endpoint para obter status das conexões
+app.get('/api/pje/connection-status', async (req, res) => {
+  const status = {
+    pje1grau: false,
+    pje2grau: false,
+    configs: {
+      pje1grau: {
+        host: dbConfigs.pje1grau.host,
+        database: dbConfigs.pje1grau.database,
+        user: dbConfigs.pje1grau.user
+      },
+      pje2grau: {
+        host: dbConfigs.pje2grau.host,
+        database: dbConfigs.pje2grau.database,
+        user: dbConfigs.pje2grau.user
+      }
+    }
+  };
+  
+  try {
+    await pje1grauPool.query('SELECT 1');
+    status.pje1grau = true;
+  } catch (err) {
+    console.error('Status check 1º Grau:', err.message);
+  }
+  
+  try {
+    await pje2grauPool.query('SELECT 1');
+    status.pje2grau = true;
+  } catch (err) {
+    console.error('Status check 2º Grau:', err.message);
+  }
+  
+  res.json(status);
 });
 
 // Endpoint para buscar OJs por cidade
