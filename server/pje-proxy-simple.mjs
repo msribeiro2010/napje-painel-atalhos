@@ -191,36 +191,32 @@ app.get('/api/pje/distribuicao-diaria', async (req, res) => {
     // Query para buscar processos distribuídos no dia
     let query = `
       WITH distribuicao AS (
-        SELECT 
-          p.id_processo,
-          p.nr_processo,
+        SELECT
+          p.id_processo_trf,
+          p.nr_sequencia || '.' || p.nr_digito_verificador || '.' || p.nr_ano || '.' || p.nr_identificacao_orgao_justica as nr_processo,
           p.dt_autuacao::date as data_distribuicao,
           p.id_orgao_julgador,
           oj.ds_orgao_julgador,
           oj.ds_sigla,
           EXTRACT(HOUR FROM p.dt_autuacao) as hora_distribuicao,
-          CASE 
+          CASE
             WHEN p.in_segredo_justica = 'S' THEN 'Segredo de Justiça'
-            WHEN p.in_prioritario = 'S' THEN 'Prioritário'
             ELSE 'Normal'
           END as tipo_processo,
           COALESCE(c.ds_classe_judicial, 'Não informada') as classe_judicial
-        FROM 
+        FROM
           tb_processo_trf p
           INNER JOIN tb_orgao_julgador oj ON p.id_orgao_julgador = oj.id_orgao_julgador
-          LEFT JOIN tb_processo_classe pc ON p.id_processo = pc.id_processo_trf AND pc.dt_fim IS NULL
-          LEFT JOIN tb_classe_judicial c ON pc.id_classe_judicial = c.id_classe_judicial
-        WHERE 
+          LEFT JOIN tb_classe_judicial c ON p.id_classe_judicial = c.id_classe_judicial
+        WHERE
           p.dt_autuacao::date = $1::date
           ${oj ? 'AND p.id_orgao_julgador = $2' : ''}
-          AND p.id_processo_referencia IS NULL
       )
       SELECT 
         id_orgao_julgador,
         ds_orgao_julgador,
         ds_sigla,
         COUNT(*) as total_processos,
-        COUNT(*) FILTER (WHERE tipo_processo = 'Prioritário') as processos_prioritarios,
         COUNT(*) FILTER (WHERE tipo_processo = 'Segredo de Justiça') as processos_segredo,
         COUNT(*) FILTER (WHERE hora_distribuicao BETWEEN 0 AND 5) as dist_madrugada,
         COUNT(*) FILTER (WHERE hora_distribuicao BETWEEN 6 AND 11) as dist_manha,
@@ -239,13 +235,12 @@ app.get('/api/pje/distribuicao-diaria', async (req, res) => {
     
     // Buscar também o total geral do dia
     const totalQuery = `
-      SELECT 
+      SELECT
         COUNT(*) as total_geral,
         COUNT(DISTINCT id_orgao_julgador) as total_ojs_com_distribuicao
       FROM tb_processo_trf
-      WHERE 
+      WHERE
         dt_autuacao::date = $1::date
-        AND id_processo_referencia IS NULL
     `;
     
     const totalResult = await pool.query(totalQuery, [dataConsulta]);

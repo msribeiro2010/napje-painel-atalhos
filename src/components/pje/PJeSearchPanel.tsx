@@ -35,6 +35,10 @@ export const PJeSearchPanel = () => {
   const [distribuicaoGrau, setDistribuicaoGrau] = useState<'1' | '2'>('1');
   const [distribuicaoData, setDistribuicaoData] = useState(new Date().toISOString().split('T')[0]);
   const [distribuicaoResultados, setDistribuicaoResultados] = useState<any>(null);
+  const [distribuicaoOj, setDistribuicaoOj] = useState('');
+  const [distribuicaoOjNome, setDistribuicaoOjNome] = useState('');
+  const [ojsDisponiveis, setOjsDisponiveis] = useState<OrgaoJulgador[]>([]);
+  const [loadingOjsDisponiveis, setLoadingOjsDisponiveis] = useState(false);
   
   // Estados para modal de detalhes
   const [modalOpen, setModalOpen] = useState(false);
@@ -346,8 +350,17 @@ export const PJeSearchPanel = () => {
         faltantes,
         serverTotal: serverOjs.length
       });
-      
-      toast.success('Verificação concluída!');
+
+      // Mensagem mais informativa para o usuário
+      if (existentes.length > 0 && faltantes.length === 0) {
+        toast.success(`✅ Verificação concluída! Todos os ${existentes.length} OJs já estão cadastrados para o servidor.`);
+      } else if (existentes.length === 0 && faltantes.length > 0) {
+        toast.warning(`⚠️ Verificação concluída! ${faltantes.length} OJs não encontrados no cadastro do servidor.`);
+      } else if (existentes.length > 0 && faltantes.length > 0) {
+        toast.info(`📊 Verificação concluída! ${existentes.length} OJs já cadastrados, ${faltantes.length} OJs não encontrados.`);
+      } else {
+        toast.success('Verificação concluída!');
+      }
     } catch (error) {
       console.error('Erro na verificação:', error);
       toast.error('Erro ao realizar verificação');
@@ -357,14 +370,88 @@ export const PJeSearchPanel = () => {
   };
   
   // Função para exportar resultados
+  // Função para buscar OJs disponíveis
+  const buscarOjsDisponiveis = async (grau: string) => {
+    setLoadingOjsDisponiveis(true);
+    try {
+      // Busca todos os OJs do grau selecionado
+      const response = await fetch(
+        `${import.meta.env.VITE_PJE_API_URL}/orgaos-julgadores?grau=${grau}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        // Mapear os dados para o formato esperado - mantendo consistência com os campos da API
+        const ojsMapeados = data.map((oj: any) => ({
+          // Usar 'id' como id_orgao_julgador para o Select funcionar
+          id_orgao_julgador: oj.id || oj.id_orgao_julgador,
+          // Usar 'nome' como ds_orgao_julgador para exibição
+          ds_orgao_julgador: oj.nome || oj.ds_orgao_julgador,
+          // Usar 'sigla' como ds_sigla
+          ds_sigla: oj.sigla || oj.ds_sigla,
+          cidade: oj.cidade,
+          uf: oj.uf,
+          // Manter campos originais também para compatibilidade
+          id: oj.id,
+          nome: oj.nome,
+          sigla: oj.sigla
+        }));
+
+        // Ordenar OJs alfabética/numericamente
+        const ojsOrdenados = ojsMapeados.sort((a: any, b: any) => {
+          const nomeA = a.ds_orgao_julgador || '';
+          const nomeB = b.ds_orgao_julgador || '';
+
+          // Extrair números do início dos nomes (ex: "1ª Vara", "10ª Vara")
+          const matchA = nomeA.match(/^(\d+)ª?\s/);
+          const matchB = nomeB.match(/^(\d+)ª?\s/);
+
+          // Se ambos começam com números, ordenar numericamente
+          if (matchA && matchB) {
+            const diff = parseInt(matchA[1]) - parseInt(matchB[1]);
+            if (diff !== 0) return diff;
+            // Se os números são iguais, continuar com a comparação alfabética do resto
+          }
+
+          // Ordenar alfabeticamente considerando números no meio do texto também
+          return nomeA.localeCompare(nomeB, 'pt-BR', { numeric: true, sensitivity: 'base' });
+        });
+
+        setOjsDisponiveis(ojsOrdenados);
+        console.log(`✅ ${ojsOrdenados.length} OJs carregados e ordenados para o ${grau}º grau`);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar OJs disponíveis:', error);
+    } finally {
+      setLoadingOjsDisponiveis(false);
+    }
+  };
+
+  // Buscar OJs quando o grau da distribuição mudar
+  useEffect(() => {
+    buscarOjsDisponiveis(distribuicaoGrau);
+    // Limpar seleção de OJ quando mudar o grau
+    setDistribuicaoOj('');
+    setDistribuicaoOjNome('');
+  }, [distribuicaoGrau]);
+
   // Função para buscar distribuição diária
   const buscarDistribuicao = async () => {
     setLoadingDistribuicao(true);
     setDistribuicaoResultados(null);
-    
+
     try {
+      const url = distribuicaoOj
+        ? `${import.meta.env.VITE_PJE_API_URL}/distribuicao-diaria?grau=${distribuicaoGrau}&data=${distribuicaoData}&oj=${distribuicaoOj}`
+        : `${import.meta.env.VITE_PJE_API_URL}/distribuicao-diaria?grau=${distribuicaoGrau}&data=${distribuicaoData}`;
+
       const response = await fetch(
-        `${import.meta.env.VITE_PJE_API_URL}/distribuicao-diaria?grau=${distribuicaoGrau}&data=${distribuicaoData}`,
+        url,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -390,9 +477,10 @@ export const PJeSearchPanel = () => {
       }
     } catch (error) {
       console.error('Erro ao buscar distribuição:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       showToast({
         title: "❌ Erro",
-        description: "Erro ao buscar distribuição diária",
+        description: `Erro ao buscar distribuição diária: ${errorMessage}`,
         variant: "destructive",
         duration: 5000,
       });
@@ -1142,7 +1230,7 @@ export const PJeSearchPanel = () => {
                     placeholder="Digite o CPF (apenas números)"
                     value={servidorOjCpf}
                     onChange={(e) => setServidorOjCpf(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleServidorOjSearch()}
+                    onKeyDown={(e) => e.key === 'Enter' && handleServidorOjSearch()}
                   />
                   <Button 
                     onClick={handleServidorOjSearch} 
@@ -1559,19 +1647,68 @@ Vara do Trabalho de Piracicaba`}
                 </RadioGroup>
               </div>
               
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="data-distribuicao" className="pje-label">Data da Distribuição</Label>
-                  <Input
-                    id="data-distribuicao"
-                    type="date"
-                    value={distribuicaoData}
-                    onChange={(e) => setDistribuicaoData(e.target.value)}
-                    className="pje-input"
-                  />
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="data-distribuicao" className="pje-label">Data da Distribuição</Label>
+                    <Input
+                      id="data-distribuicao"
+                      type="date"
+                      value={distribuicaoData}
+                      onChange={(e) => setDistribuicaoData(e.target.value)}
+                      className="pje-input"
+                    />
+                  </div>
+
+                  <div className="flex-1">
+                    <Label htmlFor="oj-distribuicao" className="pje-label">Filtrar por Órgão Julgador (Opcional)</Label>
+                    <Select
+                      value={distribuicaoOj || "all"}
+                      onValueChange={(value) => {
+                        const novoValor = value === "all" ? "" : value;
+                        setDistribuicaoOj(novoValor);
+                        if (value === "all") {
+                          setDistribuicaoOjNome('');
+                        } else {
+                          const ojSelecionado = ojsDisponiveis.find(oj => oj.id_orgao_julgador?.toString() === value);
+                          setDistribuicaoOjNome(ojSelecionado?.ds_orgao_julgador || '');
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="pje-input">
+                        <SelectValue placeholder={loadingOjsDisponiveis ? "Carregando OJs..." : "Selecione um OJ ou deixe vazio para todos"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[400px] overflow-y-auto">
+                        <SelectItem value="all" className="font-semibold">
+                          📊 Todos os Órgãos Julgadores
+                        </SelectItem>
+                        {ojsDisponiveis.length > 0 ? (
+                          ojsDisponiveis
+                            .filter(oj => oj.id_orgao_julgador) // Filtra OJs sem ID
+                            .map((oj) => (
+                              <SelectItem
+                                key={`oj-${oj.id_orgao_julgador}`}
+                                value={oj.id_orgao_julgador.toString()}
+                                className="text-sm"
+                              >
+                                {oj.ds_orgao_julgador}
+                                {oj.cidade && ` - ${oj.cidade}`}
+                                {oj.ds_sigla && ` (${oj.ds_sigla})`}
+                              </SelectItem>
+                            ))
+                        ) : (
+                          !loadingOjsDisponiveis && (
+                            <SelectItem value="none" disabled className="text-muted-foreground">
+                              Nenhum OJ disponível
+                            </SelectItem>
+                          )
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                
-                <div className="flex items-end">
+
+                <div className="flex justify-end">
                   <Button
                     onClick={buscarDistribuicao}
                     disabled={loadingDistribuicao}
@@ -1663,6 +1800,19 @@ Vara do Trabalho de Piracicaba`}
                                   <div>
                                     <div className="font-medium">{oj.ds_orgao_julgador}</div>
                                     <div className="text-xs text-muted-foreground">{oj.ds_sigla}</div>
+                                    {(oj.primeiro_processo || oj.ultimo_processo) && (
+                                      <div className="text-xs text-amber-600 mt-1">
+                                        {oj.primeiro_processo && oj.ultimo_processo && oj.primeiro_processo === oj.ultimo_processo ? (
+                                          <span>Processo: {oj.primeiro_processo}</span>
+                                        ) : (
+                                          <>
+                                            {oj.primeiro_processo && <span>Primeiro: {oj.primeiro_processo}</span>}
+                                            {oj.primeiro_processo && oj.ultimo_processo && <span className="mx-1">•</span>}
+                                            {oj.ultimo_processo && <span>Último: {oj.ultimo_processo}</span>}
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 </td>
                                 <td className="text-center p-2 font-bold">{oj.total_processos}</td>
