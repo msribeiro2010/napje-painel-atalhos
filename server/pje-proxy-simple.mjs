@@ -177,6 +177,172 @@ app.post('/api/pje/update-configs', async (req, res) => {
   }
 });
 
+// Endpoint para buscar distribuição diária de processos por OJ
+app.get('/api/pje/distribuicao-diaria', async (req, res) => {
+  const { grau, data, oj } = req.query;
+  console.log('📊 Buscando distribuição diária:', { grau, data, oj });
+  
+  try {
+    const pool = grau === '2' ? pje2grauPool : pje1grauPool;
+    
+    // Data padrão: hoje
+    const dataConsulta = data || new Date().toISOString().split('T')[0];
+    
+    // Query para buscar processos distribuídos no dia
+    let query = `
+      WITH distribuicao AS (
+        SELECT 
+          p.id_processo,
+          p.nr_processo,
+          p.dt_autuacao::date as data_distribuicao,
+          p.id_orgao_julgador,
+          oj.ds_orgao_julgador,
+          oj.ds_sigla,
+          EXTRACT(HOUR FROM p.dt_autuacao) as hora_distribuicao,
+          CASE 
+            WHEN p.in_segredo_justica = 'S' THEN 'Segredo de Justiça'
+            WHEN p.in_prioritario = 'S' THEN 'Prioritário'
+            ELSE 'Normal'
+          END as tipo_processo,
+          COALESCE(c.ds_classe_judicial, 'Não informada') as classe_judicial
+        FROM 
+          tb_processo_trf p
+          INNER JOIN tb_orgao_julgador oj ON p.id_orgao_julgador = oj.id_orgao_julgador
+          LEFT JOIN tb_processo_classe pc ON p.id_processo = pc.id_processo_trf AND pc.dt_fim IS NULL
+          LEFT JOIN tb_classe_judicial c ON pc.id_classe_judicial = c.id_classe_judicial
+        WHERE 
+          p.dt_autuacao::date = $1::date
+          ${oj ? 'AND p.id_orgao_julgador = $2' : ''}
+          AND p.id_processo_referencia IS NULL
+      )
+      SELECT 
+        id_orgao_julgador,
+        ds_orgao_julgador,
+        ds_sigla,
+        COUNT(*) as total_processos,
+        COUNT(*) FILTER (WHERE tipo_processo = 'Prioritário') as processos_prioritarios,
+        COUNT(*) FILTER (WHERE tipo_processo = 'Segredo de Justiça') as processos_segredo,
+        COUNT(*) FILTER (WHERE hora_distribuicao BETWEEN 0 AND 5) as dist_madrugada,
+        COUNT(*) FILTER (WHERE hora_distribuicao BETWEEN 6 AND 11) as dist_manha,
+        COUNT(*) FILTER (WHERE hora_distribuicao BETWEEN 12 AND 17) as dist_tarde,
+        COUNT(*) FILTER (WHERE hora_distribuicao BETWEEN 18 AND 23) as dist_noite,
+        STRING_AGG(DISTINCT classe_judicial, ', ' ORDER BY classe_judicial) as classes_judiciais,
+        MIN(nr_processo) as primeiro_processo,
+        MAX(nr_processo) as ultimo_processo
+      FROM distribuicao
+      GROUP BY id_orgao_julgador, ds_orgao_julgador, ds_sigla
+      ORDER BY total_processos DESC, ds_orgao_julgador
+    `;
+    
+    const params = oj ? [dataConsulta, oj] : [dataConsulta];
+    const result = await pool.query(query, params);
+    
+    // Buscar também o total geral do dia
+    const totalQuery = `
+      SELECT 
+        COUNT(*) as total_geral,
+        COUNT(DISTINCT id_orgao_julgador) as total_ojs_com_distribuicao
+      FROM tb_processo_trf
+      WHERE 
+        dt_autuacao::date = $1::date
+        AND id_processo_referencia IS NULL
+    `;
+    
+    const totalResult = await pool.query(totalQuery, [dataConsulta]);
+    
+    console.log(`✅ Encontrados ${result.rows.length} OJs com distribuição em ${dataConsulta}`);
+    
+    res.json({
+      success: true,
+      data: dataConsulta,
+      grau: grau || '1',
+      total_geral: totalResult.rows[0]?.total_geral || 0,
+      total_ojs: totalResult.rows[0]?.total_ojs_com_distribuicao || 0,
+      distribuicao_por_oj: result.rows,
+      resumo_horarios: {
+        madrugada: result.rows.reduce((sum, row) => sum + parseInt(row.dist_madrugada || 0), 0),
+        manha: result.rows.reduce((sum, row) => sum + parseInt(row.dist_manha || 0), 0),
+        tarde: result.rows.reduce((sum, row) => sum + parseInt(row.dist_tarde || 0), 0),
+        noite: result.rows.reduce((sum, row) => sum + parseInt(row.dist_noite || 0), 0)
+      }
+    });
+  } catch (error) {
+    console.error('❌ Erro ao buscar distribuição:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Endpoint para buscar estatísticas mensais de distribuição
+app.get('/api/pje/distribuicao-mensal', async (req, res) => {
+  const { grau, mes, ano, oj } = req.query;
+  console.log('📊 Buscando distribuição mensal:', { grau, mes, ano, oj });
+  
+  try {
+    const pool = grau === '2' ? pje2grauPool : pje1grauPool;
+    
+    // Mês e ano padrão: atual
+    const mesConsulta = mes || new Date().getMonth() + 1;
+    const anoConsulta = ano || new Date().getFullYear();
+    
+    // Query para buscar estatísticas mensais
+    let query = `
+      WITH distribuicao_mensal AS (
+        SELECT 
+          DATE(p.dt_autuacao) as data_distribuicao,
+          p.id_orgao_julgador,
+          oj.ds_orgao_julgador,
+          COUNT(*) as total_dia
+        FROM 
+          tb_processo_trf p
+          INNER JOIN tb_orgao_julgador oj ON p.id_orgao_julgador = oj.id_orgao_julgador
+        WHERE 
+          EXTRACT(MONTH FROM p.dt_autuacao) = $1
+          AND EXTRACT(YEAR FROM p.dt_autuacao) = $2
+          ${oj ? 'AND p.id_orgao_julgador = $3' : ''}
+          AND p.id_processo_referencia IS NULL
+        GROUP BY DATE(p.dt_autuacao), p.id_orgao_julgador, oj.ds_orgao_julgador
+      )
+      SELECT 
+        id_orgao_julgador,
+        ds_orgao_julgador,
+        COUNT(DISTINCT data_distribuicao) as dias_com_distribuicao,
+        SUM(total_dia) as total_mes,
+        ROUND(AVG(total_dia), 2) as media_diaria,
+        MAX(total_dia) as max_dia,
+        MIN(total_dia) as min_dia,
+        STRING_AGG(
+          data_distribuicao::text || ':' || total_dia::text,
+          ',' ORDER BY data_distribuicao
+        ) as distribuicao_por_dia
+      FROM distribuicao_mensal
+      GROUP BY id_orgao_julgador, ds_orgao_julgador
+      ORDER BY total_mes DESC
+    `;
+    
+    const params = oj ? [mesConsulta, anoConsulta, oj] : [mesConsulta, anoConsulta];
+    const result = await pool.query(query, params);
+    
+    console.log(`✅ Estatísticas mensais: ${result.rows.length} OJs em ${mesConsulta}/${anoConsulta}`);
+    
+    res.json({
+      success: true,
+      mes: mesConsulta,
+      ano: anoConsulta,
+      grau: grau || '1',
+      estatisticas: result.rows
+    });
+  } catch (error) {
+    console.error('❌ Erro ao buscar distribuição mensal:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
 // Endpoint para obter status das conexões
 app.get('/api/pje/connection-status', async (req, res) => {
   const status = {

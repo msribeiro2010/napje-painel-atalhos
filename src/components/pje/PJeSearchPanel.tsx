@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, FileText, Users, Building2, Loader2, FileSearch, Upload, Download, CheckCircle2, XCircle, AlertCircle, Scale, BookOpen, FolderOpen, UserCheck, FileCheck } from 'lucide-react';
+import { Search, FileText, Users, Building2, Loader2, FileSearch, Upload, Download, CheckCircle2, XCircle, AlertCircle, Scale, BookOpen, FolderOpen, UserCheck, FileCheck, BarChart3, Calendar } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,12 @@ export const PJeSearchPanel = () => {
   const [loadingOj, setLoadingOj] = useState(false);
   const [loadingProcesso, setLoadingProcesso] = useState(false);
   const [loadingServidor, setLoadingServidor] = useState(false);
+  const [loadingDistribuicao, setLoadingDistribuicao] = useState(false);
+  
+  // Estados para distribuição
+  const [distribuicaoGrau, setDistribuicaoGrau] = useState<'1' | '2'>('1');
+  const [distribuicaoData, setDistribuicaoData] = useState(new Date().toISOString().split('T')[0]);
+  const [distribuicaoResultados, setDistribuicaoResultados] = useState<any>(null);
   
   // Estados para modal de detalhes
   const [modalOpen, setModalOpen] = useState(false);
@@ -349,6 +355,50 @@ export const PJeSearchPanel = () => {
   };
   
   // Função para exportar resultados
+  // Função para buscar distribuição diária
+  const buscarDistribuicao = async () => {
+    setLoadingDistribuicao(true);
+    setDistribuicaoResultados(null);
+    
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_PJE_API_URL}/distribuicao-diaria?grau=${distribuicaoGrau}&data=${distribuicaoData}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Erro ao buscar distribuição');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setDistribuicaoResultados(data);
+        toast({
+          title: "✅ Distribuição Encontrada",
+          description: `${data.total_geral} processos distribuídos em ${data.total_ojs} OJs`,
+          duration: 3000,
+        });
+      } else {
+        throw new Error(data.error || 'Erro ao buscar distribuição');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar distribuição:', error);
+      toast({
+        title: "❌ Erro",
+        description: "Erro ao buscar distribuição diária",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setLoadingDistribuicao(false);
+    }
+  };
+
   const handleExportResults = () => {
     if (!verificationResults) {
       toast.error('Nenhum resultado para exportar');
@@ -536,7 +586,7 @@ export const PJeSearchPanel = () => {
         </CardHeader>
         <CardContent className="p-6">
         <Tabs defaultValue="ojs" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 pje-tabs-list">
+          <TabsList className="grid w-full grid-cols-6 pje-tabs-list">
             <TabsTrigger value="ojs" className="flex items-center gap-2 pje-tab-trigger">
               <Building2 className="h-4 w-4" />
               <span className="hidden sm:inline">Órgãos Julgadores</span>
@@ -559,6 +609,11 @@ export const PJeSearchPanel = () => {
               <UserCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Servidor/OJ</span>
               <span className="sm:hidden">S/OJ</span>
+            </TabsTrigger>
+            <TabsTrigger value="distribuicao" className="flex items-center gap-2 pje-tab-trigger">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Distribuição</span>
+              <span className="sm:hidden">Dist</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1480,6 +1535,174 @@ Vara do Trabalho de Piracicaba`}
                   </Card>
                 )}
               </div>
+            </div>
+          </TabsContent>
+          
+          {/* Nova aba de Distribuição */}
+          <TabsContent value="distribuicao" className="space-y-4 mt-6 pje-fade-in">
+            <div className="space-y-4">
+              <div className="bg-gradient-to-r from-amber-50/50 to-orange-50/30 p-4 rounded-lg border border-amber-200/50">
+                <RadioGroup value={distribuicaoGrau} onValueChange={(value) => setDistribuicaoGrau(value as '1' | '2')} className="pje-radio-group">
+                  <Label className="pje-label text-amber-800">Selecione o Grau de Jurisdição:</Label>
+                  <div className="flex items-center space-x-6 mt-2">
+                    <div className="flex items-center space-x-2 pje-radio-item">
+                      <RadioGroupItem value="1" id="dist-grau-1" className="pje-radio-button" />
+                      <Label htmlFor="dist-grau-1" className="font-medium text-amber-700 cursor-pointer">1º Grau</Label>
+                    </div>
+                    <div className="flex items-center space-x-2 pje-radio-item">
+                      <RadioGroupItem value="2" id="dist-grau-2" className="pje-radio-button" />
+                      <Label htmlFor="dist-grau-2" className="font-medium text-amber-700 cursor-pointer">2º Grau</Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="data-distribuicao" className="pje-label">Data da Distribuição</Label>
+                  <Input
+                    id="data-distribuicao"
+                    type="date"
+                    value={distribuicaoData}
+                    onChange={(e) => setDistribuicaoData(e.target.value)}
+                    className="pje-input"
+                  />
+                </div>
+                
+                <div className="flex items-end">
+                  <Button
+                    onClick={buscarDistribuicao}
+                    disabled={loadingDistribuicao}
+                    className="pje-button"
+                  >
+                    {loadingDistribuicao ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Buscando...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="mr-2 h-4 w-4" />
+                        Buscar Distribuição
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Resultados da Distribuição */}
+              {distribuicaoResultados && (
+                <div className="space-y-4">
+                  {/* Cards de Resumo */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Card className="pje-result-card">
+                      <CardContent className="p-4">
+                        <div className="text-2xl font-bold text-amber-800">{distribuicaoResultados.total_geral || 0}</div>
+                        <div className="text-sm text-muted-foreground">Total de Processos</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="pje-result-card">
+                      <CardContent className="p-4">
+                        <div className="text-2xl font-bold text-amber-800">{distribuicaoResultados.total_ojs || 0}</div>
+                        <div className="text-sm text-muted-foreground">OJs com Distribuição</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="pje-result-card">
+                      <CardContent className="p-4">
+                        <div className="text-2xl font-bold text-amber-800">
+                          {distribuicaoResultados.total_geral && distribuicaoResultados.total_ojs 
+                            ? Math.round(distribuicaoResultados.total_geral / distribuicaoResultados.total_ojs) 
+                            : 0}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Média por OJ</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="pje-result-card">
+                      <CardContent className="p-4">
+                        <div className="text-sm font-semibold text-amber-800">Período do Dia</div>
+                        <div className="text-xs space-y-1 mt-1">
+                          <div>Manhã: {distribuicaoResultados.resumo_horarios?.manha || 0}</div>
+                          <div>Tarde: {distribuicaoResultados.resumo_horarios?.tarde || 0}</div>
+                          <div>Noite: {distribuicaoResultados.resumo_horarios?.noite || 0}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  {/* Tabela de Distribuição por OJ */}
+                  <Card className="pje-card">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Distribuição por Órgão Julgador</CardTitle>
+                      <CardDescription>
+                        Processos distribuídos em {new Date(distribuicaoData).toLocaleDateString('pt-BR')}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left p-2">Órgão Julgador</th>
+                              <th className="text-center p-2">Total</th>
+                              <th className="text-center p-2">Prioritários</th>
+                              <th className="text-center p-2">Seg. Justiça</th>
+                              <th className="text-center p-2">Manhã</th>
+                              <th className="text-center p-2">Tarde</th>
+                              <th className="text-center p-2">Noite</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {distribuicaoResultados.distribuicao_por_oj?.map((oj: any) => (
+                              <tr key={oj.id_orgao_julgador} className="border-b hover:bg-amber-50/50">
+                                <td className="p-2">
+                                  <div>
+                                    <div className="font-medium">{oj.ds_orgao_julgador}</div>
+                                    <div className="text-xs text-muted-foreground">{oj.ds_sigla}</div>
+                                  </div>
+                                </td>
+                                <td className="text-center p-2 font-bold">{oj.total_processos}</td>
+                                <td className="text-center p-2">{oj.processos_prioritarios || 0}</td>
+                                <td className="text-center p-2">{oj.processos_segredo || 0}</td>
+                                <td className="text-center p-2">{oj.dist_manha || 0}</td>
+                                <td className="text-center p-2">{oj.dist_tarde || 0}</td>
+                                <td className="text-center p-2">{oj.dist_noite || 0}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          {distribuicaoResultados.distribuicao_por_oj?.length > 0 && (
+                            <tfoot>
+                              <tr className="font-bold">
+                                <td className="p-2">Total Geral</td>
+                                <td className="text-center p-2">{distribuicaoResultados.total_geral}</td>
+                                <td className="text-center p-2">
+                                  {distribuicaoResultados.distribuicao_por_oj.reduce((sum: number, oj: any) => 
+                                    sum + (parseInt(oj.processos_prioritarios) || 0), 0)}
+                                </td>
+                                <td className="text-center p-2">
+                                  {distribuicaoResultados.distribuicao_por_oj.reduce((sum: number, oj: any) => 
+                                    sum + (parseInt(oj.processos_segredo) || 0), 0)}
+                                </td>
+                                <td className="text-center p-2">{distribuicaoResultados.resumo_horarios?.manha || 0}</td>
+                                <td className="text-center p-2">{distribuicaoResultados.resumo_horarios?.tarde || 0}</td>
+                                <td className="text-center p-2">{distribuicaoResultados.resumo_horarios?.noite || 0}</td>
+                              </tr>
+                            </tfoot>
+                          )}
+                        </table>
+                      </div>
+                      
+                      {(!distribuicaoResultados.distribuicao_por_oj || distribuicaoResultados.distribuicao_por_oj.length === 0) && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          Nenhuma distribuição encontrada para esta data
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
