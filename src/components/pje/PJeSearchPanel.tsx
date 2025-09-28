@@ -446,24 +446,67 @@ export const PJeSearchPanel = () => {
     setDistribuicaoResultados(null);
 
     try {
-      const url = distribuicaoOj
-        ? `${import.meta.env.VITE_PJE_API_URL}/distribuicao-diaria?grau=${distribuicaoGrau}&data=${distribuicaoData}&oj=${distribuicaoOj}`
-        : `${import.meta.env.VITE_PJE_API_URL}/distribuicao-diaria?grau=${distribuicaoGrau}&data=${distribuicaoData}`;
-
-      const response = await fetch(
-        url,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error('Erro ao buscar distribuição');
+      // Verificar se a URL da API está configurada
+      const apiUrl = import.meta.env.VITE_PJE_API_URL;
+      if (!apiUrl) {
+        throw new Error('URL da API PJe não configurada. Configure VITE_PJE_API_URL.');
       }
-      
-      const data = await response.json();
+
+      const url = distribuicaoOj
+        ? `${apiUrl}/distribuicao-diaria?grau=${distribuicaoGrau}&data=${distribuicaoData}&oj=${distribuicaoOj}`
+        : `${apiUrl}/distribuicao-diaria?grau=${distribuicaoGrau}&data=${distribuicaoData}`;
+
+      console.log('🔍 Buscando distribuição em:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        // Adicionar timeout de 30 segundos
+        signal: AbortSignal.timeout(30000)
+      });
+
+      // Verificar status HTTP
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Erro HTTP:', response.status, errorText.substring(0, 200));
+
+        if (response.status === 404) {
+          throw new Error('Servidor PJe não encontrado. Verifique a configuração.');
+        } else if (response.status === 500) {
+          throw new Error('Erro no servidor PJe. Tente novamente.');
+        } else if (response.status === 502) {
+          throw new Error('Servidor PJe indisponível. Verifique se está rodando.');
+        } else {
+          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+      }
+
+      // Verificar Content-Type
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('❌ Resposta não é JSON. Content-Type:', contentType);
+        const text = await response.text();
+        console.error('Primeiros 500 caracteres da resposta:', text.substring(0, 500));
+
+        // Se receber HTML, provavelmente é página de erro
+        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+          throw new Error('Servidor retornou HTML em vez de JSON. Verifique se o servidor PJe está configurado corretamente.');
+        } else {
+          throw new Error('Resposta inválida do servidor. Esperado JSON.');
+        }
+      }
+
+      // Tentar parse JSON com tratamento de erro
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('❌ Erro ao processar JSON:', jsonError);
+        throw new Error('Dados inválidos recebidos do servidor. Não foi possível processar o JSON.');
+      }
       
       if (data.success) {
         setDistribuicaoResultados(data);
@@ -477,12 +520,28 @@ export const PJeSearchPanel = () => {
       }
     } catch (error) {
       console.error('Erro ao buscar distribuição:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+
+      let errorMessage = 'Erro desconhecido ao buscar distribuição';
+
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage = 'Tempo limite excedido. O servidor demorou muito para responder.';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Não foi possível conectar ao servidor PJe. Verifique se está rodando em ' + (import.meta.env.VITE_PJE_API_URL || 'URL não configurada');
+        } else if (error.message.includes('JSON')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('HTML')) {
+          errorMessage = 'O servidor está retornando uma página HTML em vez de dados JSON. Isso geralmente indica um erro de configuração ou que o servidor não está acessível.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       showToast({
-        title: "❌ Erro",
-        description: `Erro ao buscar distribuição diária: ${errorMessage}`,
+        title: "❌ Erro na Distribuição",
+        description: errorMessage,
         variant: "destructive",
-        duration: 5000,
+        duration: 8000,
       });
     } finally {
       setLoadingDistribuicao(false);

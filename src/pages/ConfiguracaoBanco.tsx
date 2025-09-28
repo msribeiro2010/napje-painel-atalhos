@@ -25,7 +25,9 @@ import {
   CheckCircle,
   Server,
   RefreshCw,
-  ArrowLeft
+  ArrowLeft,
+  History,
+  Clock
 } from 'lucide-react';
 import '@/styles/consultas-pje.css';
 
@@ -43,72 +45,105 @@ interface DatabaseConfigs {
   pje2grau: DatabaseConfig;
 }
 
+interface FieldHistory {
+  hosts: string[];
+  databases: string[];
+  users: string[];
+  ports: number[];
+}
+
 const ConfiguracaoBanco = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const [showPasswords, setShowPasswords] = useState({
     pje1grau: false,
     pje2grau: false
   });
-  
+
   const [testingConnection, setTestingConnection] = useState({
     pje1grau: false,
     pje2grau: false
   });
-  
+
   const [connectionStatus, setConnectionStatus] = useState({
     pje1grau: null as null | 'success' | 'error',
     pje2grau: null as null | 'success' | 'error'
   });
+
+  // Estados para histórico de campos
+  const [fieldHistory, setFieldHistory] = useState<FieldHistory>({
+    hosts: [],
+    databases: [],
+    users: [],
+    ports: []
+  });
+
+  const [showHistory, setShowHistory] = useState<{ [key: string]: boolean }>({});
   
   const [configs, setConfigs] = useState<DatabaseConfigs>({
     pje1grau: {
-      host: '',
+      host: 'pje-dbpr-a1-replica',
       database: 'pje_1grau',
-      user: '',
-      password: '',
+      user: 'msribeiro',
+      password: 'msrq1w2e3',
       port: 5432,
       ssl: false
     },
     pje2grau: {
-      host: '',
+      host: 'pje-dbpr-a2-replica',
       database: 'pje_2grau',
-      user: '',
-      password: '',
+      user: 'msribeiro',
+      password: 'msrq1w2e3',
       port: 5432,
       ssl: false
     }
   });
   
-  // Carregar configurações salvas (do localStorage ou sessionStorage)
+  // Carregar configurações e histórico salvos
   useEffect(() => {
     const loadConfigs = () => {
       try {
-        // Tentar carregar do localStorage (encriptado)
+        // Carregar configurações
         const savedConfigs = localStorage.getItem('pje_db_configs');
         if (savedConfigs) {
-          // Descriptografar (implementar criptografia real em produção)
           const decrypted = atob(savedConfigs);
           const parsed = JSON.parse(decrypted);
           setConfigs(parsed);
-          
+
           toast({
             title: "Configurações Carregadas",
             description: "As configurações anteriores foram restauradas",
             duration: 3000
           });
         }
+
+        // Carregar histórico de campos
+        const savedHistory = localStorage.getItem('pje_field_history');
+        if (savedHistory) {
+          const history = JSON.parse(savedHistory);
+          setFieldHistory(history);
+        } else {
+          // Inicializar com valores padrão conhecidos
+          const defaultHistory: FieldHistory = {
+            hosts: ['pje-dbpr-a1-replica', 'pje-dbpr-a2-replica', 'localhost', '127.0.0.1'],
+            databases: ['pje_1grau', 'pje_2grau', 'pje'],
+            users: ['msribeiro', 'pje_user', 'postgres'],
+            ports: [5432, 5433, 5434]
+          };
+          setFieldHistory(defaultHistory);
+          localStorage.setItem('pje_field_history', JSON.stringify(defaultHistory));
+        }
       } catch (error) {
         console.error('Erro ao carregar configurações:', error);
       }
     };
-    
+
     loadConfigs();
   }, []);
   
-  // Atualizar configuração
+  // Atualizar configuração e histórico
   const updateConfig = (grau: 'pje1grau' | 'pje2grau', field: keyof DatabaseConfig, value: any) => {
     setConfigs(prev => ({
       ...prev,
@@ -117,12 +152,69 @@ const ConfiguracaoBanco = () => {
         [field]: value
       }
     }));
-    
+
     // Resetar status de conexão ao modificar
     setConnectionStatus(prev => ({
       ...prev,
       [grau]: null
     }));
+
+    // Atualizar histórico de campos
+    if (value && typeof value === 'string' && value.trim() !== '') {
+      updateFieldHistory(field as string, value);
+    }
+  };
+
+  // Atualizar histórico de um campo
+  const updateFieldHistory = (field: string, value: string | number) => {
+    setFieldHistory(prev => {
+      const updated = { ...prev };
+      let fieldKey: keyof FieldHistory | null = null;
+
+      switch (field) {
+        case 'host':
+          fieldKey = 'hosts';
+          break;
+        case 'database':
+          fieldKey = 'databases';
+          break;
+        case 'user':
+          fieldKey = 'users';
+          break;
+        case 'port':
+          fieldKey = 'ports';
+          break;
+      }
+
+      if (fieldKey) {
+        const values = [...updated[fieldKey]];
+        const stringValue = value.toString();
+
+        // Remover valor se já existe e adicionar no início
+        const index = values.indexOf(fieldKey === 'ports' ? Number(value) : stringValue);
+        if (index > -1) {
+          values.splice(index, 1);
+        }
+
+        // Adicionar no início e limitar a 10 itens
+        if (fieldKey === 'ports') {
+          updated[fieldKey] = [Number(value), ...values.filter(v => v !== Number(value))].slice(0, 10);
+        } else {
+          updated[fieldKey] = [stringValue, ...values.filter(v => v !== stringValue)].slice(0, 10);
+        }
+
+        // Salvar no localStorage
+        localStorage.setItem('pje_field_history', JSON.stringify(updated));
+      }
+
+      return updated;
+    });
+  };
+
+  // Selecionar um valor do histórico
+  const selectFromHistory = (grau: 'pje1grau' | 'pje2grau', field: keyof DatabaseConfig, value: string | number) => {
+    updateConfig(grau, field, value);
+    setShowHistory(prev => ({ ...prev, [`${grau}-${field}`]: false }));
   };
   
   // Testar conexão
@@ -322,6 +414,97 @@ const ConfiguracaoBanco = () => {
     event.target.value = ''; // Limpar input
   };
   
+  // Componente de input com histórico/autocomplete
+  const InputWithHistory = ({
+    grau,
+    field,
+    label,
+    placeholder,
+    type = 'text',
+    history
+  }: {
+    grau: 'pje1grau' | 'pje2grau',
+    field: keyof DatabaseConfig,
+    label: string,
+    placeholder: string,
+    type?: string,
+    history: (string | number)[]
+  }) => {
+    const fieldKey = `${grau}-${field}`;
+    const isOpen = showHistory[fieldKey] || false;
+    const [search, setSearch] = useState('');
+
+    const filteredHistory = history.filter(item =>
+      item.toString().toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+      <div className="space-y-2">
+        <Label htmlFor={fieldKey}>{label}</Label>
+        <div className="relative">
+          <Input
+            id={fieldKey}
+            type={type}
+            placeholder={placeholder}
+            value={configs[grau][field]}
+            onChange={(e) => {
+              const value = type === 'number' ? parseInt(e.target.value) : e.target.value;
+              updateConfig(grau, field, value);
+            }}
+            onFocus={() => {
+              if (history.length > 0) {
+                setShowHistory(prev => ({ ...prev, [fieldKey]: true }));
+              }
+            }}
+            onBlur={() => {
+              // Delay to allow clicking on dropdown items
+              setTimeout(() => {
+                setShowHistory(prev => ({ ...prev, [fieldKey]: false }));
+              }, 200);
+            }}
+            className="pje-input pr-10"
+            autoComplete="off"
+          />
+          {history.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowHistory(prev => ({ ...prev, [fieldKey]: !prev[fieldKey] }))}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              <History className="h-4 w-4" />
+            </button>
+          )}
+
+          {isOpen && history.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+              <div className="p-2">
+                <div className="flex items-center gap-2 mb-2 text-xs text-gray-500">
+                  <Clock className="h-3 w-3" />
+                  <span>Valores anteriores</span>
+                </div>
+                {filteredHistory.map((value, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => selectFromHistory(grau, field, value)}
+                    className="w-full text-left px-2 py-1.5 hover:bg-gray-100 rounded text-sm"
+                  >
+                    {value}
+                  </button>
+                ))}
+                {filteredHistory.length === 0 && (
+                  <div className="text-sm text-gray-400 py-2 px-2">
+                    Nenhum valor encontrado
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   // Componente de formulário para cada grau
   const DatabaseForm = ({ grau, title }: { grau: 'pje1grau' | 'pje2grau', title: string }) => (
     <Card className="pje-card">
@@ -336,51 +519,39 @@ const ConfiguracaoBanco = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor={`${grau}-host`}>Host / IP</Label>
-            <Input
-              id={`${grau}-host`}
-              placeholder="ex: pje-dbpr-a1-replica ou 10.0.0.1"
-              value={configs[grau].host}
-              onChange={(e) => updateConfig(grau, 'host', e.target.value)}
-              className="pje-input"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor={`${grau}-port`}>Porta</Label>
-            <Input
-              id={`${grau}-port`}
-              type="number"
-              placeholder="5432"
-              value={configs[grau].port}
-              onChange={(e) => updateConfig(grau, 'port', parseInt(e.target.value))}
-              className="pje-input"
-            />
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor={`${grau}-database`}>Nome do Banco</Label>
-          <Input
-            id={`${grau}-database`}
-            placeholder={grau === 'pje1grau' ? 'pje_1grau' : 'pje_2grau'}
-            value={configs[grau].database}
-            onChange={(e) => updateConfig(grau, 'database', e.target.value)}
-            className="pje-input"
+          <InputWithHistory
+            grau={grau}
+            field="host"
+            label="Host / IP"
+            placeholder="ex: pje-dbpr-a1-replica ou 10.0.0.1"
+            history={fieldHistory.hosts}
+          />
+
+          <InputWithHistory
+            grau={grau}
+            field="port"
+            label="Porta"
+            placeholder="5432"
+            type="number"
+            history={fieldHistory.ports}
           />
         </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor={`${grau}-user`}>Usuário</Label>
-          <Input
-            id={`${grau}-user`}
-            placeholder="seu_usuario"
-            value={configs[grau].user}
-            onChange={(e) => updateConfig(grau, 'user', e.target.value)}
-            className="pje-input"
-          />
-        </div>
+
+        <InputWithHistory
+          grau={grau}
+          field="database"
+          label="Nome do Banco"
+          placeholder={grau === 'pje1grau' ? 'pje_1grau' : 'pje_2grau'}
+          history={fieldHistory.databases}
+        />
+
+        <InputWithHistory
+          grau={grau}
+          field="user"
+          label="Usuário"
+          placeholder="seu_usuario"
+          history={fieldHistory.users}
+        />
         
         <div className="space-y-2">
           <Label htmlFor={`${grau}-password`}>Senha</Label>
