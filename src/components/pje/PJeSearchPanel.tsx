@@ -540,11 +540,25 @@ export const PJeSearchPanel = () => {
         if (error.name === 'AbortError') {
           errorMessage = 'Tempo limite excedido. O servidor demorou muito para responder.';
         } else if (error.message.includes('Failed to fetch')) {
-          errorMessage = 'Não foi possível conectar ao servidor PJe. Verifique se está rodando em ' + (import.meta.env.VITE_PJE_API_URL || 'URL não configurada');
+          // Erro de rede - provavelmente tentando acessar localhost que não existe
+          showToast({
+            title: "🏢 Funcionalidade PJe Indisponível",
+            description: "As consultas PJe não estão disponíveis nesta versão online. Para usar: 1) Clone o projeto localmente, 2) Execute 'npm run pje:server', 3) Acesse via localhost.",
+            variant: "default",
+            duration: 8000
+          });
+          return;
+        } else if (error.message.includes('Unexpected token') || error.message.includes('DOCTYPE') || error.message.includes('HTML')) {
+          // Recebeu HTML em vez de JSON - servidor retornou página de erro
+          showToast({
+            title: "🏢 Funcionalidade PJe Indisponível",
+            description: "As consultas PJe não estão disponíveis nesta versão online. Para usar: 1) Clone o projeto localmente, 2) Execute 'npm run pje:server', 3) Acesse via localhost.",
+            variant: "default",
+            duration: 8000
+          });
+          return;
         } else if (error.message.includes('JSON')) {
           errorMessage = error.message;
-        } else if (error.message.includes('HTML')) {
-          errorMessage = 'O servidor está retornando uma página HTML em vez de dados JSON. Isso geralmente indica um erro de configuração ou que o servidor não está acessível.';
         } else {
           errorMessage = error.message;
         }
