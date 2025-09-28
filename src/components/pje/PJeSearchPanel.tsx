@@ -374,9 +374,16 @@ export const PJeSearchPanel = () => {
   const buscarOjsDisponiveis = async (grau: string) => {
     setLoadingOjsDisponiveis(true);
     try {
+      // Verificar se a URL da API está configurada
+      const apiUrl = import.meta.env.VITE_PJE_API_URL;
+      if (!apiUrl || apiUrl.trim() === '') {
+        setOjsDisponiveis([]);
+        return;
+      }
+
       // Busca todos os OJs do grau selecionado
       const response = await fetch(
-        `${import.meta.env.VITE_PJE_API_URL}/orgaos-julgadores?grau=${grau}`,
+        `${apiUrl}/orgaos-julgadores?grau=${grau}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -448,8 +455,14 @@ export const PJeSearchPanel = () => {
     try {
       // Verificar se a URL da API está configurada
       const apiUrl = import.meta.env.VITE_PJE_API_URL;
-      if (!apiUrl) {
-        throw new Error('URL da API PJe não configurada. Configure VITE_PJE_API_URL.');
+      if (!apiUrl || apiUrl.trim() === '') {
+        showToast({
+          title: "🏢 Funcionalidade PJe Indisponível",
+          description: "As consultas PJe não estão disponíveis nesta versão online. Para usar: 1) Clone o projeto localmente, 2) Execute 'npm run pje:server', 3) Acesse via localhost.",
+          variant: "default",
+          duration: 8000
+        });
+        return;
       }
 
       const url = distribuicaoOj

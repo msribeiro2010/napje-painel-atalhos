@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "index.js"
+    }
+  ],
+  "env": {
+    "PJE_DB1_HOST": "pje-dbpr-a1-replica",
+    "PJE_DB1_DATABASE": "pje_1grau",
+    "PJE_DB1_USER": "msribeiro",
+    "PJE_DB1_PASSWORD": "msrq1w2e3",
+    "PJE_DB2_HOST": "pje-dbpr-a2-replica",
+    "PJE_DB2_DATABASE": "pje_2grau",
+    "PJE_DB2_USER": "msribeiro",
+    "PJE_DB2_PASSWORD": "msrq1w2e3"
+  }
+}
