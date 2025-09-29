@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useSupabaseClient } from "@/hooks/useSupabaseClient";
 import { toast } from "@/hooks/use-toast";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
@@ -52,6 +52,8 @@ const loadFromLocalStorage = (): Feriado[] | null => {
 };
 
 export const useFeriados = () => {
+  const supabase = useSupabaseClient();
+  
   return useQuery({
     queryKey: ["feriados"],
     queryFn: async () => {
@@ -124,6 +126,7 @@ export const useFeriadosDoAno = () => {
 
 export const useCreateFeriado = () => {
   const queryClient = useQueryClient();
+  const supabase = useSupabaseClient();
 
   return useMutation({
     mutationFn: async (feriado: NovoFeriado) => {
@@ -180,6 +183,7 @@ export const useCreateFeriado = () => {
 
 export const useUpdateFeriado = () => {
   const queryClient = useQueryClient();
+  const supabase = useSupabaseClient();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: AtualizarFeriado & { id: number }) => {
@@ -237,6 +241,7 @@ export const useUpdateFeriado = () => {
 
 export const useDeleteFeriado = () => {
   const queryClient = useQueryClient();
+  const supabase = useSupabaseClient();
 
   return useMutation({
     mutationFn: async (id: number) => {

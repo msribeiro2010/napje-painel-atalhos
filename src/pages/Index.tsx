@@ -18,7 +18,7 @@ import {
   Activity
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseClient } from '@/hooks/useSupabaseClient';
 import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,6 +36,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, signOut } = useAuth();
+  const supabase = useSupabaseClient();
   const { salvarUsuario } = useUsuarios();
   const { salvarChamado } = useChamados();
   const [showMainForm, setShowMainForm] = useState(false);

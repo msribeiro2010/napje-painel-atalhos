@@ -20,6 +20,9 @@ import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
 import '@/styles/consultas-pje.css';
 
+// Configuração da API
+const PJE_API_URL = import.meta.env.VITE_PJE_API_URL || 'http://localhost:3001/api/pje';
+
 export const PJeSearchPanel = () => {
   const { loading, searchOrgaosJulgadores, searchProcessos, searchServidores } = usePJeSearch();
   
@@ -172,7 +175,7 @@ export const PJeSearchPanel = () => {
       setLoadingSugestoes(true);
       try {
         const response = await fetch(
-          `http://localhost:3001/api/pje/servidores/sugestoes?grau=${servidorGrau}&termo=${encodeURIComponent(debouncedNome)}&limit=8`
+          `${PJE_API_URL}/servidores/sugestoes?grau=${servidorGrau}&termo=${encodeURIComponent(debouncedNome)}&limit=8`
         );
         
         if (response.ok) {
@@ -212,7 +215,7 @@ export const PJeSearchPanel = () => {
     
     try {
       const response = await fetch(
-        `http://localhost:3001/api/pje/servidor-ojs?cpf=${servidorOjCpf}&grau=${servidorOjGrau}`,
+        `${PJE_API_URL}/servidor-ojs?cpf=${servidorOjCpf}&grau=${servidorOjGrau}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -446,7 +449,7 @@ export const PJeSearchPanel = () => {
     
     try {
       const response = await fetch(
-        `http://localhost:3001/api/pje/processos-por-documento?documento=${encodeURIComponent(documento)}&limit=200`
+        `${PJE_API_URL}/processos-por-documento?documento=${encodeURIComponent(documento)}&limit=200`
       );
       
       if (!response.ok) {
@@ -705,7 +708,7 @@ export const PJeSearchPanel = () => {
                     console.log('Buscando processos de exemplo...');
                     setLoadingProcesso(true);
                     try {
-                      const response = await fetch('http://localhost:3001/api/pje/processos-exemplo?grau=' + processoGrau);
+                      const response = await fetch(`${PJE_API_URL}/processos-exemplo?grau=${processoGrau}`);
                       const data = await response.json();
                       console.log('Processos de exemplo:', data);
                       if (data.length > 0) {
