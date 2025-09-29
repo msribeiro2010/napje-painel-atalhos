@@ -158,16 +158,56 @@ export const usePJeSearch = () => {
     
     try {
       const params = new URLSearchParams({ grau, ...filters });
-      const response = await fetch(`${PJE_API_URL}/servidores?${params}`);
+      const url = `${PJE_API_URL}/servidores?${params}`;
+      console.log('🔍 Fazendo requisição para:', url);
+      
+      const response = await fetch(url);
+      console.log('📡 Resposta recebida:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        url: response.url
+      });
       
       if (!response.ok) {
-        throw new Error('Erro ao buscar servidores');
+        const errorText = await response.text();
+        console.error('❌ Resposta de erro:', errorText);
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
       
-      const data = await response.json();
-      return data;
+      const responseText = await response.text();
+      console.log('📄 Texto da resposta (primeiros 200 chars):', responseText.substring(0, 200));
+      
+      // Check if response looks like JSON before parsing
+      const trimmed = responseText.trim();
+      if (!trimmed.startsWith('[') && !trimmed.startsWith('{')) {
+        console.error('❌ Resposta não parece ser JSON:', trimmed.substring(0, 100));
+        throw new Error('Servidor retornou resposta inválida (não é JSON)');
+      }
+      
+      try {
+        const data = JSON.parse(responseText);
+        console.log('✅ JSON parseado com sucesso:', Array.isArray(data) ? data.length : 'objeto', 'resultado(s)');
+        return Array.isArray(data) ? data : [];
+      } catch (parseError) {
+        console.error('❌ Erro ao fazer parse do JSON:', parseError);
+        console.error('📄 Resposta completa (primeiros 500 chars):', responseText.substring(0, 500));
+        console.error('📄 Últimos 100 chars:', responseText.slice(-100));
+        
+        // Try to provide more specific error information
+        if (responseText.includes('<!DOCTYPE')) {
+          throw new Error('Servidor retornou página HTML em vez de dados JSON');
+        } else if (responseText.includes('Error:')) {
+          throw new Error('Servidor retornou erro em formato texto');
+        } else if (responseText.includes('Cannot GET')) {
+          throw new Error('Endpoint não encontrado no servidor');
+        } else {
+          throw new Error(`Resposta inválida do servidor: ${parseError.message}`);
+        }
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      console.error('❌ Erro na busca de servidores:', err);
       setError(message);
       toast({
         title: 'Erro',

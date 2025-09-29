@@ -812,6 +812,10 @@ app.get('/api/pje/servidores', async (req, res) => {
   const { grau, nome, cpf, matricula, limit = '30' } = req.query;
   console.log('📝 Buscando servidores:', { grau, nome: nome ? nome.substring(0, 3) + '***' : null, cpf: cpf ? '***' : null, matricula });
   
+  // Ensure we always return JSON with proper headers
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  
   try {
     const pool = grau === '2' ? pje2grauPool : pje1grauPool;
     
@@ -1037,11 +1041,92 @@ app.get('/api/pje/servidores', async (req, res) => {
       
     } catch (errorSimples) {
       console.error('❌ Erro na query simplificada:', errorSimples);
-      res.status(500).json({ 
-        error: 'Erro ao buscar servidores', 
-        message: error.message 
-      });
+      
+      // Final safety net - ensure we always return valid JSON
+      try {
+        res.status(500).json({ 
+          error: 'Erro ao buscar servidores', 
+          message: errorSimples.message || 'Erro interno do servidor',
+          timestamp: new Date().toISOString()
+        });
+      } catch (finalError) {
+        console.error('❌ Erro crítico ao retornar JSON:', finalError);
+        res.status(500).end('{"error":"Erro crítico do servidor","message":"Falha ao processar resposta"}');
+      }
     }
+  }
+});
+
+// Endpoint de teste para debug do JSON parsing
+app.get('/api/pje/test-json-debug', async (req, res) => {
+  const { grau = '1', nome = 'TESTE_AUTOMATICO_DEBUG' } = req.query;
+  console.log('🧪 TESTE DEBUG JSON:', { grau, nome });
+  
+  try {
+    const pool = grau === '2' ? pje2grauPool : pje1grauPool;
+    
+    // Query simples para teste
+    const query = `
+      SELECT 
+        ul.id_usuario as id,
+        ul.ds_nome as nome,
+        ul.ds_login as login,
+        ul.ds_email as email,
+        ul.in_ativo as ativo
+      FROM pje.tb_usuario_login ul
+      WHERE ul.ds_nome IS NOT NULL
+        AND ul.in_ativo = 'S'
+        AND LOWER(ul.ds_nome) LIKE LOWER($1)
+      ORDER BY ul.ds_nome
+      LIMIT 5
+    `;
+    
+    const result = await pool.query(query, [`%${nome}%`]);
+    
+    const testData = {
+      debug: {
+        timestamp: new Date().toISOString(),
+        query_params: { grau, nome },
+        raw_count: result.rows.length,
+        content_type: 'application/json',
+        encoding: 'utf-8'
+      },
+      data: result.rows.map(row => ({
+        id: row.id?.toString() || 'null',
+        nome: row.nome || 'null',
+        login: row.login || 'null',
+        email: row.email || 'null',
+        ativo: row.ativo === 'S'
+      })),
+      test_json_string: JSON.stringify({ test: 'value', number: 123, boolean: true }),
+      test_special_chars: 'Teste com acentos: ção, ã, é, ü, ñ'
+    };
+    
+    // Log detalhado
+    console.log('🧪 TESTE DEBUG - Dados preparados:', {
+      debug_info: testData.debug,
+      data_count: testData.data.length,
+      json_size: JSON.stringify(testData).length
+    });
+    
+    // Definir headers explicitamente
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    res.json(testData);
+    
+  } catch (error) {
+    console.error('❌ TESTE DEBUG - Erro:', error);
+    res.status(500).json({ 
+      debug: {
+        error: true,
+        message: error.message,
+        timestamp: new Date().toISOString()
+      },
+      error: 'Erro no teste de debug'
+    });
   }
 });
 
