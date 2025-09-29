@@ -23,7 +23,8 @@ export const WeeklyNotificationsManager = () => {
     updateNotification,
     deleteNotification,
     updateSettings,
-    testNotification
+    testNotification,
+    fetchNotifications
   } = useWeeklyNotificationsManager();
 
   // Usar o hook lazy para carregar dados apenas quando necessário
@@ -44,6 +45,175 @@ export const WeeklyNotificationsManager = () => {
   });
 
   const activeNotifications = (notifications || []).filter(n => n.ativo);
+
+  // Funções auxiliares definidas antes de serem usadas
+  const resetForm = () => {
+    setFormData({
+      titulo: '',
+      mensagem: '',
+      ativo: true,
+      dayofweek: 1,
+      selectedDays: [],
+      isWeekdayRange: false,
+      time: '09:00'
+    });
+    setEditingNotification(null);
+  };
+
+  const handleCreate = () => {
+    resetForm();
+    setIsNotificationDialogOpen(true);
+  };
+
+  const handleEditNotification = (notification: WeeklyNotification) => {
+    setEditingNotification(notification);
+    setFormData({
+      titulo: notification.titulo,
+      mensagem: notification.mensagem,
+      ativo: notification.ativo,
+      dayofweek: notification.dayofweek,
+      selectedDays: notification.selectedDays || [notification.dayofweek],
+      isWeekdayRange: notification.isWeekdayRange || false,
+      time: notification.time
+    });
+    setIsNotificationDialogOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent | any) => {
+    e.preventDefault();
+    
+    // Tentar pegar formData atualizado do evento, se disponível
+    const currentFormData = (e.target?.formData) || formData;
+    
+    console.log('FormData recebido:', currentFormData); // Debug
+    console.log('É weekday range?', currentFormData.isWeekdayRange); // Debug
+    
+    // Validação mais flexível - só precisa de título e mensagem
+    if (!currentFormData.titulo.trim() || !currentFormData.mensagem.trim()) {
+      return;
+    }
+
+    try {
+      // Declarar dayNames uma única vez para reutilização
+      const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      
+      // Se for período seg-sex, criar uma notificação para cada dia
+      if (currentFormData.isWeekdayRange) {
+        const weekdays = [1, 2, 3, 4, 5]; // Segunda a Sexta
+        
+        if (editingNotification) {
+          // Para edição de uma notificação existente para período seg-sex:
+          // 1. Excluir a notificação original
+          console.log('Convertendo notificação única para período seg-sex. Excluindo original...'); // Debug
+          await deleteNotification(editingNotification.id);
+          
+          // 2. Criar 5 novas notificações (uma para cada dia)
+          console.log('Criando 5 notificações para seg-sex (edição)...'); // Debug
+          for (const day of weekdays) {
+            const notificationData = {
+              titulo: `${currentFormData.titulo.trim()} - ${dayNames[day]}`,
+              mensagem: currentFormData.mensagem.trim(),
+              ativo: currentFormData.ativo,
+              dayofweek: day,
+              time: currentFormData.time
+            };
+            console.log(`Criando notificação para ${dayNames[day]} (edição):`, notificationData); // Debug
+            await createNotification(notificationData);
+          }
+        } else {
+          // Para criação, criar uma notificação para cada dia da semana
+          console.log('Criando notificações para seg-sex (nova)...'); // Debug
+          for (const day of weekdays) {
+            const notificationData = {
+              titulo: `${currentFormData.titulo.trim()} - ${dayNames[day]}`,
+              mensagem: currentFormData.mensagem.trim(),
+              ativo: currentFormData.ativo,
+              dayofweek: day,
+              time: currentFormData.time
+            };
+            console.log(`Criando notificação para ${dayNames[day]} (nova):`, notificationData); // Debug
+            await createNotification(notificationData);
+          }
+        }
+      } else {
+        // Lógica normal para dias individuais
+        const sortedDays = (currentFormData.selectedDays || [currentFormData.dayofweek]).sort((a, b) => a - b);
+        console.log('Criando notificações para dias individuais:', sortedDays); // Debug
+        
+        if (editingNotification) {
+          // Verificar se a notificação sendo editada fazia parte de um grupo seg-sex
+          const baseTitle = editingNotification.titulo.replace(/ - (Seg|Ter|Qua|Qui|Sex|Sáb|Dom)$/, '');
+          const relatedNotifications = notifications.filter(n => 
+            n.id !== editingNotification.id && 
+            n.titulo.startsWith(baseTitle) && 
+            n.titulo.match(/ - (Seg|Ter|Qua|Qui|Sex|Sáb|Dom)$/)
+          );
+          
+          if (relatedNotifications.length > 0) {
+            console.log(`Detectado grupo seg-sex relacionado (${relatedNotifications.length} notificações). Excluindo...`); // Debug
+            // Excluir todas as notificações relacionadas do grupo
+            for (const related of relatedNotifications) {
+              await deleteNotification(related.id);
+            }
+          }
+          
+          await updateNotification(editingNotification.id, {
+            titulo: currentFormData.titulo.trim(),
+            mensagem: currentFormData.mensagem.trim(),
+            ativo: currentFormData.ativo,
+            dayofweek: sortedDays[0] || 1,
+            time: currentFormData.time
+          });
+        } else {
+          // Criar uma notificação para cada dia selecionado
+          for (const day of sortedDays) {
+            const suffix = sortedDays.length > 1 ? ` - ${dayNames[day]}` : '';
+            const notificationData = {
+              titulo: `${currentFormData.titulo.trim()}${suffix}`,
+              mensagem: currentFormData.mensagem.trim(),
+              ativo: currentFormData.ativo,
+              dayofweek: day,
+              time: currentFormData.time
+            };
+            console.log(`Criando notificação para ${dayNames[day]}:`, notificationData); // Debug
+            await createNotification(notificationData);
+          }
+        }
+      }
+      
+      setIsNotificationDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao salvar notificação:', error);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsNotificationDialogOpen(false);
+    resetForm();
+  };
+
+  const handleToggleNotification = async (notification: WeeklyNotification) => {
+    try {
+      console.log('Toggling notification:', notification.id, 'from', notification.ativo, 'to', !notification.ativo);
+      const success = await updateNotification(notification.id, {
+        ...notification,
+        ativo: !notification.ativo
+      });
+      
+      if (success) {
+        console.log('Notification toggle successful');
+      } else {
+        console.error('Notification toggle failed');
+      }
+    } catch (error) {
+      console.error('Error toggling notification:', error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteNotification(id);
+  };
 
   if (isLoading) {
     return (
@@ -93,174 +263,6 @@ export const WeeklyNotificationsManager = () => {
       </div>
     );
   }
-
-  const resetForm = () => {
-    setFormData({
-      titulo: '',
-      mensagem: '',
-      ativo: true,
-      dayofweek: 1,
-      selectedDays: [],
-      isWeekdayRange: false,
-      time: '09:00'
-    });
-    setEditingNotification(null);
-  };
-
-  const handleCreate = () => {
-    resetForm();
-    setIsNotificationDialogOpen(true);
-  };
-
-  const handleEdit = (notification: WeeklyNotification) => {
-    setEditingNotification(notification);
-    setFormData({
-      titulo: notification.titulo,
-      mensagem: notification.mensagem,
-      ativo: notification.ativo,
-      dayofweek: notification.dayofweek,
-      selectedDays: notification.selectedDays || [notification.dayofweek],
-      isWeekdayRange: notification.isWeekdayRange || false,
-      time: notification.time
-    });
-    setIsNotificationDialogOpen(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent | any) => {
-    e.preventDefault();
-    
-    // Tentar pegar formData atualizado do evento, se disponível
-    const currentFormData = (e.target?.formData) || formData;
-    
-    console.log('FormData recebido:', currentFormData); // Debug
-    console.log('É weekday range?', currentFormData.isWeekdayRange); // Debug
-    
-    // Validação mais flexível - só precisa de título e mensagem
-    if (!currentFormData.titulo.trim() || !currentFormData.mensagem.trim()) {
-      return;
-    }
-
-    try {
-      // Se for período seg-sex, criar uma notificação para cada dia
-      if (currentFormData.isWeekdayRange) {
-        const weekdays = [1, 2, 3, 4, 5]; // Segunda a Sexta
-        
-        if (editingNotification) {
-          // Para edição de uma notificação existente para período seg-sex:
-          // 1. Excluir a notificação original
-          console.log('Convertendo notificação única para período seg-sex. Excluindo original...'); // Debug
-          await deleteNotification(editingNotification.id);
-          
-          // 2. Criar 5 novas notificações (uma para cada dia)
-          console.log('Criando 5 notificações para seg-sex (edição)...'); // Debug
-          for (const day of weekdays) {
-            const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-            const notificationData = {
-              titulo: `${currentFormData.titulo.trim()} - ${dayNames[day]}`,
-              mensagem: currentFormData.mensagem.trim(),
-              ativo: currentFormData.ativo,
-              dayofweek: day,
-              time: currentFormData.time
-            };
-            console.log(`Criando notificação para ${dayNames[day]} (edição):`, notificationData); // Debug
-            await createNotification(notificationData);
-          }
-        } else {
-          // Para criação, criar uma notificação para cada dia da semana
-          console.log('Criando notificações para seg-sex (nova)...'); // Debug
-          for (const day of weekdays) {
-            const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-            const notificationData = {
-              titulo: `${currentFormData.titulo.trim()} - ${dayNames[day]}`,
-              mensagem: currentFormData.mensagem.trim(),
-              ativo: currentFormData.ativo,
-              dayofweek: day,
-              time: currentFormData.time
-            };
-            console.log(`Criando notificação para ${dayNames[day]} (nova):`, notificationData); // Debug
-            await createNotification(notificationData);
-          }
-        }
-      } else {
-        // Lógica normal para dias individuais
-        const sortedDays = (currentFormData.selectedDays || [currentFormData.dayofweek]).sort((a, b) => a - b);
-        console.log('Criando notificações para dias individuais:', sortedDays); // Debug
-        
-        if (editingNotification) {
-          // Verificar se a notificação sendo editada fazia parte de um grupo seg-sex
-          const baseTitle = editingNotification.titulo.replace(/ - (Seg|Ter|Qua|Qui|Sex|Sáb|Dom)$/, '');
-          const relatedNotifications = notifications.filter(n => 
-            n.id !== editingNotification.id && 
-            n.titulo.startsWith(baseTitle) && 
-            n.titulo.match(/ - (Seg|Ter|Qua|Qui|Sex|Sáb|Dom)$/)
-          );
-          
-          if (relatedNotifications.length > 0) {
-            console.log(`Detectado grupo seg-sex relacionado (${relatedNotifications.length} notificações). Excluindo...`); // Debug
-            // Excluir todas as notificações relacionadas do grupo
-            for (const related of relatedNotifications) {
-              await deleteNotification(related.id);
-            }
-          }
-          
-          await updateNotification(editingNotification.id, {
-            titulo: currentFormData.titulo.trim(),
-            mensagem: currentFormData.mensagem.trim(),
-            ativo: currentFormData.ativo,
-            dayofweek: sortedDays[0] || 1,
-            time: currentFormData.time
-          });
-        } else {
-          // Criar uma notificação para cada dia selecionado
-          for (const day of sortedDays) {
-            const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-            const suffix = sortedDays.length > 1 ? ` - ${dayNames[day]}` : '';
-            const notificationData = {
-              titulo: `${currentFormData.titulo.trim()}${suffix}`,
-              mensagem: currentFormData.mensagem.trim(),
-              ativo: currentFormData.ativo,
-              dayofweek: day,
-              time: currentFormData.time
-            };
-            console.log(`Criando notificação para ${dayNames[day]}:`, notificationData); // Debug
-            await createNotification(notificationData);
-          }
-        }
-      }
-      
-      setIsNotificationDialogOpen(false);
-      resetForm();
-    } catch (error) {
-      console.error('Erro ao salvar notificação:', error);
-    }
-  };
-
-  const handleCancel = () => {
-    setIsNotificationDialogOpen(false);
-    resetForm();
-  };
-
-  const handleToggleNotification = async (notification: WeeklyNotification) => {
-    try {
-      console.log('Toggling notification:', notification.id, 'from', notification.ativo, 'to', !notification.ativo);
-      const success = await updateNotification(notification.id, {
-        ...notification,
-        ativo: !notification.ativo
-      });
-      
-      if (success) {
-        console.log('Notification toggle successful');
-      } else {
-        console.error('Notification toggle failed');
-      }
-    } catch (error) {
-      console.error('Error toggling notification:', error);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    await deleteNotification(id);
-  };
 
   return (
     <>
@@ -545,7 +547,7 @@ export const WeeklyNotificationsManager = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleEdit(notification)}
+                                onClick={() => handleEditNotification(notification)}
                                 className="flex-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400"
                               >
                                 <Edit className="h-4 w-4 mr-1" />
