@@ -301,12 +301,12 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
       </CollapsibleSection>
 
       {/* Botões de Ação */}
-      <div className="flex justify-center gap-4 mt-6">
+      <div className="flex justify-center gap-4 mt-6 form-actions">
         <Button 
           onClick={onClearForm || onResetForm}
           size="lg"
           variant="outline"
-          className="h-14 border-red-200 hover:border-red-300 text-red-700 hover:text-red-800 hover:bg-red-50 shadow-lg hover:shadow-xl transition-all duration-200 group"
+          className="h-14 border-red-200 hover:border-red-300 text-red-700 hover:text-red-800 hover:bg-red-50 shadow-lg hover:shadow-xl transition-all duration-200 group form-button form-button-outline"
         >
           <div className="flex items-center gap-3">
             <Trash2 className="h-5 w-5 group-hover:scale-110 transition-all" />
@@ -319,7 +319,7 @@ export const FormSection = ({ formData, onInputChange, onMultipleInputChange, on
         <Button 
           onClick={onGenerateDescription}
           size="lg"
-          className="h-14 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group"
+          className="h-14 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group form-button"
         >
           <div className="flex items-center gap-3">
             <FileText className="h-5 w-5 group-hover:scale-110 transition-all" />
