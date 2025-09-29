@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages & Vercel
 
 on:
   push:
@@ -6,10 +6,46 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  NODE_VERSION: '20'
+
 jobs:
-  build-and-deploy:
+  test:
     runs-on: ubuntu-latest
-    
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run linter
+      run: npm run lint
+      continue-on-error: true
+
+    - name: Type check
+      run: npm run type-check
+      continue-on-error: true
+
+    - name: Build test
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://test.supabase.co' }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'test-key' }}
+        VITE_PJE_API_URL: ${{ secrets.VITE_PJE_API_URL || 'http://localhost:3001/api/pje' }}
+      run: npm run build
+
+  deploy-github-pages:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
     permissions:
       contents: read
       pages: write
@@ -22,13 +58,17 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
 
     - name: Install dependencies
       run: npm ci
 
-    - name: Build project
+    - name: Build project for GitHub Pages
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        VITE_PJE_API_URL: ${{ secrets.VITE_PJE_API_URL || 'https://pje-server.vercel.app/api/pje' }}
       run: npm run build
 
     - name: Create 404.html for SPA routing
@@ -36,12 +76,34 @@ jobs:
 
     - name: Setup Pages
       uses: actions/configure-pages@v4
-      
+
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
         path: './dist'
-        
+
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
+
+  notify:
+    needs: [test, deploy-github-pages]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+    - name: Deployment Status
+      run: |
+        echo "📋 Deployment Summary"
+        echo "===================="
+        echo "📅 Date: $(date)"
+        echo "🔗 Commit: ${{ github.sha }}"
+        echo "👤 Author: ${{ github.actor }}"
+        echo "📌 Branch: ${{ github.ref_name }}"
+        echo ""
+        if [ "${{ needs.deploy-github-pages.result }}" == "success" ]; then
+          echo "✅ GitHub Pages: Deployed successfully"
+          echo "🔗 URL: https://${{ github.repository_owner }}.github.io/napje-painel-atalhos/"
+        else
+          echo "❌ GitHub Pages: Deployment failed or skipped"
+        fi

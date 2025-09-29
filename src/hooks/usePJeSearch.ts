@@ -9,6 +9,10 @@ export interface OrgaoJulgador {
   sigla: string;
   cidade?: string;
   uf?: string;
+  // Campos adicionais para compatibilidade com a API do PJe
+  id_orgao_julgador?: number | string;
+  ds_orgao_julgador?: string;
+  ds_sigla?: string;
 }
 
 export interface ProcessoParte {
@@ -62,6 +66,7 @@ export interface Processo {
   data_autuacao?: string;
   prioridade?: string;
   orgao_julgador?: string;
+  nome_orgao_julgador?: string; // Campo adicional para o nome completo do órgão julgador
   valor_causa?: number;
   partes?: ProcessoParte[];
   tarefa_atual?: TarefaAtual | null;

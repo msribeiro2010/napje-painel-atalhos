@@ -1,0 +1,32 @@
+{
+  "name": "pje-server",
+  "version": "1.0.0",
+  "description": "Servidor API para integração com banco de dados PJe",
+  "main": "pje-proxy-simple.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node pje-proxy-simple.mjs",
+    "dev": "nodemon pje-proxy-simple.mjs",
+    "test": "node -e \"console.log('Testando conexão com bancos PJe...')\" && node pje-proxy-simple.mjs"
+  },
+  "keywords": [
+    "pje",
+    "api",
+    "postgres",
+    "tribunal"
+  ],
+  "author": "TRT15",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

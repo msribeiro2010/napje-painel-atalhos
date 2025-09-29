@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, FileText, Users, Building2, Loader2, FileSearch, Upload, Download, CheckCircle2, XCircle, AlertCircle, Scale, BookOpen, FolderOpen, UserCheck, FileCheck } from 'lucide-react';
+import { Search, FileText, Users, Building2, Loader2, FileSearch, Upload, Download, CheckCircle2, XCircle, AlertCircle, Scale, BookOpen, FolderOpen, UserCheck, FileCheck, BarChart3, Calendar } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import '@/styles/consultas-pje.css';
 
 // Configuração da API
@@ -25,11 +26,22 @@ const PJE_API_URL = import.meta.env.VITE_PJE_API_URL || 'http://localhost:3001/a
 
 export const PJeSearchPanel = () => {
   const { loading, searchOrgaosJulgadores, searchProcessos, searchServidores } = usePJeSearch();
+  const { toast: showToast } = useToast();
   
   // Estados de loading separados para cada busca
   const [loadingOj, setLoadingOj] = useState(false);
   const [loadingProcesso, setLoadingProcesso] = useState(false);
   const [loadingServidor, setLoadingServidor] = useState(false);
+  const [loadingDistribuicao, setLoadingDistribuicao] = useState(false);
+  
+  // Estados para distribuição
+  const [distribuicaoGrau, setDistribuicaoGrau] = useState<'1' | '2'>('1');
+  const [distribuicaoData, setDistribuicaoData] = useState(new Date().toISOString().split('T')[0]);
+  const [distribuicaoResultados, setDistribuicaoResultados] = useState<any>(null);
+  const [distribuicaoOj, setDistribuicaoOj] = useState('');
+  const [distribuicaoOjNome, setDistribuicaoOjNome] = useState('');
+  const [ojsDisponiveis, setOjsDisponiveis] = useState<OrgaoJulgador[]>([]);
+  const [loadingOjsDisponiveis, setLoadingOjsDisponiveis] = useState(false);
   
   // Estados para modal de detalhes
   const [modalOpen, setModalOpen] = useState(false);
@@ -341,8 +353,17 @@ export const PJeSearchPanel = () => {
         faltantes,
         serverTotal: serverOjs.length
       });
-      
-      toast.success('Verificação concluída!');
+
+      // Mensagem mais informativa para o usuário
+      if (existentes.length > 0 && faltantes.length === 0) {
+        toast.success(`✅ Verificação concluída! Todos os ${existentes.length} OJs já estão cadastrados para o servidor.`);
+      } else if (existentes.length === 0 && faltantes.length > 0) {
+        toast.warning(`⚠️ Verificação concluída! ${faltantes.length} OJs não encontrados no cadastro do servidor.`);
+      } else if (existentes.length > 0 && faltantes.length > 0) {
+        toast.info(`📊 Verificação concluída! ${existentes.length} OJs já cadastrados, ${faltantes.length} OJs não encontrados.`);
+      } else {
+        toast.success('Verificação concluída!');
+      }
     } catch (error) {
       console.error('Erro na verificação:', error);
       toast.error('Erro ao realizar verificação');
@@ -352,6 +373,211 @@ export const PJeSearchPanel = () => {
   };
   
   // Função para exportar resultados
+  // Função para buscar OJs disponíveis
+  const buscarOjsDisponiveis = async (grau: string) => {
+    setLoadingOjsDisponiveis(true);
+    try {
+      // Verificar se a URL da API está configurada
+      const apiUrl = import.meta.env.VITE_PJE_API_URL;
+      if (!apiUrl || apiUrl.trim() === '') {
+        setOjsDisponiveis([]);
+        return;
+      }
+
+      // Busca todos os OJs do grau selecionado
+      const response = await fetch(
+        `${apiUrl}/orgaos-julgadores?grau=${grau}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        // Mapear os dados para o formato esperado - mantendo consistência com os campos da API
+        const ojsMapeados = data.map((oj: any) => ({
+          // Usar 'id' como id_orgao_julgador para o Select funcionar
+          id_orgao_julgador: oj.id || oj.id_orgao_julgador,
+          // Usar 'nome' como ds_orgao_julgador para exibição
+          ds_orgao_julgador: oj.nome || oj.ds_orgao_julgador,
+          // Usar 'sigla' como ds_sigla
+          ds_sigla: oj.sigla || oj.ds_sigla,
+          cidade: oj.cidade,
+          uf: oj.uf,
+          // Manter campos originais também para compatibilidade
+          id: oj.id,
+          nome: oj.nome,
+          sigla: oj.sigla
+        }));
+
+        // Ordenar OJs alfabética/numericamente
+        const ojsOrdenados = ojsMapeados.sort((a: any, b: any) => {
+          const nomeA = a.ds_orgao_julgador || '';
+          const nomeB = b.ds_orgao_julgador || '';
+
+          // Extrair números do início dos nomes (ex: "1ª Vara", "10ª Vara")
+          const matchA = nomeA.match(/^(\d+)ª?\s/);
+          const matchB = nomeB.match(/^(\d+)ª?\s/);
+
+          // Se ambos começam com números, ordenar numericamente
+          if (matchA && matchB) {
+            const diff = parseInt(matchA[1]) - parseInt(matchB[1]);
+            if (diff !== 0) return diff;
+            // Se os números são iguais, continuar com a comparação alfabética do resto
+          }
+
+          // Ordenar alfabeticamente considerando números no meio do texto também
+          return nomeA.localeCompare(nomeB, 'pt-BR', { numeric: true, sensitivity: 'base' });
+        });
+
+        setOjsDisponiveis(ojsOrdenados);
+        console.log(`✅ ${ojsOrdenados.length} OJs carregados e ordenados para o ${grau}º grau`);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar OJs disponíveis:', error);
+    } finally {
+      setLoadingOjsDisponiveis(false);
+    }
+  };
+
+  // Buscar OJs quando o grau da distribuição mudar
+  useEffect(() => {
+    buscarOjsDisponiveis(distribuicaoGrau);
+    // Limpar seleção de OJ quando mudar o grau
+    setDistribuicaoOj('');
+    setDistribuicaoOjNome('');
+  }, [distribuicaoGrau]);
+
+  // Função para buscar distribuição diária
+  const buscarDistribuicao = async () => {
+    setLoadingDistribuicao(true);
+    setDistribuicaoResultados(null);
+
+    try {
+      // Verificar se a URL da API está configurada
+      const apiUrl = import.meta.env.VITE_PJE_API_URL;
+      if (!apiUrl || apiUrl.trim() === '') {
+        showToast({
+          title: "🏢 Funcionalidade PJe Indisponível",
+          description: "As consultas PJe não estão disponíveis nesta versão online. Para usar: 1) Clone o projeto localmente, 2) Execute 'npm run pje:server', 3) Acesse via localhost.",
+          variant: "default",
+          duration: 8000
+        });
+        return;
+      }
+
+      const url = distribuicaoOj
+        ? `${apiUrl}/distribuicao-diaria?grau=${distribuicaoGrau}&data=${distribuicaoData}&oj=${distribuicaoOj}`
+        : `${apiUrl}/distribuicao-diaria?grau=${distribuicaoGrau}&data=${distribuicaoData}`;
+
+      console.log('🔍 Buscando distribuição em:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        // Adicionar timeout de 30 segundos
+        signal: AbortSignal.timeout(30000)
+      });
+
+      // Verificar status HTTP
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Erro HTTP:', response.status, errorText.substring(0, 200));
+
+        if (response.status === 404) {
+          throw new Error('Servidor PJe não encontrado. Verifique a configuração.');
+        } else if (response.status === 500) {
+          throw new Error('Erro no servidor PJe. Tente novamente.');
+        } else if (response.status === 502) {
+          throw new Error('Servidor PJe indisponível. Verifique se está rodando.');
+        } else {
+          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+      }
+
+      // Verificar Content-Type
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('❌ Resposta não é JSON. Content-Type:', contentType);
+        const text = await response.text();
+        console.error('Primeiros 500 caracteres da resposta:', text.substring(0, 500));
+
+        // Se receber HTML, provavelmente é página de erro
+        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+          throw new Error('Servidor retornou HTML em vez de JSON. Verifique se o servidor PJe está configurado corretamente.');
+        } else {
+          throw new Error('Resposta inválida do servidor. Esperado JSON.');
+        }
+      }
+
+      // Tentar parse JSON com tratamento de erro
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('❌ Erro ao processar JSON:', jsonError);
+        throw new Error('Dados inválidos recebidos do servidor. Não foi possível processar o JSON.');
+      }
+      
+      if (data.success) {
+        setDistribuicaoResultados(data);
+        showToast({
+          title: "✅ Distribuição Encontrada",
+          description: `${data.total_geral} processos distribuídos em ${data.total_ojs} OJs`,
+          duration: 3000,
+        });
+      } else {
+        throw new Error(data.error || 'Erro ao buscar distribuição');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar distribuição:', error);
+
+      let errorMessage = 'Erro desconhecido ao buscar distribuição';
+
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage = 'Tempo limite excedido. O servidor demorou muito para responder.';
+        } else if (error.message.includes('Failed to fetch')) {
+          // Erro de rede - provavelmente tentando acessar localhost que não existe
+          showToast({
+            title: "🏢 Funcionalidade PJe Indisponível",
+            description: "As consultas PJe não estão disponíveis nesta versão online. Para usar: 1) Clone o projeto localmente, 2) Execute 'npm run pje:server', 3) Acesse via localhost.",
+            variant: "default",
+            duration: 8000
+          });
+          return;
+        } else if (error.message.includes('Unexpected token') || error.message.includes('DOCTYPE') || error.message.includes('HTML')) {
+          // Recebeu HTML em vez de JSON - servidor retornou página de erro
+          showToast({
+            title: "🏢 Funcionalidade PJe Indisponível",
+            description: "As consultas PJe não estão disponíveis nesta versão online. Para usar: 1) Clone o projeto localmente, 2) Execute 'npm run pje:server', 3) Acesse via localhost.",
+            variant: "default",
+            duration: 8000
+          });
+          return;
+        } else if (error.message.includes('JSON')) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      showToast({
+        title: "❌ Erro na Distribuição",
+        description: errorMessage,
+        variant: "destructive",
+        duration: 8000,
+      });
+    } finally {
+      setLoadingDistribuicao(false);
+    }
+  };
+
   const handleExportResults = () => {
     if (!verificationResults) {
       toast.error('Nenhum resultado para exportar');
@@ -539,7 +765,7 @@ export const PJeSearchPanel = () => {
         </CardHeader>
         <CardContent className="p-6">
         <Tabs defaultValue="ojs" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 pje-tabs-list">
+          <TabsList className="grid w-full grid-cols-6 pje-tabs-list">
             <TabsTrigger value="ojs" className="flex items-center gap-2 pje-tab-trigger">
               <Building2 className="h-4 w-4" />
               <span className="hidden sm:inline">Órgãos Julgadores</span>
@@ -562,6 +788,11 @@ export const PJeSearchPanel = () => {
               <UserCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Servidor/OJ</span>
               <span className="sm:hidden">S/OJ</span>
+            </TabsTrigger>
+            <TabsTrigger value="distribuicao" className="flex items-center gap-2 pje-tab-trigger">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Distribuição</span>
+              <span className="sm:hidden">Dist</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1088,7 +1319,7 @@ export const PJeSearchPanel = () => {
                     placeholder="Digite o CPF (apenas números)"
                     value={servidorOjCpf}
                     onChange={(e) => setServidorOjCpf(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleServidorOjSearch()}
+                    onKeyDown={(e) => e.key === 'Enter' && handleServidorOjSearch()}
                   />
                   <Button 
                     onClick={handleServidorOjSearch} 
@@ -1483,6 +1714,236 @@ Vara do Trabalho de Piracicaba`}
                   </Card>
                 )}
               </div>
+            </div>
+          </TabsContent>
+          
+          {/* Nova aba de Distribuição */}
+          <TabsContent value="distribuicao" className="space-y-4 mt-6 pje-fade-in">
+            <div className="space-y-4">
+              <div className="bg-gradient-to-r from-amber-50/50 to-orange-50/30 p-4 rounded-lg border border-amber-200/50">
+                <RadioGroup value={distribuicaoGrau} onValueChange={(value) => setDistribuicaoGrau(value as '1' | '2')} className="pje-radio-group">
+                  <Label className="pje-label text-amber-800">Selecione o Grau de Jurisdição:</Label>
+                  <div className="flex items-center space-x-6 mt-2">
+                    <div className="flex items-center space-x-2 pje-radio-item">
+                      <RadioGroupItem value="1" id="dist-grau-1" className="pje-radio-button" />
+                      <Label htmlFor="dist-grau-1" className="font-medium text-amber-700 cursor-pointer">1º Grau</Label>
+                    </div>
+                    <div className="flex items-center space-x-2 pje-radio-item">
+                      <RadioGroupItem value="2" id="dist-grau-2" className="pje-radio-button" />
+                      <Label htmlFor="dist-grau-2" className="font-medium text-amber-700 cursor-pointer">2º Grau</Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="data-distribuicao" className="pje-label">Data da Distribuição</Label>
+                    <Input
+                      id="data-distribuicao"
+                      type="date"
+                      value={distribuicaoData}
+                      onChange={(e) => setDistribuicaoData(e.target.value)}
+                      className="pje-input"
+                    />
+                  </div>
+
+                  <div className="flex-1">
+                    <Label htmlFor="oj-distribuicao" className="pje-label">Filtrar por Órgão Julgador (Opcional)</Label>
+                    <Select
+                      value={distribuicaoOj || "all"}
+                      onValueChange={(value) => {
+                        const novoValor = value === "all" ? "" : value;
+                        setDistribuicaoOj(novoValor);
+                        if (value === "all") {
+                          setDistribuicaoOjNome('');
+                        } else {
+                          const ojSelecionado = ojsDisponiveis.find(oj => oj.id_orgao_julgador?.toString() === value);
+                          setDistribuicaoOjNome(ojSelecionado?.ds_orgao_julgador || '');
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="pje-input">
+                        <SelectValue placeholder={loadingOjsDisponiveis ? "Carregando OJs..." : "Selecione um OJ ou deixe vazio para todos"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[400px] overflow-y-auto">
+                        <SelectItem value="all" className="font-semibold">
+                          📊 Todos os Órgãos Julgadores
+                        </SelectItem>
+                        {ojsDisponiveis.length > 0 ? (
+                          ojsDisponiveis
+                            .filter(oj => oj.id_orgao_julgador) // Filtra OJs sem ID
+                            .map((oj) => (
+                              <SelectItem
+                                key={`oj-${oj.id_orgao_julgador}`}
+                                value={oj.id_orgao_julgador.toString()}
+                                className="text-sm"
+                              >
+                                {oj.ds_orgao_julgador}
+                                {oj.cidade && ` - ${oj.cidade}`}
+                                {oj.ds_sigla && ` (${oj.ds_sigla})`}
+                              </SelectItem>
+                            ))
+                        ) : (
+                          !loadingOjsDisponiveis && (
+                            <SelectItem value="none" disabled className="text-muted-foreground">
+                              Nenhum OJ disponível
+                            </SelectItem>
+                          )
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button
+                    onClick={buscarDistribuicao}
+                    disabled={loadingDistribuicao}
+                    className="pje-button"
+                  >
+                    {loadingDistribuicao ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Buscando...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="mr-2 h-4 w-4" />
+                        Buscar Distribuição
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Resultados da Distribuição */}
+              {distribuicaoResultados && (
+                <div className="space-y-4">
+                  {/* Cards de Resumo */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Card className="pje-result-card">
+                      <CardContent className="p-4">
+                        <div className="text-2xl font-bold text-amber-800">{distribuicaoResultados.total_geral || 0}</div>
+                        <div className="text-sm text-muted-foreground">Total de Processos</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="pje-result-card">
+                      <CardContent className="p-4">
+                        <div className="text-2xl font-bold text-amber-800">{distribuicaoResultados.total_ojs || 0}</div>
+                        <div className="text-sm text-muted-foreground">OJs com Distribuição</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="pje-result-card">
+                      <CardContent className="p-4">
+                        <div className="text-2xl font-bold text-amber-800">
+                          {distribuicaoResultados.total_geral && distribuicaoResultados.total_ojs 
+                            ? Math.round(distribuicaoResultados.total_geral / distribuicaoResultados.total_ojs) 
+                            : 0}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Média por OJ</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="pje-result-card">
+                      <CardContent className="p-4">
+                        <div className="text-sm font-semibold text-amber-800">Período do Dia</div>
+                        <div className="text-xs space-y-1 mt-1">
+                          <div>Manhã: {distribuicaoResultados.resumo_horarios?.manha || 0}</div>
+                          <div>Tarde: {distribuicaoResultados.resumo_horarios?.tarde || 0}</div>
+                          <div>Noite: {distribuicaoResultados.resumo_horarios?.noite || 0}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  {/* Tabela de Distribuição por OJ */}
+                  <Card className="pje-card">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Distribuição por Órgão Julgador</CardTitle>
+                      <CardDescription>
+                        Processos distribuídos em {new Date(distribuicaoData).toLocaleDateString('pt-BR')}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left p-2">Órgão Julgador</th>
+                              <th className="text-center p-2">Total</th>
+                              <th className="text-center p-2">Prioritários</th>
+                              <th className="text-center p-2">Seg. Justiça</th>
+                              <th className="text-center p-2">Manhã</th>
+                              <th className="text-center p-2">Tarde</th>
+                              <th className="text-center p-2">Noite</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {distribuicaoResultados.distribuicao_por_oj?.map((oj: any) => (
+                              <tr key={oj.id_orgao_julgador} className="border-b hover:bg-amber-50/50">
+                                <td className="p-2">
+                                  <div>
+                                    <div className="font-medium">{oj.ds_orgao_julgador}</div>
+                                    <div className="text-xs text-muted-foreground">{oj.ds_sigla}</div>
+                                    {(oj.primeiro_processo || oj.ultimo_processo) && (
+                                      <div className="text-xs text-amber-600 mt-1">
+                                        {oj.primeiro_processo && oj.ultimo_processo && oj.primeiro_processo === oj.ultimo_processo ? (
+                                          <span>Processo: {oj.primeiro_processo}</span>
+                                        ) : (
+                                          <>
+                                            {oj.primeiro_processo && <span>Primeiro: {oj.primeiro_processo}</span>}
+                                            {oj.primeiro_processo && oj.ultimo_processo && <span className="mx-1">•</span>}
+                                            {oj.ultimo_processo && <span>Último: {oj.ultimo_processo}</span>}
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="text-center p-2 font-bold">{oj.total_processos}</td>
+                                <td className="text-center p-2">{oj.processos_prioritarios || 0}</td>
+                                <td className="text-center p-2">{oj.processos_segredo || 0}</td>
+                                <td className="text-center p-2">{oj.dist_manha || 0}</td>
+                                <td className="text-center p-2">{oj.dist_tarde || 0}</td>
+                                <td className="text-center p-2">{oj.dist_noite || 0}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          {distribuicaoResultados.distribuicao_por_oj?.length > 0 && (
+                            <tfoot>
+                              <tr className="font-bold">
+                                <td className="p-2">Total Geral</td>
+                                <td className="text-center p-2">{distribuicaoResultados.total_geral}</td>
+                                <td className="text-center p-2">
+                                  {distribuicaoResultados.distribuicao_por_oj.reduce((sum: number, oj: any) => 
+                                    sum + (parseInt(oj.processos_prioritarios) || 0), 0)}
+                                </td>
+                                <td className="text-center p-2">
+                                  {distribuicaoResultados.distribuicao_por_oj.reduce((sum: number, oj: any) => 
+                                    sum + (parseInt(oj.processos_segredo) || 0), 0)}
+                                </td>
+                                <td className="text-center p-2">{distribuicaoResultados.resumo_horarios?.manha || 0}</td>
+                                <td className="text-center p-2">{distribuicaoResultados.resumo_horarios?.tarde || 0}</td>
+                                <td className="text-center p-2">{distribuicaoResultados.resumo_horarios?.noite || 0}</td>
+                              </tr>
+                            </tfoot>
+                          )}
+                        </table>
+                      </div>
+                      
+                      {(!distribuicaoResultados.distribuicao_por_oj || distribuicaoResultados.distribuicao_por_oj.length === 0) && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          Nenhuma distribuição encontrada para esta data
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

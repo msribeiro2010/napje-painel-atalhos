@@ -16,7 +16,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Shield, Lock, Bot, ExternalLink, Bell, BarChart3, Calendar } from 'lucide-react';
+import { User, Settings, LogOut, Shield, Lock, Bot, ExternalLink, Bell, BarChart3, Calendar, Database } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -299,6 +299,24 @@ const UserMenu = () => {
           >
             <Settings className="mr-2 h-4 w-4" />
             <span>Configurações do Sistema</span>
+          </DropdownMenuItem>
+        )}
+        {profile.is_admin && (
+          <DropdownMenuItem 
+            onClick={() => navigate('/configuracao-banco')}
+            className="cursor-pointer hover:bg-gradient-accent"
+          >
+            <Database className="mr-2 h-4 w-4" />
+            <span>Configurar Banco PJe</span>
+          </DropdownMenuItem>
+        )}
+        {profile.is_admin && (
+          <DropdownMenuItem 
+            onClick={() => navigate('/analytics-pje')}
+            className="cursor-pointer hover:bg-gradient-accent"
+          >
+            <BarChart3 className="mr-2 h-4 w-4" />
+            <span>Analytics PJe - Big Data</span>
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
