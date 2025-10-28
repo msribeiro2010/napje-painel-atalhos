@@ -184,69 +184,178 @@ function CalendarComponent() {
     }
   };
 
+  // Calcular estatísticas do mês
+  const monthStats = {
+    presencial: Object.values(marks).filter(m => m === 'presencial').length,
+    remoto: Object.values(marks).filter(m => m === 'remoto').length,
+    ferias: Object.values(marks).filter(m => m === 'ferias').length + (vacations?.reduce((acc, v) => {
+      const start = new Date(v.start_date);
+      const end = new Date(v.end_date);
+      if (start.getMonth() === month.getMonth() && start.getFullYear() === month.getFullYear()) {
+        return acc + (v.days_count || 0);
+      }
+      return acc;
+    }, 0) || 0),
+    plantao: Object.values(marks).filter(m => m === 'plantao').length,
+    folga: Object.values(marks).filter(m => m === 'folga').length,
+  };
+
   return (
-    <div className="relative">
-      <div className="bg-[#f8f5e4] border border-[#e2d8b8] rounded-xl shadow-sm p-6 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-        <div className="flex flex-col">
-          <span className="font-semibold text-[#7c6a3c] text-xl flex items-center gap-2">
-            <CalendarIcon className="h-6 w-6 text-[#bfae7c]" />
-            Meu Calendário de Trabalho
-            {(searchParams.get('year') || searchParams.get('month')) && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full ml-2">
-                Navegação do Dashboard
-              </span>
-            )}
-          </span>
-          <span className="text-[#bfae7c] text-base">{format(month, 'MMMM yyyy', { locale: ptBR })}</span>
-        </div>
-        <div className="flex gap-2 items-center">
-          <VacationAlerts compact />
-          <Button
-            size="sm"
-            className="px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
-            onClick={() => setIsVacationDialogOpen(true)}
-          >
-            <Palmtree className="h-4 w-4 mr-1" />
-            Cadastrar Férias
-          </Button>
-          <CustomEventDialog onAdd={async (event) => { await addCustomEvent(event); }} />
-          <Button
-            size="sm"
-            variant="outline"
-            className="px-3 py-2 hover:bg-gray-50 transition-colors"
-            onClick={() => setMonth(addDays(month, -30))}
-          >
-            Anterior
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="px-3 py-2 hover:bg-gray-50 transition-colors"
-            onClick={() => setMonth(addDays(month, 30))}
-          >
-            Próximo
-          </Button>
-          <Button
-            size="sm"
-            variant={showAISuggestions ? "default" : "outline"}
-            className="px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
-            onClick={() => setShowAISuggestions(!showAISuggestions)}
-            title="Sugestões inteligentes de férias com IA"
-          >
-            <Brain className="h-4 w-4 mr-1" />
-            IA Férias
-          </Button>
+    <div className="relative space-y-6">
+      {/* Header Moderno com Estatísticas */}
+      <div className="bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-purple-950/20 rounded-2xl shadow-xl border border-blue-100 dark:border-slate-700 overflow-hidden">
+        {/* Barra superior colorida */}
+        <div className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+
+        <div className="p-6">
+          {/* Título e Navegação */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
+                  <CalendarIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Calendário de Trabalho
+                  </h1>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
+                    {format(month, "MMMM 'de' yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Botões de Ação */}
+            <div className="flex gap-2 items-center flex-wrap">
+              <VacationAlerts compact />
+
+              <Button
+                size="sm"
+                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+                onClick={() => setIsVacationDialogOpen(true)}
+              >
+                <Palmtree className="h-4 w-4 mr-2" />
+                Férias
+              </Button>
+
+              <CustomEventDialog onAdd={async (event) => { await addCustomEvent(event); }} />
+
+              <div className="flex gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 shadow-md">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  onClick={() => setMonth(addDays(month, -30))}
+                >
+                  ← Anterior
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  onClick={() => setMonth(addDays(month, 30))}
+                >
+                  Próximo →
+                </Button>
+              </div>
+
+              <Button
+                size="sm"
+                variant={showAISuggestions ? "default" : "outline"}
+                className={`px-4 py-2 ${showAISuggestions ? 'bg-gradient-to-r from-purple-600 to-blue-600' : ''} text-white hover:from-purple-700 hover:to-blue-700 shadow-md hover:shadow-lg transition-all duration-200`}
+                onClick={() => setShowAISuggestions(!showAISuggestions)}
+                title="Sugestões inteligentes de férias com IA"
+              >
+                <Brain className="h-4 w-4 mr-2" />
+                IA Férias
+              </Button>
+            </div>
+          </div>
+
+          {/* Mini Estatísticas do Mês */}
+          <div className="grid grid-cols-5 gap-3">
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/20 dark:to-amber-900/20 rounded-xl p-3 border border-amber-200 dark:border-amber-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{monthStats.presencial}</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-500 font-medium">Presencial</p>
+                </div>
+                <BriefcaseBusiness className="h-8 w-8 text-amber-500 opacity-50" />
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 rounded-xl p-3 border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{monthStats.remoto}</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-500 font-medium">Home Office</p>
+                </div>
+                <Laptop className="h-8 w-8 text-blue-500 opacity-50" />
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-orange-50 to-red-100 dark:from-orange-950/20 dark:to-red-900/20 rounded-xl p-3 border border-orange-200 dark:border-orange-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold text-orange-700 dark:text-orange-400">{monthStats.ferias}</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-500 font-medium">Férias</p>
+                </div>
+                <span className="text-3xl opacity-50">🌴</span>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950/20 dark:to-emerald-900/20 rounded-xl p-3 border border-green-200 dark:border-green-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-400">{monthStats.plantao}</p>
+                  <p className="text-xs text-green-600 dark:text-green-500 font-medium">Plantão</p>
+                </div>
+                <ShieldAlert className="h-8 w-8 text-green-500 opacity-50" />
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/20 dark:to-slate-800/20 rounded-xl p-3 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold text-slate-700 dark:text-slate-400">{monthStats.folga}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-500 font-medium">Folga</p>
+                </div>
+                <BedDouble className="h-8 w-8 text-slate-500 opacity-50" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      
-      <div className="grid grid-cols-7 gap-2 mb-4">
-        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d) => (
-          <div key={d} className="text-[#bfae7c] font-semibold text-center py-2 text-sm">{d}</div>
-        ))}
-        {Array(days[0].getDay()).fill(null).map((_, i) => (
-          <div key={'empty-' + i}></div>
-        ))}
+
+      {/* Grid Moderno do Calendário */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        {/* Cabeçalho dos Dias da Semana */}
+        <div className="grid grid-cols-7 gap-px bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-px">
+          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d, i) => (
+            <div
+              key={d}
+              className={`bg-gradient-to-br ${
+                i === 0 || i === 6
+                  ? 'from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50'
+                  : 'from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50'
+              } font-bold text-center py-4 text-sm ${
+                i === 0 || i === 6
+                  ? 'text-purple-700 dark:text-purple-400'
+                  : 'text-blue-700 dark:text-blue-400'
+              }`}
+            >
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Grid de Dias */}
+        <div className="grid grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800 p-px">
+          {/* Dias vazios antes do início do mês */}
+          {Array(days[0].getDay()).fill(null).map((_, i) => (
+            <div key={'empty-' + i} className="bg-slate-50 dark:bg-slate-900/50 min-h-[100px]"></div>
+          ))}
         {days.map((date) => {
           const key = format(date, 'yyyy-MM-dd');
           const mark = marks[key];
@@ -264,30 +373,69 @@ function CalendarComponent() {
           // Eventos personalizados do dia
           const customEventsOfDay = (customEvents || []).filter(ev => ev.date === key);
 
-          // Determinar cor de fundo - priorizar feriados e férias cadastradas
-          let backgroundColor = mark ? calendarLabels[mark].color : calendarLabels.presencial.color;
+          // Determinar estilo moderno baseado no tipo
+          const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
-          // Se está em período de férias cadastrado, usar cor de férias
-          if (isInVacation && !mark) {
-            backgroundColor = calendarLabels.ferias.color;
+          let dayStyle = {
+            bg: 'bg-white dark:bg-slate-900',
+            border: 'border-slate-200 dark:border-slate-700',
+            text: 'text-slate-900 dark:text-slate-100',
+            hover: 'hover:shadow-lg hover:scale-[1.02]',
+          };
+
+          if (mark === 'presencial') {
+            dayStyle = {
+              bg: 'bg-gradient-to-br from-amber-50 via-amber-100/50 to-orange-50 dark:from-amber-950/30 dark:via-amber-900/20 dark:to-orange-950/30',
+              border: 'border-amber-300 dark:border-amber-700',
+              text: 'text-amber-900 dark:text-amber-100',
+              hover: 'hover:shadow-amber-200 dark:hover:shadow-amber-900/50 hover:scale-[1.02]',
+            };
+          } else if (mark === 'remoto') {
+            dayStyle = {
+              bg: 'bg-gradient-to-br from-blue-50 via-blue-100/50 to-cyan-50 dark:from-blue-950/30 dark:via-blue-900/20 dark:to-cyan-950/30',
+              border: 'border-blue-300 dark:border-blue-700',
+              text: 'text-blue-900 dark:text-blue-100',
+              hover: 'hover:shadow-blue-200 dark:hover:shadow-blue-900/50 hover:scale-[1.02]',
+            };
+          } else if (mark === 'ferias' || (isInVacation && !mark)) {
+            dayStyle = {
+              bg: 'bg-gradient-to-br from-orange-50 via-red-100/50 to-pink-50 dark:from-orange-950/30 dark:via-red-900/20 dark:to-pink-950/30',
+              border: 'border-orange-300 dark:border-orange-700',
+              text: 'text-orange-900 dark:text-orange-100',
+              hover: 'hover:shadow-orange-200 dark:hover:shadow-orange-900/50 hover:scale-[1.02]',
+            };
+          } else if (mark === 'plantao') {
+            dayStyle = {
+              bg: 'bg-gradient-to-br from-green-50 via-emerald-100/50 to-teal-50 dark:from-green-950/30 dark:via-emerald-900/20 dark:to-teal-950/30',
+              border: 'border-green-300 dark:border-green-700',
+              text: 'text-green-900 dark:text-green-100',
+              hover: 'hover:shadow-green-200 dark:hover:shadow-green-900/50 hover:scale-[1.02]',
+            };
+          } else if (mark === 'folga') {
+            dayStyle = {
+              bg: 'bg-gradient-to-br from-slate-100 via-gray-100/50 to-slate-50 dark:from-slate-800/30 dark:via-gray-800/20 dark:to-slate-900/30',
+              border: 'border-slate-300 dark:border-slate-600',
+              text: 'text-slate-700 dark:text-slate-300',
+              hover: 'hover:shadow-slate-200 dark:hover:shadow-slate-800/50 hover:scale-[1.02]',
+            };
+          } else if (isWeekend) {
+            dayStyle = {
+              bg: 'bg-gradient-to-br from-purple-50/50 via-pink-50/30 to-purple-50/50 dark:from-purple-950/20 dark:via-pink-950/10 dark:to-purple-950/20',
+              border: 'border-purple-200 dark:border-purple-800',
+              text: 'text-purple-700 dark:text-purple-300',
+              hover: 'hover:shadow-purple-100 dark:hover:shadow-purple-900/30 hover:scale-[1.02]',
+            };
           }
-          if (hasFeriado && hasAniversario) {
-            backgroundColor = 'linear-gradient(45deg, #ffeb3b 50%, #ff9800 50%)'; // Gradiente para ambos
-          } else if (hasFeriado) {
-            backgroundColor = '#ffeb3b'; // Amarelo para feriados
-          } else if (hasAniversario) {
-            backgroundColor = '#ff9800'; // Laranja para aniversários
+
+          // Feriados e aniversários
+          if (hasFeriado) {
+            dayStyle.bg = 'bg-gradient-to-br from-yellow-100 via-amber-100 to-orange-100 dark:from-yellow-900/40 dark:via-amber-900/40 dark:to-orange-900/40';
+            dayStyle.border = 'border-yellow-400 dark:border-yellow-600';
           }
-
-          // Definir classe animada
-          let animationClass = '';
-          if (hasFeriado) animationClass = 'animate-pulse-slow bg-yellow-100';
-          else if (isPlantao) animationClass = 'animate-bounce-slow bg-green-100';
-          else if (isFolga) animationClass = 'animate-fade-slow bg-gray-200';
-          else if (hasAniversario) animationClass = 'animate-bounce-slow bg-orange-100';
-
-          const eventTitles = dayEvents.map(e => e.title).join('\n');
-          const fullTitle = [mark ? calendarLabels[mark].label : '', eventTitles].filter(Boolean).join('\n');
+          if (hasAniversario && !hasFeriado) {
+            dayStyle.bg = 'bg-gradient-to-br from-orange-100 via-red-100 to-pink-100 dark:from-orange-900/40 dark:via-red-900/40 dark:to-pink-900/40';
+            dayStyle.border = 'border-orange-400 dark:border-orange-600';
+          }
 
           // Ícone do evento personalizado
           const customEventIcons = {
@@ -303,71 +451,71 @@ function CalendarComponent() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => handleDayClick(date)}
-                    className={`rounded-lg border border-[#e2d8b8] flex flex-col items-center justify-center h-16 w-full transition-all duration-150 focus:outline-none hover:shadow-md relative ${isCurrent ? 'ring-2 ring-[#bfae7c]' : ''} ${animationClass}`}
-                    style={{ background: backgroundColor }}
-                    title={fullTitle}
+                    className={`
+                      ${dayStyle.bg}
+                      ${dayStyle.border}
+                      ${dayStyle.text}
+                      ${dayStyle.hover}
+                      min-h-[100px] w-full
+                      border-2
+                      transition-all duration-300 ease-out
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                      relative group
+                      ${isCurrent ? 'ring-4 ring-blue-500 ring-offset-2 shadow-2xl scale-[1.05]' : ''}
+                    `}
                   >
-                    <span className="font-semibold text-[#7c6a3c] text-base">{date.getDate()}</span>
-                    {/* Ícones de eventos */}
-                    <div className="flex gap-1 absolute bottom-1 left-1">
-                      {hasFeriado && (
-                        <div className="bg-white/90 rounded-full p-1 shadow-md">
-                          <Star className="h-4 w-4 text-amber-600 drop-shadow-sm" />
-                        </div>
-                      )}
-                      {hasAniversario && (
-                        <div className="bg-white/90 rounded-full p-1 shadow-md">
-                          <Gift className="h-4 w-4 text-orange-600 drop-shadow-sm" />
-                        </div>
-                      )}
-                      {/* Ícones de eventos personalizados */}
-                      {customEventsOfDay.map(ev => (
-                        <span key={ev.id} title={ev.title} className="relative group">
-                          <div className="bg-white/90 rounded-full p-1 shadow-md">
-                            {customEventIcons[ev.type as keyof typeof customEventIcons]}
-                          </div>
-                          {/* Tooltip customizada com botões de ação */}
-                          <div className="hidden group-hover:block absolute z-50 left-6 top-0 bg-white text-xs text-gray-700 rounded shadow border border-gray-200 min-w-[160px]">
-                            <div className="p-2">
-                              <div className="font-semibold mb-1">{ev.title}</div>
-                              {ev.description && <div className="mb-2 text-gray-600">{ev.description}</div>}
-                              <div className="flex gap-1 pt-1 border-t">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditEvent(ev);
-                                  }}
-                                  className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
-                                  title="Editar evento"
-                                >
-                                  <Edit className="h-3 w-3" />
-                                  Editar
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteEvent(ev.id, ev.title);
-                                  }}
-                                  className="flex items-center gap-1 px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
-                                  title="Excluir evento"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                  Excluir
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </span>
-                      ))}
+                    {/* Indicador de dia atual */}
+                    {isCurrent && (
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                        <span className="text-white text-xs font-bold">●</span>
+                      </div>
+                    )}
+
+                    {/* Número do dia */}
+                    <div className="absolute top-2 left-2">
+                      <span className={`text-lg font-bold ${dayStyle.text}`}>
+                        {date.getDate()}
+                      </span>
                     </div>
-                    {/* Ícone do tipo de trabalho ou férias cadastradas */}
+                    {/* Ícone Principal no Centro */}
                     {(mark || isInVacation) && (
-                      <div className="absolute bottom-1 right-1">
-                        <div className="bg-white/90 rounded-full p-1 shadow-md">
+                      <div className="flex items-center justify-center h-full">
+                        <div className="transform group-hover:scale-110 transition-transform duration-200">
                           {mark ? calendarLabels[mark].icon : calendarLabels.ferias.icon}
                         </div>
                       </div>
                     )}
+
+                    {/* Badges de Eventos (Feriados e Aniversários) */}
+                    <div className="flex gap-1 absolute top-2 right-2">
+                      {hasFeriado && (
+                        <div className="bg-gradient-to-br from-yellow-400 to-amber-500 rounded-lg p-1.5 shadow-lg animate-pulse">
+                          <Star className="h-3 w-3 text-white drop-shadow-sm" />
+                        </div>
+                      )}
+                      {hasAniversario && (
+                        <div className="bg-gradient-to-br from-orange-400 to-pink-500 rounded-lg p-1.5 shadow-lg animate-bounce">
+                          <Gift className="h-3 w-3 text-white drop-shadow-sm" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Badges de Eventos Personalizados (inferior) */}
+                    <div className="flex gap-1 absolute bottom-2 left-2">
+                      {customEventsOfDay.map(ev => (
+                        <div
+                          key={ev.id}
+                          className="bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg p-1.5 shadow-md hover:scale-110 transition-transform cursor-pointer"
+                          title={ev.title}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditEvent(ev);
+                          }}
+                        >
+                          {customEventIcons[ev.type as keyof typeof customEventIcons]}
+                        </div>
+                      ))}
+                    </div>
                   </button>
                 </TooltipTrigger>
                 {(dayEvents.length > 0 || isInVacation) && (
@@ -410,80 +558,70 @@ function CalendarComponent() {
             </TooltipProvider>
           );
         })}
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-white/70 dark:bg-gray-800/80 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-        <div className="space-y-2">
-          <h4 className="font-semibold text-[#7c6a3c] dark:text-amber-300 text-sm">Modalidade de Trabalho</h4>
-          <div className="flex flex-wrap gap-4">
-            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-              <span className="inline-block w-4 h-4 rounded bg-[#f5e7c4] dark:bg-amber-200 border border-[#e2d8b8] dark:border-amber-300 shadow-sm"></span>
-              <BriefcaseBusiness className="h-5 w-5 text-[#8b7355] dark:text-amber-700 drop-shadow-sm" />
-              Presencial (TRT15)
-            </span>
-            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-              <span className="inline-block w-4 h-4 rounded bg-[#ffe6e6] dark:bg-red-200 border border-[#e2d8b8] dark:border-red-300 shadow-sm"></span>
-              <span className="text-xl drop-shadow-sm">🌴</span>
-              Férias (inclui finais de semana)
-            </span>
-            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-              <span className="inline-block w-4 h-4 rounded bg-[#e6f7ff] dark:bg-blue-200 border border-[#e2d8b8] dark:border-blue-300 shadow-sm"></span>
-              <Laptop className="h-5 w-5 text-[#5ba3d4] dark:text-blue-400 drop-shadow-sm" />
-              Home Office
-            </span>
-            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-              <span className="inline-block w-4 h-4 rounded bg-[#e6ffe6] dark:bg-green-200 border border-[#e2d8b8] dark:border-green-300 shadow-sm"></span>
-              <ShieldAlert className="h-5 w-5 text-[#2e7d32] dark:text-green-400 drop-shadow-sm" />
-              Plantão
-            </span>
-            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-              <span className="inline-block w-4 h-4 rounded bg-[#e0e0e0] dark:bg-gray-300 border border-[#e2d8b8] dark:border-gray-400 shadow-sm"></span>
-              <BedDouble className="h-5 w-5 text-[#424242] dark:text-gray-400 drop-shadow-sm" />
-              Folga
-            </span>
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <h4 className="font-semibold text-[#7c6a3c] dark:text-amber-300 text-sm">Eventos</h4>
-          <div className="flex flex-wrap gap-4">
-            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-              <span className="inline-block w-4 h-4 rounded bg-[#ffeb3b] dark:bg-yellow-300 border border-[#e2d8b8] dark:border-yellow-400 shadow-sm"></span>
-              <div className="bg-white/90 dark:bg-gray-700/90 rounded-full p-1 shadow-sm">
-                <Star className="h-4 w-4 text-amber-600 dark:text-yellow-400 drop-shadow-sm" />
-              </div>
-              Feriados
-            </span>
-            <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-              <span className="inline-block w-4 h-4 rounded bg-[#ff9800] dark:bg-orange-300 border border-[#e2d8b8] dark:border-orange-400 shadow-sm"></span>
-              <div className="bg-white/90 dark:bg-gray-700/90 rounded-full p-1 shadow-sm">
-                <Gift className="h-4 w-4 text-orange-600 dark:text-orange-400 drop-shadow-sm" />
-              </div>
-              Aniversários
-            </span>
-          </div>
         </div>
       </div>
-      
-      <div className="mt-4 space-y-2">
-        <div className="text-center text-sm text-[#bfae7c]">
-          <p>Clique nos dias para marcar seu tipo de trabalho</p>
+
+      {/* Legenda Moderna */}
+      <div className="bg-gradient-to-br from-white via-slate-50 to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-blue-950/30 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+            📋 Legenda
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Clique nos dias para alternar entre as modalidades
+          </p>
         </div>
-        
-        {events.length > 0 && (
-          <div className="text-center text-xs text-[#bfae7c] bg-white/30 p-2 rounded">
-            <span className="font-medium">
-              {events.filter(e => e.type === 'feriado').length} feriado(s) e {events.filter(e => e.type === 'aniversario').length} aniversário(s) este mês
-            </span>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {/* Presencial */}
+          <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-xl border border-amber-200 dark:border-amber-800">
+            <BriefcaseBusiness className="h-6 w-6 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Presencial</span>
           </div>
-        )}
-        
-        {eventsLoading && (
-          <div className="text-center text-xs text-[#bfae7c]">
-            <span>Carregando eventos...</span>
+
+          {/* Home Office */}
+          <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-xl border border-blue-200 dark:border-blue-800">
+            <Laptop className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">Home Office</span>
           </div>
-        )}
-      </div>
+
+          {/* Férias */}
+          <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-950/20 dark:to-pink-950/20 rounded-xl border border-orange-200 dark:border-orange-800">
+            <span className="text-2xl flex-shrink-0">🌴</span>
+            <span className="text-sm font-medium text-orange-900 dark:text-orange-100">Férias</span>
+          </div>
+
+          {/* Plantão */}
+          <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-950/20 dark:to-teal-950/20 rounded-xl border border-green-200 dark:border-green-800">
+            <ShieldAlert className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0" />
+            <span className="text-sm font-medium text-green-900 dark:text-green-100">Plantão</span>
+          </div>
+
+          {/* Folga */}
+          <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-800/20 dark:to-gray-900/20 rounded-xl border border-slate-200 dark:border-slate-700">
+            <BedDouble className="h-6 w-6 text-slate-600 dark:text-slate-400 flex-shrink-0" />
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Folga</span>
+          </div>
+        </div>
+
+        {/* Eventos Especiais */}
+        <div className="mt-4 flex items-center gap-4 justify-center flex-wrap">
+          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-yellow-100 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30 rounded-lg border border-yellow-300 dark:border-yellow-700">
+            <Star className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <span className="text-xs font-medium text-amber-900 dark:text-amber-100">Feriado</span>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-orange-100 to-pink-100 dark:from-orange-900/30 dark:to-pink-900/30 rounded-lg border border-orange-300 dark:border-orange-700">
+            <Gift className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <span className="text-xs font-medium text-orange-900 dark:text-orange-100">Aniversário</span>
+          </div>
+          {events.length > 0 && (
+            <div className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {events.filter(e => e.type === 'feriado').length} feriados | {events.filter(e => e.type === 'aniversario').length} aniversários
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Dialog para editar eventos personalizados */}
