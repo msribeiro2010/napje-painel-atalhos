@@ -18,6 +18,7 @@ import { useCustomEvents } from '@/hooks/useCustomEvents';
 import { useVacations } from '@/hooks/useVacations';
 import { VacationDialog } from '@/components/vacation/VacationDialog';
 import { VacationAlerts } from '@/components/vacation/VacationAlerts';
+import { ModernPageHeader } from '@/components/ModernPageHeader';
 
 import { ptBR } from 'date-fns/locale';
 
@@ -203,78 +204,59 @@ function CalendarComponent() {
   return (
     <div className="relative space-y-6">
       {/* Header Moderno com Estatísticas */}
-      <div className="bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-purple-950/20 rounded-2xl shadow-xl border border-blue-100 dark:border-slate-700 overflow-hidden">
-        {/* Barra superior colorida */}
-        <div className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+      <ModernPageHeader
+        title="Calendário de Trabalho"
+        subtitle={format(month, "MMMM 'de' yyyy", { locale: ptBR })}
+        icon={<CalendarIcon className="h-6 w-6 text-white" />}
+        actions={
+          <>
+            <VacationAlerts compact />
 
-        <div className="p-6">
-          {/* Título e Navegação */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
-                  <CalendarIcon className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Calendário de Trabalho
-                  </h1>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
-                    {format(month, "MMMM 'de' yyyy", { locale: ptBR })}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <Button
+              size="sm"
+              className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+              onClick={() => setIsVacationDialogOpen(true)}
+            >
+              <Palmtree className="h-4 w-4 mr-2" />
+              Férias
+            </Button>
 
-            {/* Botões de Ação */}
-            <div className="flex gap-2 items-center flex-wrap">
-              <VacationAlerts compact />
+            <CustomEventDialog onAdd={async (event) => { await addCustomEvent(event); }} />
 
+            <div className="flex gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 shadow-md">
               <Button
                 size="sm"
-                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
-                onClick={() => setIsVacationDialogOpen(true)}
+                variant="ghost"
+                className="px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
+                onClick={() => setMonth(addDays(month, -30))}
               >
-                <Palmtree className="h-4 w-4 mr-2" />
-                Férias
+                ← Anterior
               </Button>
-
-              <CustomEventDialog onAdd={async (event) => { await addCustomEvent(event); }} />
-
-              <div className="flex gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 shadow-md">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
-                  onClick={() => setMonth(addDays(month, -30))}
-                >
-                  ← Anterior
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
-                  onClick={() => setMonth(addDays(month, 30))}
-                >
-                  Próximo →
-                </Button>
-              </div>
-
               <Button
                 size="sm"
-                variant={showAISuggestions ? "default" : "outline"}
-                className={`px-4 py-2 ${showAISuggestions ? 'bg-gradient-to-r from-purple-600 to-blue-600' : ''} text-white hover:from-purple-700 hover:to-blue-700 shadow-md hover:shadow-lg transition-all duration-200`}
-                onClick={() => setShowAISuggestions(!showAISuggestions)}
-                title="Sugestões inteligentes de férias com IA"
+                variant="ghost"
+                className="px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
+                onClick={() => setMonth(addDays(month, 30))}
               >
-                <Brain className="h-4 w-4 mr-2" />
-                IA Férias
+                Próximo →
               </Button>
             </div>
-          </div>
 
-          {/* Mini Estatísticas do Mês */}
-          <div className="grid grid-cols-5 gap-3">
+            <Button
+              size="sm"
+              variant={showAISuggestions ? "default" : "outline"}
+              className={`px-4 py-2 ${showAISuggestions ? 'bg-gradient-to-r from-purple-600 to-blue-600' : ''} text-white hover:from-purple-700 hover:to-blue-700 shadow-md hover:shadow-lg transition-all duration-200`}
+              onClick={() => setShowAISuggestions(!showAISuggestions)}
+              title="Sugestões inteligentes de férias com IA"
+            >
+              <Brain className="h-4 w-4 mr-2" />
+              IA Férias
+            </Button>
+          </>
+        }
+      >
+        {/* Mini Estatísticas do Mês */}
+        <div className="grid grid-cols-5 gap-3 mt-6">
             <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/20 dark:to-amber-900/20 rounded-xl p-3 border border-amber-200 dark:border-amber-800">
               <div className="flex items-center justify-between">
                 <div>
@@ -326,7 +308,7 @@ function CalendarComponent() {
             </div>
           </div>
         </div>
-      </div>
+      </ModernPageHeader>
 
       {/* Grid Moderno do Calendário */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
