@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Home, Sun, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users, Edit, Trash2, Building2, HardHat, Umbrella, Briefcase, Coffee } from 'lucide-react';
+import { Calendar as CalendarIcon, Home, Sun, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users, Edit, Trash2, Building2, HardHat, Umbrella, Briefcase, Coffee, Palmtree } from 'lucide-react';
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
@@ -15,12 +15,15 @@ import { toast } from 'sonner';
 import { CustomEventDialog } from '@/components/CustomEventDialog';
 import { EditCustomEventDialog } from '@/components/EditCustomEventDialog';
 import { useCustomEvents } from '@/hooks/useCustomEvents';
+import { useVacations } from '@/hooks/useVacations';
+import { VacationDialog } from '@/components/vacation/VacationDialog';
+import { VacationAlerts } from '@/components/vacation/VacationAlerts';
 
 import { ptBR } from 'date-fns/locale';
 
 const calendarLabels = {
   presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Building2 className="h-5 w-5 text-[#8b7355] drop-shadow-sm" /> },
-  ferias: { label: 'Férias', color: '#ffe6e6', icon: <Umbrella className="h-5 w-5 text-[#d4756b] drop-shadow-sm" /> },
+  ferias: { label: 'Férias', color: '#ffe6e6', icon: <span className="text-2xl drop-shadow-sm">🌴</span> },
   remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Coffee className="h-5 w-5 text-[#5ba3d4] drop-shadow-sm" /> },
   plantao: { label: 'Plantão', color: '#e6ffe6', icon: <HardHat className="h-5 w-5 text-[#2e7d32] drop-shadow-sm" /> },
   folga: { label: 'Folga', color: '#e0e0e0', icon: <Umbrella className="h-5 w-5 text-[#424242] drop-shadow-sm" /> },
@@ -51,10 +54,13 @@ function CalendarComponent() {
   const [editingEvent, setEditingEvent] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [savingDate, setSavingDate] = useState<string | null>(null);
-  
+  const [isVacationDialogOpen, setIsVacationDialogOpen] = useState(false);
+  const [selectedVacationDates, setSelectedVacationDates] = useState<{ start?: Date; end?: Date }>({});
+
   // Usar o hook para buscar/salvar marcações do Supabase
   const { marks, loading: marksLoading, saveMark, removeMark, fetchMarks } = useWorkCalendar(month);
   const { customEvents, addCustomEvent, updateCustomEvent, removeCustomEvent, loading: customEventsLoading } = useCustomEvents(month);
+  const { vacations, getVacationForDate, isDateInVacation } = useVacations(month.getFullYear());
 
   // Atualizar o mês quando os parâmetros de URL mudarem
   useEffect(() => {
@@ -193,28 +199,37 @@ function CalendarComponent() {
           </span>
           <span className="text-[#bfae7c] text-base">{format(month, 'MMMM yyyy', { locale: ptBR })}</span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <VacationAlerts compact />
+          <Button
+            size="sm"
+            className="px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+            onClick={() => setIsVacationDialogOpen(true)}
+          >
+            <Palmtree className="h-4 w-4 mr-1" />
+            Cadastrar Férias
+          </Button>
           <CustomEventDialog onAdd={async (event) => { await addCustomEvent(event); }} />
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="px-3 py-2 hover:bg-gray-50 transition-colors" 
+          <Button
+            size="sm"
+            variant="outline"
+            className="px-3 py-2 hover:bg-gray-50 transition-colors"
             onClick={() => setMonth(addDays(month, -30))}
           >
             Anterior
           </Button>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="px-3 py-2 hover:bg-gray-50 transition-colors" 
+          <Button
+            size="sm"
+            variant="outline"
+            className="px-3 py-2 hover:bg-gray-50 transition-colors"
             onClick={() => setMonth(addDays(month, 30))}
           >
             Próximo
           </Button>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             variant={showAISuggestions ? "default" : "outline"}
-            className="px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg" 
+            className="px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
             onClick={() => setShowAISuggestions(!showAISuggestions)}
             title="Sugestões inteligentes de férias com IA"
           >
@@ -386,7 +401,7 @@ function CalendarComponent() {
             </span>
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
               <span className="inline-block w-4 h-4 rounded bg-[#ffe6e6] dark:bg-red-200 border border-[#e2d8b8] dark:border-red-300 shadow-sm"></span>
-              <Umbrella className="h-5 w-5 text-red-600 dark:text-red-400 drop-shadow-sm" />
+              <span className="text-xl drop-shadow-sm">🌴</span>
               Férias
             </span>
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
@@ -457,7 +472,13 @@ function CalendarComponent() {
         onUpdate={updateCustomEvent}
       />
 
-
+      {/* Dialog para cadastrar férias */}
+      <VacationDialog
+        open={isVacationDialogOpen}
+        onOpenChange={setIsVacationDialogOpen}
+        initialStartDate={selectedVacationDates.start}
+        initialEndDate={selectedVacationDates.end}
+      />
 
       {/* Painel de Sugestões de IA - Flutuante */}
       <div className={`fixed top-4 right-4 w-96 max-h-[90vh] overflow-hidden transition-all duration-500 ease-in-out z-50 ${
