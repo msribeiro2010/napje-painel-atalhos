@@ -307,7 +307,6 @@ function CalendarComponent() {
               </div>
             </div>
           </div>
-        </div>
       </ModernPageHeader>
 
       {/* Grid Moderno do Calendário */}

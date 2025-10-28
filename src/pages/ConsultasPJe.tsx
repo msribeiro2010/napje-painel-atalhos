@@ -2,11 +2,11 @@ import React from 'react';
 import { ModernLayout } from '@/components/layout/ModernLayout';
 import { PJeSearchPanel } from '@/components/pje/PJeSearchPanel';
 import { PJeAnalyticsDashboard } from '@/components/pje/PJeAnalyticsDashboard';
-import { PageHeader } from '@/components/PageHeader';
+import { ModernPageHeader } from '@/components/ModernPageHeader';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { InfoIcon, Settings, Search, BarChart3 } from 'lucide-react';
+import { InfoIcon, Settings, Search, BarChart3, Database } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -35,23 +35,25 @@ const ConsultasPJe = () => {
   return (
     <ModernLayout>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex justify-between items-start mb-6">
-          <PageHeader 
-            title="Consultas PJe" 
-            description="Pesquise informações nas bases de dados do PJe 1º e 2º grau"
-          />
-          {isAdmin && (
-            <Button 
-              onClick={() => navigate('/configuracao-pje')} 
-              variant="outline"
-              className="gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Configurar Banco
-            </Button>
-          )}
-        </div>
-        
+        <ModernPageHeader
+          title="Consultas PJe"
+          subtitle="Pesquise informações nas bases de dados do PJe 1º e 2º grau"
+          icon={<Database className="h-6 w-6 text-white" />}
+          iconBgColor="from-indigo-500 to-purple-600"
+          actions={
+            isAdmin && (
+              <Button
+                onClick={() => navigate('/configuracao-pje')}
+                variant="outline"
+                className="gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Configurar Banco
+              </Button>
+            )
+          }
+        />
+
         <div className="mt-6 space-y-4">
           <Alert>
             <InfoIcon className="h-4 w-4" />

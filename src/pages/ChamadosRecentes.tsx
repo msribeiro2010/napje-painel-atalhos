@@ -2,12 +2,13 @@ import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, FileText, Search } from 'lucide-react';
+import { FileText, Search, FolderClock } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useChamadosRecentes } from '@/hooks/useChamadosRecentes';
 import { ChamadoCard } from '@/components/ChamadoCard';
 import { Clock } from '@/components/ui/clock';
 import { DateDisplay } from '@/components/ui/date-display';
+import { ModernPageHeader } from '@/components/ModernPageHeader';
 
 const ChamadosRecentes = () => {
   const navigate = useNavigate();
@@ -64,38 +65,29 @@ const ChamadosRecentes = () => {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/')} 
-              className="mr-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Chamados Recentes</h1>
-              <p className="text-muted-foreground">Histórico dos últimos chamados criados</p>
+        <ModernPageHeader
+          title="Chamados Recentes"
+          subtitle="Histórico dos últimos chamados criados"
+          icon={<FolderClock className="h-6 w-6 text-white" />}
+          iconBgColor="from-blue-500 to-cyan-600"
+          actions={
+            <div className="flex items-center gap-4">
+              <Clock />
+              <DateDisplay />
+              {/* Campo de busca */}
+              <div className="relative w-80">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Buscar por título, descrição, processo..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <Clock />
-            <DateDisplay />
-            {/* Campo de busca */}
-            <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Buscar por título, descrição, processo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* Indicador de busca ativa */}
         {searchTerm && (

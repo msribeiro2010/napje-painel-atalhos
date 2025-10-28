@@ -102,8 +102,7 @@ export const useOrgaosJulgadores = (grau: '1grau' | '2grau') => {
 
         const queryPromise = supabase
           .from(tableName)
-          .select('id, codigo, nome')
-          .order('nome', { ascending: true });
+          .select('id, codigo, nome');
 
         const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 

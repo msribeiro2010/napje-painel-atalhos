@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { ModernPageHeader } from '@/components/ModernPageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,11 +8,64 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Search, Copy, Download, Plus, Edit, Trash2 } from 'lucide-react';
+import { Search, Copy, Download, Plus, Edit, Trash2, Scale } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useOrgaosJulgadores, OrgaoJulgador } from '@/hooks/useOrgaosJulgadores';
 import { OrgaoJulgadorDialog } from '@/components/orgaos-julgadores/OrgaoJulgadorDialog';
 import { useProfile } from '@/hooks/useProfile';
+
+// Função para extrair a cidade do nome do órgão
+const extrairCidade = (nomeOrgao: string): string => {
+  // Padrão 1: "1ª Vara do Trabalho de Campinas"
+  let match = nomeOrgao.match(/Vara\s+do\s+Trabalho\s+de\s+(.+?)(?:\s*-|$)/i) ||
+              nomeOrgao.match(/Vara\s+do\s+Trabalho\s+do\s+(.+?)(?:\s*-|$)/i);
+
+  if (match) {
+    return match[1].trim();
+  }
+
+  // Padrão 2: "Divisão de Execução de Araçatuba"
+  match = nomeOrgao.match(/Divisão\s+de\s+Execução\s+de\s+(.+?)(?:\s*-|$)/i);
+  if (match) {
+    return match[1].trim();
+  }
+
+  // Padrão 3: "EXE1 - Campinas", "CON2 - Campinas", "DIVEX - Campinas", "LIQ1 - Campinas"
+  match = nomeOrgao.match(/^[A-Z0-9]+\s*-\s*(.+)$/i);
+  if (match) {
+    return match[1].trim();
+  }
+
+  // Padrão 4: Outros casos especiais
+  return 'Outras';
+};
+
+// Função para agrupar órgãos por cidade
+const agruparPorCidade = (orgaos: OrgaoJulgador[]) => {
+  const grupos: { [cidade: string]: OrgaoJulgador[] } = {};
+
+  orgaos.forEach(orgao => {
+    const cidade = extrairCidade(orgao.nome);
+    if (!grupos[cidade]) {
+      grupos[cidade] = [];
+    }
+    grupos[cidade].push(orgao);
+  });
+
+  // Ordenar cidades alfabeticamente
+  const cidadesOrdenadas = Object.keys(grupos).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  // Retornar objeto ordenado
+  const gruposOrdenados: { [cidade: string]: OrgaoJulgador[] } = {};
+  cidadesOrdenadas.forEach(cidade => {
+    // Ordenar órgãos dentro de cada cidade por código numérico
+    gruposOrdenados[cidade] = grupos[cidade].sort((a, b) =>
+      parseInt(a.codigo) - parseInt(b.codigo)
+    );
+  });
+
+  return gruposOrdenados;
+};
 
 const OrgaosJulgadores = () => {
   const [busca, setBusca] = useState('');
@@ -21,10 +74,10 @@ const OrgaosJulgadores = () => {
   const [editingOrgao, setEditingOrgao] = useState<OrgaoJulgador | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [orgaoToDelete, setOrgaoToDelete] = useState<OrgaoJulgador | null>(null);
-  
+
   const { toast } = useToast();
   const { data: profile } = useProfile();
-  
+
   const {
     orgaos,
     isLoading,
@@ -38,13 +91,21 @@ const OrgaosJulgadores = () => {
   // Filtrar órgãos com base na busca
   const orgaosFiltrados = useMemo(() => {
     if (!busca.trim()) return orgaos;
-    
+
     const termoBusca = busca.toLowerCase();
-    return orgaos.filter(orgao => 
-      orgao.codigo.includes(termoBusca) || 
+    return orgaos.filter(orgao =>
+      orgao.codigo.includes(termoBusca) ||
       orgao.nome.toLowerCase().includes(termoBusca)
     );
   }, [busca, orgaos]);
+
+  // Agrupar órgãos filtrados por cidade (apenas para 1º grau)
+  const orgaosPorCidade = useMemo(() => {
+    if (grauAtivo === '1grau') {
+      return agruparPorCidade(orgaosFiltrados);
+    }
+    return {};
+  }, [orgaosFiltrados, grauAtivo]);
 
   const copiarCodigo = (codigo: string) => {
     navigator.clipboard.writeText(codigo);
@@ -56,10 +117,10 @@ const OrgaosJulgadores = () => {
 
   const exportarDados = () => {
     const csvContent = [
-      'Código,Nome do Órgão',
-      ...orgaos.map(orgao => `${orgao.codigo},"${orgao.nome}"`)
+      'Código,Nome do Órgão,Cidade',
+      ...orgaos.map(orgao => `${orgao.codigo},"${orgao.nome}","${extrairCidade(orgao.nome)}"`)
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -102,7 +163,77 @@ const OrgaosJulgadores = () => {
     }
   };
 
-  const renderTable = (orgaosList: OrgaoJulgador[]) => (
+  // Renderizar tabela agrupada por cidade (1º grau) - Tabela única
+  const renderTabelaAgrupada = () => {
+    return (
+      <div className="border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[120px]">Código</TableHead>
+              <TableHead>Nome do Órgão</TableHead>
+              <TableHead className="w-[140px]">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Object.entries(orgaosPorCidade).map(([cidade, orgaosDaCidade], cidadeIndex) => (
+              <>
+                {orgaosDaCidade.map((orgao, index) => (
+                  <TableRow
+                    key={orgao.id}
+                    className="hover:bg-rose-50/50 dark:hover:bg-rose-950/10"
+                  >
+                    <TableCell className="font-mono font-medium">
+                      {orgao.codigo}
+                    </TableCell>
+                    <TableCell>{orgao.nome}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copiarCodigo(orgao.codigo)}
+                          className="p-2 h-8 w-8"
+                          title="Copiar código"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        {isAdmin && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEdit(orgao)}
+                              className="p-2 h-8 w-8"
+                              title="Editar"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteClick(orgao)}
+                              className="p-2 h-8 w-8 text-destructive hover:text-destructive"
+                              title="Excluir"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
+
+  // Renderizar tabela simples (2º grau)
+  const renderTabelaSimples = (orgaosList: OrgaoJulgador[]) => (
     <div className="border rounded-md">
       <Table>
         <TableHeader>
@@ -176,54 +307,58 @@ const OrgaosJulgadores = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-bg p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-7xl mx-auto">
-        <PageHeader 
+        <ModernPageHeader
           title="Órgãos Julgadores"
           subtitle="Consulta e gestão de órgãos julgadores do TRT15 - 1º e 2º graus"
+          icon={<Scale className="h-6 w-6 text-white" />}
+          iconBgColor="from-rose-500 to-pink-600"
+          actions={
+            <div className="flex gap-2">
+              {isAdmin && (
+                <Button
+                  onClick={handleCreate}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Novo Órgão
+                </Button>
+              )}
+              <Button
+                onClick={exportarDados}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Exportar CSV
+              </Button>
+            </div>
+          }
         />
 
-        <Card>
+        <Card className="mt-6">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-2xl">Órgãos Julgadores</CardTitle>
                 <CardDescription>
-                  Busque órgãos julgadores por código ou nome
+                  Busque órgãos julgadores por código, nome ou cidade
                 </CardDescription>
-              </div>
-              <div className="flex gap-2">
-                {isAdmin && (
-                  <Button 
-                    onClick={handleCreate}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Novo Órgão
-                  </Button>
-                )}
-                <Button 
-                  onClick={exportarDados}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Exportar CSV
-                </Button>
               </div>
             </div>
           </CardHeader>
-          
+
           <CardContent>
             <div className="space-y-6">
               {/* Campo de busca */}
               <div className="space-y-2">
-                <Label htmlFor="busca">Buscar por código ou nome</Label>
+                <Label htmlFor="busca">Buscar por código, nome ou cidade</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     id="busca"
-                    placeholder="Digite o código ou nome do órgão..."
+                    placeholder="Digite o código, nome do órgão ou cidade..."
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
                     className="pl-10"
@@ -241,10 +376,21 @@ const OrgaosJulgadores = () => {
                 <TabsContent value="1grau" className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Badge variant="secondary">
-                      {orgaosFiltrados.length} órgão(s) encontrado(s)
+                      {orgaosFiltrados.length} órgão(s) em {Object.keys(orgaosPorCidade).length} cidade(s)
                     </Badge>
                   </div>
-                  {renderTable(orgaosFiltrados)}
+                  {isLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                      <p className="text-muted-foreground mt-4">Carregando órgãos...</p>
+                    </div>
+                  ) : Object.keys(orgaosPorCidade).length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Nenhum órgão julgador encontrado
+                    </div>
+                  ) : (
+                    renderTabelaAgrupada()
+                  )}
                 </TabsContent>
 
                 <TabsContent value="2grau" className="space-y-4">
@@ -253,7 +399,7 @@ const OrgaosJulgadores = () => {
                       {orgaosFiltrados.length} órgão(s) encontrado(s)
                     </Badge>
                   </div>
-                  {renderTable(orgaosFiltrados)}
+                  {renderTabelaSimples(orgaosFiltrados)}
                 </TabsContent>
               </Tabs>
             </div>

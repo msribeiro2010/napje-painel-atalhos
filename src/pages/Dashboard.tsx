@@ -806,8 +806,8 @@ const Dashboard = () => {
         <div className="relative z-10">
         {/* Header Modernizado */}
         <div className="dashboard-header rounded-xl mb-6">
-          <DashboardHeader 
-            user={user} 
+          <DashboardHeader
+            user={user}
             onSearch={() => setSmartSearchOpen(true)}
           />
         </div>
