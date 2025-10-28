@@ -67,7 +67,7 @@ const ConfiguracaoPJe = () => {
     setTestResult('');
     
     try {
-      const response = await fetch(`http://localhost:3001/api/pje/test-connection?grau=${grau}`);
+      const response = await fetch(`${import.meta.env.VITE_PJE_API_URL || 'http://localhost:3001/api/pje'}/test-connection?grau=${grau}`);
       const data = await response.json();
       
       if (response.ok) {

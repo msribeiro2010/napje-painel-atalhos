@@ -43,7 +43,7 @@ export const PJeAnalyticsDashboard = () => {
   const [gargalos, setGargalos] = useState<any[]>([]);
   const [audiencias, setAudiencias] = useState<any[]>([]);
 
-  const API_URL = 'http://localhost:3001/api/pje/analytics';
+  const API_URL = `${import.meta.env.VITE_PJE_API_URL || 'http://localhost:3001/api/pje'}/analytics`;
 
   // Carregar dashboard ao montar
   useEffect(() => {

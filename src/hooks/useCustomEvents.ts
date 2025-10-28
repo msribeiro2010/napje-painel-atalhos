@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseClient } from '@/hooks/useSupabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -21,6 +21,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 export const useCustomEvents = (month: Date) => {
   const { user } = useAuth();
+  const supabase = useSupabaseClient();
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

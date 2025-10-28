@@ -25,6 +25,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/pje/:path*",
+      "destination": "https://nonincandescent-comfortedly-sheridan.ngrok-free.dev/api/pje/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

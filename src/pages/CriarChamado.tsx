@@ -25,6 +25,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
+// Importando estilos específicos para criar chamado
+import '@/styles/criar-chamado.css';
 
 const CriarChamado = () => {
   const navigate = useNavigate();
@@ -667,7 +669,7 @@ const CriarChamado = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-bg p-4">
+    <div className="min-h-screen bg-gradient-bg p-4 form-container">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
@@ -743,11 +745,12 @@ const CriarChamado = () => {
         <div className="max-w-5xl mx-auto">
             {/* Formulário Principal */}
             <div className="space-y-8">
-            <ModernCard variant="glass" className="overflow-hidden">
+            <ModernCard variant="glass" className="overflow-hidden form-card">
               <ModernCardHeader
                 title="Dados do Chamado"
                 description="Preencha as informações necessárias para criar o chamado"
                 icon={<FileText className="h-5 w-5 text-white" />}
+                className="form-card-header"
                 action={
                   <div className="flex items-center gap-3">
                     {/* Botões de template modernizados - Cores consistentes com dashboard */}
@@ -790,11 +793,12 @@ const CriarChamado = () => {
             
             {/* Seção de Descrição Gerada */}
             {isGenerated && (
-              <ModernCard variant="glass">
+              <ModernCard variant="glass" className="form-card">
                 <ModernCardHeader
                   title="Descrição Gerada"
                   description="Visualize e edite a descrição gerada para o chamado"
                   icon={<Sparkles className="h-5 w-5 text-white" />}
+                  className="form-card-header"
                 />
                 <ModernCardContent className="p-6">
                   <GeneratedDescriptionSection
@@ -814,8 +818,8 @@ const CriarChamado = () => {
             
             {/* Botões de Ação Modernizados */}
             {!isGenerated && (
-              <ModernCard variant="glass">
-                <ModernCardContent className="p-6">
+              <ModernCard variant="glass" className="form-card">
+                <ModernCardContent className="p-6 form-actions">
 
                 </ModernCardContent>
               </ModernCard>

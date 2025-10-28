@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseClient } from '@/hooks/useSupabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { BookOpen, Plus, StickyNote, Scale, Calendar, Zap, Building2, Home, ExternalLink, Database } from 'lucide-react';
@@ -46,6 +46,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const supabase = useSupabaseClient();
   const { isOpen, toggleChat } = useChatAssistant();
   // const { modalOpen, setModalOpen } = useEventNotifications();
   // useEventReminders(); // Hook de lembretes
