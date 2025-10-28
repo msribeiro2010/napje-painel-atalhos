@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Home, Sun, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users, Edit, Trash2, Building2, HardHat, Umbrella, Briefcase, Coffee, Palmtree } from 'lucide-react';
+import { Calendar as CalendarIcon, Home, Sun, Laptop, ArrowLeft, Gift, Star, Brain, Sparkles, Shield, BookOpen, Video, Users, Edit, Trash2, Building2, HardHat, Umbrella, Briefcase, Coffee, Palmtree, BriefcaseBusiness, ShieldAlert, BedDouble } from 'lucide-react';
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
@@ -22,11 +22,11 @@ import { VacationAlerts } from '@/components/vacation/VacationAlerts';
 import { ptBR } from 'date-fns/locale';
 
 const calendarLabels = {
-  presencial: { label: 'Presencial', color: '#f5e7c4', icon: <Building2 className="h-5 w-5 text-[#8b7355] drop-shadow-sm" /> },
+  presencial: { label: 'Presencial', color: '#f5e7c4', icon: <BriefcaseBusiness className="h-5 w-5 text-[#8b7355] drop-shadow-sm" /> },
   ferias: { label: 'Férias', color: '#ffe6e6', icon: <span className="text-2xl drop-shadow-sm">🌴</span> },
-  remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Coffee className="h-5 w-5 text-[#5ba3d4] drop-shadow-sm" /> },
-  plantao: { label: 'Plantão', color: '#e6ffe6', icon: <HardHat className="h-5 w-5 text-[#2e7d32] drop-shadow-sm" /> },
-  folga: { label: 'Folga', color: '#e0e0e0', icon: <Umbrella className="h-5 w-5 text-[#424242] drop-shadow-sm" /> },
+  remoto: { label: 'Remoto', color: '#e6f7ff', icon: <Laptop className="h-5 w-5 text-[#5ba3d4] drop-shadow-sm" /> },
+  plantao: { label: 'Plantão', color: '#e6ffe6', icon: <ShieldAlert className="h-5 w-5 text-[#2e7d32] drop-shadow-sm" /> },
+  folga: { label: 'Folga', color: '#e0e0e0', icon: <BedDouble className="h-5 w-5 text-[#424242] drop-shadow-sm" /> },
   none: { label: '', color: '#fff', icon: null },
 };
 
@@ -96,18 +96,19 @@ function CalendarComponent() {
     const isWeekend = date.getDay() === 0 || date.getDay() === 6;
     const isFeriado = dayEvents.some(e => e.type === 'feriado');
 
-    // Lógica especial para finais de semana e feriados
+    // Lógica para finais de semana e feriados
+    // Permite: férias (porque é período corrente) e plantão
     if (isWeekend || isFeriado) {
-      if (current === null) {
-        // Ir diretamente para plantão em finais de semana e feriados
-        saveMark(key, 'plantao');
-      } else if (current === 'plantao') {
-        // Remover plantão se já estiver marcado
+      const next: WorkStatus | null =
+        current === null ? 'ferias' :        // Primeiro clique: férias
+        current === 'ferias' ? 'plantao' :   // Segundo clique: plantão
+        current === 'plantao' ? null :       // Terceiro clique: remove
+        null;
+
+      if (next === null) {
         removeMark(key);
       } else {
-        // Se houver outra modalidade marcada, substituir por plantão
-        saveMark(key, 'plantao');
-        toast.info('Em finais de semana e feriados só é permitido marcar Plantão.');
+        saveMark(key, next);
       }
       return;
     }
@@ -256,11 +257,20 @@ function CalendarComponent() {
           const isPlantao = mark === 'plantao';
           const isFolga = mark === 'folga';
 
+          // Verificar se o dia está em período de férias cadastrado
+          const isInVacation = isDateInVacation(date);
+          const vacationForDay = getVacationForDate(date);
+
           // Eventos personalizados do dia
           const customEventsOfDay = (customEvents || []).filter(ev => ev.date === key);
 
-          // Determinar cor de fundo - priorizar feriados
+          // Determinar cor de fundo - priorizar feriados e férias cadastradas
           let backgroundColor = mark ? calendarLabels[mark].color : calendarLabels.presencial.color;
+
+          // Se está em período de férias cadastrado, usar cor de férias
+          if (isInVacation && !mark) {
+            backgroundColor = calendarLabels.ferias.color;
+          }
           if (hasFeriado && hasAniversario) {
             backgroundColor = 'linear-gradient(45deg, #ffeb3b 50%, #ff9800 50%)'; // Gradiente para ambos
           } else if (hasFeriado) {
@@ -350,19 +360,31 @@ function CalendarComponent() {
                         </span>
                       ))}
                     </div>
-                    {/* Ícone do tipo de trabalho */}
-                    {mark && (
+                    {/* Ícone do tipo de trabalho ou férias cadastradas */}
+                    {(mark || isInVacation) && (
                       <div className="absolute bottom-1 right-1">
                         <div className="bg-white/90 rounded-full p-1 shadow-md">
-                          {calendarLabels[mark].icon}
+                          {mark ? calendarLabels[mark].icon : calendarLabels.ferias.icon}
                         </div>
                       </div>
                     )}
                   </button>
                 </TooltipTrigger>
-                {dayEvents.length > 0 && (
+                {(dayEvents.length > 0 || isInVacation) && (
                   <TooltipContent>
                     <div className="space-y-1">
+                      {/* Exibir férias cadastradas */}
+                      {isInVacation && vacationForDay && (
+                        <div className="flex items-center gap-2 border-b pb-1 mb-1">
+                          <span className="text-lg">🌴</span>
+                          <div>
+                            <span className="text-sm font-semibold">Férias</span>
+                            {vacationForDay.notes && (
+                              <span className="text-xs text-gray-500 block">{vacationForDay.notes}</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       {dayEvents.map((event, index) => (
                         <div key={index} className="flex items-center gap-2">
                           {event.type === 'feriado' ? (
@@ -396,27 +418,27 @@ function CalendarComponent() {
           <div className="flex flex-wrap gap-4">
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
               <span className="inline-block w-4 h-4 rounded bg-[#f5e7c4] dark:bg-amber-200 border border-[#e2d8b8] dark:border-amber-300 shadow-sm"></span>
-              <Building2 className="h-5 w-5 text-white drop-shadow-sm" />
+              <BriefcaseBusiness className="h-5 w-5 text-[#8b7355] dark:text-amber-700 drop-shadow-sm" />
               Presencial (TRT15)
             </span>
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
               <span className="inline-block w-4 h-4 rounded bg-[#ffe6e6] dark:bg-red-200 border border-[#e2d8b8] dark:border-red-300 shadow-sm"></span>
               <span className="text-xl drop-shadow-sm">🌴</span>
-              Férias
+              Férias (inclui finais de semana)
             </span>
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
               <span className="inline-block w-4 h-4 rounded bg-[#e6f7ff] dark:bg-blue-200 border border-[#e2d8b8] dark:border-blue-300 shadow-sm"></span>
-              <Coffee className="h-5 w-5 text-blue-600 dark:text-blue-400 drop-shadow-sm" />
+              <Laptop className="h-5 w-5 text-[#5ba3d4] dark:text-blue-400 drop-shadow-sm" />
               Home Office
             </span>
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
               <span className="inline-block w-4 h-4 rounded bg-[#e6ffe6] dark:bg-green-200 border border-[#e2d8b8] dark:border-green-300 shadow-sm"></span>
-              <HardHat className="h-5 w-5 text-green-600 dark:text-green-400 drop-shadow-sm" />
+              <ShieldAlert className="h-5 w-5 text-[#2e7d32] dark:text-green-400 drop-shadow-sm" />
               Plantão
             </span>
             <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
               <span className="inline-block w-4 h-4 rounded bg-[#e0e0e0] dark:bg-gray-300 border border-[#e2d8b8] dark:border-gray-400 shadow-sm"></span>
-              <Umbrella className="h-5 w-5 text-gray-600 dark:text-gray-400 drop-shadow-sm" />
+              <BedDouble className="h-5 w-5 text-[#424242] dark:text-gray-400 drop-shadow-sm" />
               Folga
             </span>
           </div>
