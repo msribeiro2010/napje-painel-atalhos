@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Distribuição PJe</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Teste da API de Distribuição PJe</h1>
+    
+    <div>
+        <button onclick="testarDistribuicao()">Testar Distribuição</button>
+        <button onclick="testarHealth()">Testar Health</button>
+        <button onclick="limparResultados()">Limpar</button>
+    </div>
+    
+    <div id="resultados"></div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/api/pje';
+        
+        function adicionarResultado(titulo, conteudo, tipo = 'result') {
+            const div = document.createElement('div');
+            div.className = `result ${tipo}`;
+            div.innerHTML = `<h3>${titulo}</h3><pre>${conteudo}</pre>`;
+            document.getElementById('resultados').appendChild(div);
+        }
+        
+        async function testarHealth() {
+            try {
+                console.log('🔍 Testando health check...');
+                const response = await fetch(`${API_URL}/health`);
+                const healthData = await response.json();
+                
+                adicionarResultado(
+                    '✅ Health Check', 
+                    JSON.stringify(healthData, null, 2), 
+                    'success'
+                );
+            } catch (error) {
+                console.error('❌ Erro no health check:', error);
+                adicionarResultado(
+                    '❌ Erro Health Check', 
+                    error.message, 
+                    'error'
+                );
+            }
+        }
+        
+        async function testarDistribuicao() {
+            try {
+                const dataConsulta = '2025-09-28';
+                const grau = '1';
+                const url = `${API_URL}/distribuicao-diaria?grau=${grau}&data=${dataConsulta}`;
+                
+                console.log('🔍 Testando distribuição:', url);
+                adicionarResultado('🔍 Requisição', `URL: ${url}`, 'result');
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                console.log('📊 Status:', response.status);
+                console.log('📊 Headers:', Object.fromEntries(response.headers));
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const responseData = await response.json();
+                console.log('📊 Dados recebidos:', responseData);
+                
+                adicionarResultado(
+                    '✅ Distribuição Carregada', 
+                    `Total: ${responseData.total_geral} processos\nOJs: ${responseData.total_ojs}\nSucesso: ${responseData.success}`, 
+                    'success'
+                );
+                
+                if (responseData.distribuicao_por_oj && responseData.distribuicao_por_oj.length > 0) {
+                    adicionarResultado(
+                        '📋 Primeiros OJs', 
+                        JSON.stringify(responseData.distribuicao_por_oj.slice(0, 3), null, 2), 
+                        'result'
+                    );
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro na distribuição:', error);
+                adicionarResultado(
+                    '❌ Erro Distribuição', 
+                    error.message, 
+                    'error'
+                );
+            }
+        }
+        
+        function limparResultados() {
+            document.getElementById('resultados').innerHTML = '';
+        }
+        
+        // Testar automaticamente ao carregar
+        window.onload = function() {
+            console.log('🚀 Página carregada, testando automaticamente...');
+            testarHealth();
+            setTimeout(testarDistribuicao, 1000);
+        };
+    </script>
+</body>
+</html>

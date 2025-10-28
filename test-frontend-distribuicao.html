@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Frontend - Distribuição PJe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .success {
+            border-left-color: #28a745;
+            background-color: #d4edda;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        .warning {
+            border-left-color: #ffc107;
+            background-color: #fff3cd;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Teste Frontend - Distribuição PJe</h1>
+        <p>Este teste simula exatamente o comportamento do componente React PJeSearchPanel.</p>
+        
+        <div class="form-group">
+            <label for="grau">Grau:</label>
+            <select id="grau">
+                <option value="1">1º Grau</option>
+                <option value="2">2º Grau</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="data">Data:</label>
+            <input type="date" id="data" value="2025-09-28">
+        </div>
+        
+        <div class="form-group">
+            <label for="oj">OJ (opcional):</label>
+            <input type="text" id="oj" placeholder="Deixe vazio para buscar todos">
+        </div>
+        
+        <button onclick="testarDistribuicao()" id="btnTeste">🚀 Testar Distribuição</button>
+        <button onclick="verificarVariaveisAmbiente()">🔧 Verificar Variáveis</button>
+        <button onclick="testarConexaoAPI()">🌐 Testar Conexão API</button>
+        <button onclick="limparResultados()">🧹 Limpar</button>
+        
+        <div id="resultados"></div>
+    </div>
+
+    <script>
+        let loading = false;
+        
+        function adicionarResultado(tipo, titulo, conteudo) {
+            const div = document.createElement('div');
+            div.className = `result ${tipo}`;
+            div.innerHTML = `<strong>${titulo}</strong><br>${conteudo}`;
+            document.getElementById('resultados').appendChild(div);
+        }
+        
+        function limparResultados() {
+            document.getElementById('resultados').innerHTML = '';
+        }
+        
+        function setLoading(isLoading) {
+            loading = isLoading;
+            const btn = document.getElementById('btnTeste');
+            btn.disabled = isLoading;
+            btn.textContent = isLoading ? '⏳ Testando...' : '🚀 Testar Distribuição';
+        }
+        
+        function verificarVariaveisAmbiente() {
+            adicionarResultado('warning', '🔧 Verificação de Variáveis de Ambiente', 
+                'No navegador, as variáveis de ambiente Vite são injetadas durante o build.<br>' +
+                'VITE_PJE_API_URL deveria estar disponível como import.meta.env.VITE_PJE_API_URL<br>' +
+                'Valor esperado: http://localhost:3001/api/pje'
+            );
+        }
+        
+        async function testarConexaoAPI() {
+            try {
+                adicionarResultado('info', '🌐 Testando Conexão com API', 'Verificando se o servidor está respondendo...');
+                
+                const response = await fetch('http://localhost:3001/api/pje/health', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    adicionarResultado('success', '✅ API Conectada', 
+                        `Servidor PJe está funcionando!<br>Status: ${data.status}<br>Timestamp: ${data.timestamp}`
+                    );
+                } else {
+                    adicionarResultado('error', '❌ Erro na API', 
+                        `Status: ${response.status}<br>Erro: ${response.statusText}`
+                    );
+                }
+            } catch (error) {
+                adicionarResultado('error', '❌ Erro de Conexão', 
+                    `Não foi possível conectar com a API:<br>${error.message}`
+                );
+            }
+        }
+        
+        async function testarDistribuicao() {
+            if (loading) return;
+            
+            setLoading(true);
+            limparResultados();
+            
+            try {
+                // Simular verificação de variável de ambiente
+                const apiUrl = 'http://localhost:3001/api/pje'; // Valor que deveria vir de import.meta.env.VITE_PJE_API_URL
+                
+                adicionarResultado('info', '🔧 Configuração', 
+                    `API URL: ${apiUrl}<br>` +
+                    `Simulando: import.meta.env.VITE_PJE_API_URL`
+                );
+                
+                if (!apiUrl || apiUrl.trim() === '') {
+                    adicionarResultado('error', '❌ Configuração Inválida', 
+                        'VITE_PJE_API_URL não está configurada'
+                    );
+                    return;
+                }
+                
+                // Obter valores do formulário
+                const grau = document.getElementById('grau').value;
+                const data = document.getElementById('data').value;
+                const oj = document.getElementById('oj').value.trim();
+                
+                // Construir URL
+                const url = oj 
+                    ? `${apiUrl}/distribuicao-diaria?grau=${grau}&data=${data}&oj=${oj}`
+                    : `${apiUrl}/distribuicao-diaria?grau=${grau}&data=${data}`;
+                
+                adicionarResultado('info', '🚀 Fazendo Requisição', 
+                    `URL: ${url}<br>` +
+                    `Método: GET<br>` +
+                    `Headers: Accept: application/json, Content-Type: application/json<br>` +
+                    `Timeout: 30 segundos`
+                );
+                
+                // Fazer requisição
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    signal: AbortSignal.timeout(30000)
+                });
+                
+                adicionarResultado('info', '📊 Resposta Recebida', 
+                    `Status: ${response.status} ${response.statusText}<br>` +
+                    `Content-Type: ${response.headers.get('content-type')}<br>` +
+                    `Headers: ${JSON.stringify(Object.fromEntries(response.headers), null, 2)}`
+                );
+                
+                // Verificar status HTTP
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    adicionarResultado('error', '❌ Erro HTTP', 
+                        `Status: ${response.status}<br>` +
+                        `Resposta: ${errorText.substring(0, 500)}`
+                    );
+                    return;
+                }
+                
+                // Verificar Content-Type
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    adicionarResultado('error', '❌ Resposta Inválida', 
+                        `Content-Type: ${contentType}<br>` +
+                        `Resposta (primeiros 500 chars): ${text.substring(0, 500)}`
+                    );
+                    return;
+                }
+                
+                // Parse JSON
+                let responseData;
+                try {
+                    responseData = await response.json();
+                } catch (jsonError) {
+                    adicionarResultado('error', '❌ Erro JSON', 
+                        `Não foi possível processar JSON: ${jsonError.message}`
+                    );
+                    return;
+                }
+                
+                // Verificar sucesso
+                if (responseData.success) {
+                    adicionarResultado('success', '✅ Sucesso!', 
+                        `${responseData.total_geral} processos distribuídos em ${responseData.total_ojs} OJs<br>` +
+                        `<pre>${JSON.stringify(responseData, null, 2)}</pre>`
+                    );
+                } else {
+                    adicionarResultado('error', '❌ Erro na Resposta', 
+                        `Erro: ${responseData.error || 'Erro desconhecido'}<br>` +
+                        `<pre>${JSON.stringify(responseData, null, 2)}</pre>`
+                    );
+                }
+                
+            } catch (error) {
+                console.error('Erro no teste:', error);
+                
+                let errorMessage = 'Erro desconhecido';
+                
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Timeout - O servidor demorou mais de 30 segundos para responder';
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Falha na conexão - Verifique se o servidor está rodando em localhost:3001';
+                } else {
+                    errorMessage = error.message;
+                }
+                
+                adicionarResultado('error', '❌ Erro na Requisição', errorMessage);
+                
+            } finally {
+                setLoading(false);
+            }
+        }
+        
+        // Executar teste automático ao carregar
+        window.addEventListener('load', () => {
+            adicionarResultado('info', '🔍 Teste Carregado', 
+                'Página carregada. Clique em "Testar Distribuição" para iniciar o teste.'
+            );
+        });
+    </script>
+</body>
+</html>

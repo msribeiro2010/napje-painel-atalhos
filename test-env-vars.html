@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Variáveis de Ambiente - Vite</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Teste de Variáveis de Ambiente - Vite</h1>
+        
+        <div class="test-section info">
+            <h3>📋 Informações do Teste</h3>
+            <p>Este teste verifica se as variáveis de ambiente do Vite estão sendo carregadas corretamente.</p>
+            <p><strong>URL atual:</strong> <span id="current-url"></span></p>
+            <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
+        </div>
+
+        <div class="test-section" id="env-test">
+            <h3>🌍 Variáveis de Ambiente</h3>
+            <div id="env-results"></div>
+        </div>
+
+        <div class="test-section" id="api-test">
+            <h3>🚀 Teste da API</h3>
+            <button onclick="testApi()">Testar API de Distribuição</button>
+            <div id="api-results"></div>
+        </div>
+
+        <div class="test-section" id="fetch-test">
+            <h3>🔗 Teste de Fetch Direto</h3>
+            <button onclick="testDirectFetch()">Testar Fetch Direto</button>
+            <div id="fetch-results"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Atualizar informações básicas
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('timestamp').textContent = new Date().toLocaleString('pt-BR');
+
+        // Testar variáveis de ambiente
+        function testEnvironmentVariables() {
+            const envResults = document.getElementById('env-results');
+            const envSection = document.getElementById('env-test');
+            
+            try {
+                // Verificar se import.meta.env está disponível
+                if (typeof import.meta !== 'undefined' && import.meta.env) {
+                    const env = import.meta.env;
+                    
+                    let html = '<h4>✅ import.meta.env disponível</h4>';
+                    html += '<pre>' + JSON.stringify(env, null, 2) + '</pre>';
+                    
+                    // Verificar especificamente VITE_PJE_API_URL
+                    const apiUrl = env.VITE_PJE_API_URL;
+                    if (apiUrl) {
+                        html += `<p><strong>✅ VITE_PJE_API_URL encontrada:</strong> ${apiUrl}</p>`;
+                        envSection.className = 'test-section success';
+                    } else {
+                        html += '<p><strong>❌ VITE_PJE_API_URL não encontrada</strong></p>';
+                        envSection.className = 'test-section error';
+                    }
+                    
+                    envResults.innerHTML = html;
+                } else {
+                    envResults.innerHTML = '<p><strong>❌ import.meta.env não está disponível</strong></p>';
+                    envSection.className = 'test-section error';
+                }
+            } catch (error) {
+                envResults.innerHTML = `<p><strong>❌ Erro ao acessar variáveis de ambiente:</strong> ${error.message}</p>`;
+                envSection.className = 'test-section error';
+            }
+        }
+
+        // Testar API
+        window.testApi = async function() {
+            const apiResults = document.getElementById('api-results');
+            const apiSection = document.getElementById('api-test');
+            
+            apiResults.innerHTML = '<p>🔄 Testando...</p>';
+            
+            try {
+                const apiUrl = import.meta.env.VITE_PJE_API_URL || 'http://localhost:3001/api/pje';
+                const testUrl = `${apiUrl}/distribuicao-diaria?grau=1&data=2025-09-28`;
+                
+                console.log('🚀 Testando URL:', testUrl);
+                
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    signal: AbortSignal.timeout(10000)
+                });
+                
+                const responseInfo = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    url: response.url
+                };
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    let html = '<h4>✅ Requisição bem-sucedida</h4>';
+                    html += '<h5>📊 Informações da Resposta:</h5>';
+                    html += '<pre>' + JSON.stringify(responseInfo, null, 2) + '</pre>';
+                    html += '<h5>📋 Dados Recebidos:</h5>';
+                    html += '<pre>' + JSON.stringify(data, null, 2).substring(0, 1000) + '...</pre>';
+                    
+                    apiResults.innerHTML = html;
+                    apiSection.className = 'test-section success';
+                } else {
+                    let html = '<h4>❌ Erro na requisição</h4>';
+                    html += '<pre>' + JSON.stringify(responseInfo, null, 2) + '</pre>';
+                    
+                    apiResults.innerHTML = html;
+                    apiSection.className = 'test-section error';
+                }
+                
+            } catch (error) {
+                let html = '<h4>❌ Erro na requisição</h4>';
+                html += `<p><strong>Erro:</strong> ${error.message}</p>`;
+                html += `<p><strong>Tipo:</strong> ${error.name}</p>`;
+                
+                apiResults.innerHTML = html;
+                apiSection.className = 'test-section error';
+            }
+        };
+
+        // Testar fetch direto
+        window.testDirectFetch = async function() {
+            const fetchResults = document.getElementById('fetch-results');
+            const fetchSection = document.getElementById('fetch-test');
+            
+            fetchResults.innerHTML = '<p>🔄 Testando fetch direto...</p>';
+            
+            try {
+                const testUrl = 'http://localhost:3001/api/pje/distribuicao-diaria?grau=1&data=2025-09-28';
+                
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    signal: AbortSignal.timeout(10000)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    let html = '<h4>✅ Fetch direto bem-sucedido</h4>';
+                    html += `<p><strong>Status:</strong> ${response.status}</p>`;
+                    html += `<p><strong>Total de OJs:</strong> ${data.total_ojs || 'N/A'}</p>`;
+                    html += `<p><strong>Total de processos:</strong> ${data.total_geral || 'N/A'}</p>`;
+                    
+                    fetchResults.innerHTML = html;
+                    fetchSection.className = 'test-section success';
+                } else {
+                    fetchResults.innerHTML = `<h4>❌ Erro no fetch direto</h4><p>Status: ${response.status}</p>`;
+                    fetchSection.className = 'test-section error';
+                }
+                
+            } catch (error) {
+                fetchResults.innerHTML = `<h4>❌ Erro no fetch direto</h4><p>${error.message}</p>`;
+                fetchSection.className = 'test-section error';
+            }
+        };
+
+        // Executar teste de variáveis de ambiente automaticamente
+        testEnvironmentVariables();
+    </script>
+</body>
+</html>

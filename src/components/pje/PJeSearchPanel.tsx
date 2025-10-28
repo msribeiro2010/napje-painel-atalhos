@@ -449,12 +449,16 @@ export const PJeSearchPanel = () => {
 
   // Função para buscar distribuição diária
   const buscarDistribuicao = async () => {
+    console.log('🚀 Iniciando buscarDistribuicao...');
     setLoadingDistribuicao(true);
     setDistribuicaoResultados(null);
 
     try {
       // Verificar se a URL da API está configurada
       const apiUrl = import.meta.env.VITE_PJE_API_URL;
+      console.log('🔧 VITE_PJE_API_URL:', apiUrl);
+      console.log('🔧 Todas as variáveis de ambiente:', import.meta.env);
+      
       if (!apiUrl || apiUrl.trim() === '') {
         showToast({
           title: "🏢 Funcionalidade PJe Indisponível",

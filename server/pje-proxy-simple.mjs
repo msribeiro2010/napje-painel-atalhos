@@ -193,7 +193,7 @@ app.get('/api/pje/distribuicao-diaria', async (req, res) => {
       WITH distribuicao AS (
         SELECT
           p.id_processo_trf,
-          p.nr_sequencia || '.' || p.nr_digito_verificador || '.' || p.nr_ano || '.' || p.nr_identificacao_orgao_justica as nr_processo,
+          CONCAT(LPAD(p.nr_sequencia::text, 7, '0'), '-', LPAD(p.nr_digito_verificador::text, 2, '0'), '.', p.nr_ano, '.5.15.', LPAD(p.nr_identificacao_orgao_justica::text, 4, '0')) as nr_processo,
           p.dt_autuacao::date as data_distribuicao,
           p.id_orgao_julgador,
           oj.ds_orgao_julgador,
@@ -1665,6 +1665,22 @@ app.get('/api/pje/analytics/produtividade-tarefas', async (req, res) => {
     console.error('❌ Erro na produtividade:', error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    name: 'PJe API Server',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: [
+      'GET /health - Health check',
+      'GET /api/pje/orgaos-julgadores - Lista órgãos julgadores',
+      'GET /api/pje/processos - Lista processos',
+      'GET /api/pje/analytics/* - Endpoints de analytics'
+    ],
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Health check

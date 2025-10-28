@@ -193,7 +193,7 @@ app.get('/api/pje/distribuicao-diaria', async (req, res) => {
       WITH distribuicao AS (
         SELECT
           p.id_processo_trf,
-          p.nr_sequencia || '.' || p.nr_digito_verificador || '.' || p.nr_ano || '.' || p.nr_identificacao_orgao_justica as nr_processo,
+          CONCAT(LPAD(p.nr_sequencia::text, 7, '0'), '-', LPAD(p.nr_digito_verificador::text, 2, '0'), '.', p.nr_ano, '.5.15.', LPAD(p.nr_identificacao_orgao_justica::text, 4, '0')) as nr_processo,
           p.dt_autuacao::date as data_distribuicao,
           p.id_orgao_julgador,
           oj.ds_orgao_julgador,

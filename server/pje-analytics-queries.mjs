@@ -18,7 +18,7 @@ export const PJeAnalyticsQueries = {
   processosDistribuidosHoje: `
     SELECT 
       p.id_processo_trf,
-      p.nr_sequencia || '-' || p.nr_digito_verificador || '.' || p.nr_ano as numero_processo,
+      CONCAT(LPAD(p.nr_sequencia::text, 7, '0'), '-', LPAD(p.nr_digito_verificador::text, 2, '0'), '.', p.nr_ano, '.5.15.', LPAD(p.nr_identificacao_orgao_justica::text, 4, '0')) as numero_processo,
       p.dt_autuacao,
       oj.ds_orgao_julgador,
       oj.nr_vara,
@@ -222,7 +222,7 @@ export const PJeAnalyticsQueries = {
   audienciasDoDia: `
     SELECT 
       pa.id_processo_audiencia,
-      ptrf.nr_sequencia || '-' || ptrf.nr_digito_verificador || '.' || ptrf.nr_ano as numero_processo,
+      CONCAT(LPAD(ptrf.nr_sequencia::text, 7, '0'), '-', LPAD(ptrf.nr_digito_verificador::text, 2, '0'), '.', ptrf.nr_ano, '.5.15.', LPAD(ptrf.nr_identificacao_orgao_justica::text, 4, '0')) as numero_processo,
       oj.ds_orgao_julgador,
       oj.nr_vara,
       sa.ds_sala as sala_audiencia,
