@@ -39,6 +39,7 @@ export interface VacationAlert {
   alert_date: string;
   is_sent: boolean;
   sent_at?: string;
+  message?: string; // Mensagem do alerta
   created_at: string;
   // Dados do período de férias (para exibição)
   vacation?: VacationPeriod;
@@ -141,6 +142,40 @@ export const alertTypeMessages: Record<AlertType, { title: string; message: stri
     title: 'Bem-Vindo de Volta!',
     message: 'Suas férias terminaram. Esperamos que tenha aproveitado! 💼',
     icon: '👋',
+  },
+};
+
+// Labels para alertas (para componente VacationAlerts)
+export const alertTypeLabels: Record<AlertType, { label: string; color: string; icon: string }> = {
+  '30_days_before': {
+    label: '30 dias antes',
+    color: 'bg-gradient-to-br from-blue-400 to-blue-500',
+    icon: '⏰',
+  },
+  '7_days_before': {
+    label: '7 dias antes',
+    color: 'bg-gradient-to-br from-amber-400 to-orange-500',
+    icon: '⏰',
+  },
+  '1_day_before': {
+    label: '1 dia antes',
+    color: 'bg-gradient-to-br from-orange-400 to-red-500',
+    icon: '📅',
+  },
+  'starts_today': {
+    label: 'Começa hoje',
+    color: 'bg-gradient-to-br from-green-400 to-emerald-500',
+    icon: '🌴',
+  },
+  'ends_today': {
+    label: 'Termina hoje',
+    color: 'bg-gradient-to-br from-purple-400 to-pink-500',
+    icon: '🌅',
+  },
+  'ended_yesterday': {
+    label: 'Terminou ontem',
+    color: 'bg-gradient-to-br from-slate-400 to-slate-500',
+    icon: '🔔',
   },
 };
 

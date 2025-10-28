@@ -20,7 +20,8 @@ export function VacationAlerts({ compact = false }: VacationAlertsProps) {
   const { alerts, markAlertAsRead, dismissAlert, isMarkingRead, isDismissing } = useVacations();
   const [isOpen, setIsOpen] = useState(false);
 
-  const unreadAlerts = alerts?.filter(alert => !alert.is_read) || [];
+  // Alertas não enviados (is_sent: false)
+  const unreadAlerts = alerts?.filter(alert => !alert.is_sent) || [];
   const unreadCount = unreadAlerts.length;
 
   const handleMarkAsRead = (alertId: string) => {
@@ -84,12 +85,12 @@ export function VacationAlerts({ compact = false }: VacationAlertsProps) {
                       key={alert.id}
                       className={cn(
                         'relative p-3 rounded-lg border transition-all duration-200',
-                        alert.is_read
+                        alert.is_sent
                           ? 'bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-700'
                           : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-sm'
                       )}
                     >
-                      {!alert.is_read && (
+                      {!alert.is_sent && (
                         <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
                       )}
                       <div className="flex items-start gap-3">
@@ -107,7 +108,7 @@ export function VacationAlerts({ compact = false }: VacationAlertsProps) {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 mt-2">
-                        {!alert.is_read && (
+                        {!alert.is_sent && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -178,12 +179,12 @@ export function VacationAlerts({ compact = false }: VacationAlertsProps) {
                 key={alert.id}
                 className={cn(
                   'relative p-4 rounded-lg border transition-all duration-200',
-                  alert.is_read
+                  alert.is_sent
                     ? 'bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-700'
                     : 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800 shadow-md'
                 )}
               >
-                {!alert.is_read && (
+                {!alert.is_sent && (
                   <div className="absolute top-3 right-3 flex items-center gap-2">
                     <span className="text-xs font-medium text-blue-600 dark:text-blue-400">NOVO</span>
                     <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
@@ -209,7 +210,7 @@ export function VacationAlerts({ compact = false }: VacationAlertsProps) {
                       <span>
                         {format(new Date(alert.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
                       </span>
-                      {alert.is_read && (
+                      {alert.is_sent && (
                         <Badge variant="outline" className="text-xs">
                           ✓ Lido
                         </Badge>
@@ -219,7 +220,7 @@ export function VacationAlerts({ compact = false }: VacationAlertsProps) {
                 </div>
 
                 <div className="flex items-center gap-2 mt-4">
-                  {!alert.is_read && (
+                  {!alert.is_sent && (
                     <Button
                       variant="outline"
                       size="sm"
