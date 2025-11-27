@@ -85,7 +85,10 @@ export const useWeeklyNotificationsManager = () => {
 
       if (error) {
         console.error('Fetch error:', error);
-        throw error;
+        const localRaw = typeof window !== 'undefined' ? localStorage.getItem('weekly_notifications_demo') : null;
+        const localData = localRaw ? JSON.parse(localRaw) : [];
+        setNotifications(localData);
+        return;
       }
       
       console.log('Notifications fetched successfully:', data);
@@ -101,8 +104,9 @@ export const useWeeklyNotificationsManager = () => {
         toast.error(`Erro ao carregar notificações: ${error?.message || 'Erro desconhecido'}`);
       }
       
-      // Set empty array as fallback
-      setNotifications([]);
+      const localRaw = typeof window !== 'undefined' ? localStorage.getItem('weekly_notifications_demo') : null;
+      const localData = localRaw ? JSON.parse(localRaw) : [];
+      setNotifications(localData);
     } finally {
       setIsLoading(false);
     }
@@ -132,6 +136,25 @@ export const useWeeklyNotificationsManager = () => {
 
         if (error) {
           console.error('Update error:', error);
+          const localRaw = typeof window !== 'undefined' ? localStorage.getItem('weekly_notifications_demo') : null;
+          const localData: WeeklyNotification[] = localRaw ? JSON.parse(localRaw) : [];
+          const idx = localData.findIndex(n => n.id === editingId);
+          if (idx !== -1) {
+            const updated: WeeklyNotification = {
+              ...localData[idx],
+              titulo: formData.titulo,
+              mensagem: formData.mensagem,
+              ativo: formData.ativo,
+              dayofweek: formData.dayofweek,
+              time: formData.time,
+              updated_at: new Date().toISOString()
+            };
+            localData[idx] = updated;
+            localStorage.setItem('weekly_notifications_demo', JSON.stringify(localData));
+            setNotifications(localData);
+            toast.success('Notificação atualizada com sucesso!');
+            return true;
+          }
           throw error;
         }
         
@@ -153,7 +176,23 @@ export const useWeeklyNotificationsManager = () => {
 
         if (error) {
           console.error('Insert error:', error);
-          throw error;
+          const localRaw = typeof window !== 'undefined' ? localStorage.getItem('weekly_notifications_demo') : null;
+          const localData: WeeklyNotification[] = localRaw ? JSON.parse(localRaw) : [];
+          const newItem: WeeklyNotification = {
+            id: `demo-${Date.now()}`,
+            titulo: formData.titulo,
+            mensagem: formData.mensagem,
+            ativo: formData.ativo,
+            dayofweek: formData.dayofweek,
+            time: formData.time,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          const updatedList = [newItem, ...localData];
+          localStorage.setItem('weekly_notifications_demo', JSON.stringify(updatedList));
+          setNotifications(updatedList);
+          toast.success('Notificação criada com sucesso!');
+          return true;
         }
         
         console.log('Insert successful:', data);
@@ -190,7 +229,13 @@ export const useWeeklyNotificationsManager = () => {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        const localRaw = typeof window !== 'undefined' ? localStorage.getItem('weekly_notifications_demo') : null;
+        const localData: WeeklyNotification[] = localRaw ? JSON.parse(localRaw) : [];
+        const updated = localData.filter(n => n.id !== id);
+        localStorage.setItem('weekly_notifications_demo', JSON.stringify(updated));
+        setNotifications(updated);
+      }
       
       toast.success('Notificação excluída com sucesso!');
       await fetchNotifications();

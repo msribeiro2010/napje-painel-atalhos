@@ -175,7 +175,7 @@ export const WeeklyNotificationDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
         <DialogHeader className="space-y-3">
           <DialogTitle className="flex items-center gap-3 text-xl">
             <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white">

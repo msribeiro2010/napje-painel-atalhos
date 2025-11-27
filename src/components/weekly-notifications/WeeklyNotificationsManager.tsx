@@ -260,6 +260,16 @@ export const WeeklyNotificationsManager = () => {
              Tentar Novamente
            </Button>
         </div>
+
+        <WeeklyNotificationDialog
+          isOpen={isNotificationDialogOpen}
+          onOpenChange={setIsNotificationDialogOpen}
+          editingNotification={editingNotification}
+          formData={formData}
+          setFormData={setFormData}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
       </div>
     );
   }
