@@ -41,14 +41,14 @@ const testDistribuicao = async () => {
       throw new Error('Resposta inválida do servidor');
     }
     
-    const data = await response.json();
-    console.log('✅ Dados recebidos:', data);
+    const json = await response.json();
+    console.log('✅ Dados recebidos:', json);
     
-    if (data.success) {
-      console.log(`✅ Sucesso! ${data.total_geral} processos em ${data.total_ojs} OJs`);
-      return data;
+    if (json.success) {
+      console.log(`✅ Sucesso! ${json.total_geral} processos em ${json.total_ojs} OJs`);
+      return json;
     } else {
-      throw new Error(data.error || 'Erro na resposta');
+      throw new Error(json.error || 'Erro na resposta');
     }
     
   } catch (error) {

@@ -10,22 +10,15 @@ export interface CalendarEvent {
   description?: string;
 }
 
-export const useCalendarEvents = (currentMonth: Date) => {
-  if (!currentMonth) {
-    return useQuery({
-      queryKey: ["calendar-events", "invalid"],
-      queryFn: () => Promise.resolve([]),
-      enabled: false
-    });
-  }
-  
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const monthStartStr = format(monthStart, 'yyyy-MM-dd');
-  const monthEndStr = format(monthEnd, 'yyyy-MM-dd');
+export const useCalendarEvents = (currentMonth: Date | null) => {
+  const monthStart = currentMonth ? startOfMonth(currentMonth) : null;
+  const monthEnd = currentMonth ? endOfMonth(currentMonth) : null;
+  const monthStartStr = monthStart ? format(monthStart, 'yyyy-MM-dd') : '';
+  const monthEndStr = monthEnd ? format(monthEnd, 'yyyy-MM-dd') : '';
 
   return useQuery({
-    queryKey: ["calendar-events", format(currentMonth, 'yyyy-MM')],
+    queryKey: ["calendar-events", currentMonth ? format(currentMonth, 'yyyy-MM') : 'invalid'],
+    enabled: !!currentMonth,
     queryFn: async (): Promise<CalendarEvent[]> => {
       const events: CalendarEvent[] = [];
 
@@ -68,8 +61,8 @@ export const useCalendarEvents = (currentMonth: Date) => {
       if (aniversariantesError) {
         console.error('Erro ao buscar aniversariantes:', aniversariantesError);
       } else {
-        const currentYear = currentMonth?.getFullYear() || new Date().getFullYear();
-        const currentMonthNum = (currentMonth?.getMonth() || new Date().getMonth()) + 1;
+        const currentYear = currentMonth!.getFullYear();
+        const currentMonthNum = currentMonth!.getMonth() + 1;
         
         aniversariantes?.forEach(aniversariante => {
           // Validate that data_nascimento exists
