@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Roboto:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Roboto:wght@300;400;500;700&family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@400;700&display=swap');
 @import './styles/design-tokens.css';
 
 @tailwind base;
@@ -254,10 +254,10 @@
     --popover: 42 30% 97%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 217 91% 60%;
-    /* Azul moderno e vibrante */
+    --primary: 28 90% 55%;
+    /* Dourado/sepia para acento vintage */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 217 91% 70%;
+    --primary-glow: 28 90% 65%;
 
     --secondary: 40 20% 92%;
     /* Cinza azulado suave */
@@ -267,7 +267,7 @@
     /* Neutro cinza claro */
     --muted-foreground: 25 15% 40%;
 
-    --accent: 142 76% 36%;
+    --accent: 100 35% 40%;
     /* Verde esmeralda para destaques */
     --accent-foreground: 0 0% 100%;
 
@@ -283,16 +283,16 @@
     /* Bordas modernas e equilibradas */
 
     /* Gradientes modernos e profissionais */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(237 91% 65%));
-    --gradient-secondary: linear-gradient(135deg, hsl(42 35% 95%), hsl(40 25% 92%));
+    --gradient-primary: linear-gradient(135deg, hsl(28 90% 55%), hsl(18 80% 50%));
+    --gradient-secondary: linear-gradient(135deg, hsl(42 35% 95%), hsl(42 60% 88%));
     --gradient-bg: linear-gradient(135deg,
         hsl(42 35% 95%) 0%,
-        hsl(40 25% 93%) 25%,
-        hsl(38 20% 92%) 50%,
-        hsl(40 25% 93%) 75%,
+        hsl(42 60% 90%) 25%,
+        hsl(100 20% 92%) 50%,
+        hsl(28 80% 90%) 75%,
         hsl(42 35% 95%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(42 30% 97%), hsl(40 25% 93%));
-    --gradient-accent: linear-gradient(135deg, hsl(42 35% 90% / 0.4), hsl(38 30% 88% / 0.3));
+    --gradient-card: linear-gradient(145deg, hsl(42 30% 97%), hsl(42 60% 92%));
+    --gradient-accent: linear-gradient(135deg, hsl(28 80% 80% / 0.35), hsl(100 30% 70% / 0.3));
 
     /* Gradientes coloridos modernos */
     --gradient-blue: linear-gradient(135deg, hsl(217 91% 95%), hsl(237 91% 97%));
@@ -324,6 +324,12 @@
     --slate-500: hsl(215 16% 47%);
     --slate-700: hsl(215 19% 35%);
     --slate-900: hsl(222 47% 11%);
+
+    --retro-orange: hsl(28 90% 55%);
+    --retro-mustard: hsl(42 70% 65%);
+    --retro-cream: hsl(42 35% 95%);
+    --retro-green: hsl(100 35% 40%);
+    --retro-brown: hsl(24 25% 30%);
 
     /* Variáveis do sidebar modernas */
     --sidebar-background: 42 35% 95%;
@@ -415,8 +421,10 @@
   body {
     @apply bg-gradient-bg text-foreground font-sans antialiased;
     background-image:
-      radial-gradient(circle at 25% 25%, hsl(42 35% 93%) 0%, transparent 70%),
-      radial-gradient(circle at 75% 75%, hsl(40 25% 94%) 0%, transparent 70%),
+      radial-gradient(circle at 20% 20%, hsl(42 30% 92%) 0%, transparent 70%),
+      radial-gradient(circle at 80% 80%, hsl(40 25% 93%) 0%, transparent 70%),
+      radial-gradient(closest-side, hsl(42 25% 88% / 0.12), transparent 60%),
+      repeating-linear-gradient(0deg, transparent 0, transparent 2px, hsl(42 20% 30% / 0.03) 2px, hsl(42 20% 30% / 0.03) 3px),
       linear-gradient(135deg,
         hsl(42 35% 95%) 0%,
         hsl(40 25% 93%) 25%,
@@ -424,7 +432,7 @@
         hsl(40 25% 93%) 75%,
         hsl(42 35% 95%) 100%);
     background-attachment: fixed;
-    background-size: 1000px 1000px, 1000px 1000px, 100% 100%;
+    background-size: 1000px 1000px, 1000px 1000px, 800px 800px, auto, 100% 100%;
     min-height: 100vh;
   }
 
@@ -438,6 +446,14 @@
         hsl(215 28% 17%) 50%,
         hsl(217 33% 14%) 75%,
         hsl(222 47% 11%) 100%);
+  }
+}
+
+@layer base {
+  /* Tipografia com toque vintage para títulos no modo claro */
+  .light h1, .light h2, .light h3, .light h4 {
+    font-family: 'Playfair Display', serif;
+    letter-spacing: 0.02em;
   }
 }
 
@@ -639,6 +655,40 @@
   .dark .glass-effect {
     background: rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .light .bg-white {
+    background-color: hsl(var(--card)) !important;
+  }
+  .light .bg-white\/50,
+  .light .bg-white\/60,
+  .light .bg-white\/70,
+  .light .bg-white\/80,
+  .light .bg-white\/90 {
+    background-color: hsl(var(--card)) !important;
+  }
+  .light .bg-gray-50,
+  .light .bg-gray-100,
+  .light .bg-slate-50,
+  .light .bg-slate-100,
+  .light .bg-neutral-50,
+  .light .bg-neutral-100 {
+    background-color: hsl(var(--card)) !important;
+  }
+  .light .border-gray-100,
+  .light .border-gray-200,
+  .light .border-slate-100,
+  .light .border-slate-200,
+  .light .border-neutral-100,
+  .light .border-neutral-200 {
+    border-color: hsl(var(--border)) !important;
+  }
+  /* Cartões com textura suave vintage */
+  .light .bg-card {
+    background-image: var(--gradient-card),
+      radial-gradient(circle at 10% 10%, hsl(42 35% 96% / 0.6), transparent 40%),
+      radial-gradient(circle at 90% 90%, hsl(40 25% 94% / 0.5), transparent 40%);
+    background-blend-mode: normal, multiply, multiply;
   }
 }
 
