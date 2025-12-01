@@ -71,7 +71,7 @@ export const useCalendarEvents = (currentMonth: Date | null) => {
             return;
           }
 
-          const birthDate = new Date(aniversariante.data_nascimento);
+          const birthDate = new Date(`${aniversariante.data_nascimento}T12:00:00`);
           
           // Validate that the date is valid
           if (isNaN(birthDate.getTime())) {
