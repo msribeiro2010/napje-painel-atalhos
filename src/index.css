@@ -703,11 +703,11 @@
   }
 
   .bg-gradient-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    background: var(--gradient-primary);
   }
 
   .bg-gradient-secondary {
-    background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+    background: var(--gradient-secondary);
   }
 
   /* Animações personalizadas */
@@ -846,7 +846,7 @@
 
   /* Efeitos de texto */
   .text-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

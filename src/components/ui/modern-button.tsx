@@ -37,7 +37,7 @@ export const ModernButton = React.forwardRef<HTMLButtonElement, ModernButtonProp
         ref={ref}
         className={cn(
           "transition-all duration-300 ease-out",
-          "relative overflow-hidden",
+          "relative overflow-hidden group",
           variants[variant],
           isDisabled && "opacity-50 cursor-not-allowed",
           className

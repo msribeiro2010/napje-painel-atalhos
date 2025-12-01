@@ -28,9 +28,9 @@ export const ModernCard = ({
   return (
     <Card 
       className={cn(
-        "transition-all duration-300 ease-out",
+        "transition-all duration-300 ease-out rounded-3xl",
         variants[variant],
-        hover && "hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02]",
+        hover && "hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]",
         glow && "hover:shadow-glow",
         className
       )}
